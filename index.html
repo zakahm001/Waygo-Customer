@@ -22,13 +22,36 @@
     @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
     @keyframes dp{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
 
+    /* WELCOME SCREEN */
+    #sWelcome{background:#0d1b3e;align-items:center;justify-content:center;padding:30px 24px}
+    .welcome-logo{font-size:56px;color:#fbbf24;margin-bottom:8px;text-align:center}
+    .welcome-name{color:#fbbf24;font-size:30px;font-weight:bold;letter-spacing:4px;margin-bottom:6px}
+    .welcome-sub{color:#4a6090;font-size:14px;margin-bottom:48px;text-align:center}
+    .welcome-btn{width:100%;max-width:400px;padding:22px 20px;border-radius:14px;
+      font-size:17px;font-weight:700;border:none;cursor:pointer;margin-bottom:16px;
+      text-align:left;display:flex;align-items:center;gap:16px;transition:all .2s}
+    .welcome-btn-now{background:white;color:#0d1b3e}
+    .welcome-btn-pre{background:#1a2f5e;color:white;border:2px solid #2a4080}
+    .welcome-btn:active{opacity:.85;transform:scale(.98)}
+    .welcome-btn-icon{font-size:28px;flex-shrink:0}
+    .welcome-btn-text .wbt-title{font-size:17px;font-weight:800}
+    .welcome-btn-text .wbt-sub{font-size:12px;opacity:.7;margin-top:2px}
+    .welcome-lang{display:flex;gap:10px;margin-top:24px}
+    .lang-btn{background:#1a2f5e;border:1px solid #2a4080;color:#94a3b8;
+      padding:8px 16px;border-radius:20px;font-size:13px;cursor:pointer;
+      font-weight:600;transition:all .2s}
+    .lang-btn.active{background:#fbbf24;color:#0d1b3e;border-color:#fbbf24}
+
     /* TOPBAR */
     .topbar{background:#0d1b3e;padding:14px 20px;display:flex;align-items:center;
       justify-content:space-between;position:sticky;top:0;z-index:100;
       border-bottom:1px solid #1a2f5e}
-    .tlogo{color:#fbbf24;font-size:18px;font-weight:bold}
-    .tright{color:#fbbf24;font-size:12px;cursor:pointer;
-      background:#1a2f5e;padding:6px 12px;border-radius:8px;border:none;font-weight:700}
+    .tlogo{color:#fbbf24;font-size:18px;font-weight:bold;cursor:pointer}
+    .topbar-right{display:flex;align-items:center;gap:8px}
+    .tauth{color:#fbbf24;font-size:12px;cursor:pointer;background:#1a2f5e;
+      padding:6px 12px;border-radius:8px;border:none;font-weight:700}
+    .tlang{color:#4a6090;font-size:18px;cursor:pointer;background:none;
+      border:none;padding:4px}
 
     /* BOTTOM NAV */
     .bnav{position:fixed;bottom:0;left:0;right:0;background:#0d1b3e;
@@ -60,6 +83,17 @@
     .finput::placeholder{color:#94a3b8}
     select.finput{appearance:none}
 
+    /* DATE TIME ROW */
+    .dt-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+
+    /* PRE-BOOK BADGE */
+    .prebook-badge{background:#dbeafe;border:1px solid #93c5fd;border-radius:10px;
+      padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:14px}
+    .prebook-badge-icon{font-size:20px}
+    .prebook-badge-text{font-size:13px;color:#1a56db;font-weight:600}
+    .prebook-badge-change{font-size:11px;color:#1a56db;text-decoration:underline;
+      cursor:pointer;margin-left:auto;white-space:nowrap}
+
     /* BUTTONS */
     .btn{padding:14px;border-radius:10px;font-size:15px;font-weight:700;
       border:none;cursor:pointer;width:100%;text-align:center;transition:opacity .2s}
@@ -78,6 +112,7 @@
     .b-red{background:#fee2e2;color:#dc2626;border:1px solid #fecaca}
     .b-gray{background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0}
     .b-blue{background:#dbeafe;color:#1a56db;border:1px solid #93c5fd}
+    .b-purple{background:#ede9fe;color:#7c3aed;border:1px solid #ddd6fe}
 
     /* AVATAR */
     .avatar{width:56px;height:56px;border-radius:50%;background:#0d1b3e;
@@ -85,11 +120,14 @@
       font-size:22px;font-weight:bold;flex-shrink:0}
 
     /* PAYMENT GRID */
-    .pgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
-    .pbtn{padding:10px 6px;border-radius:10px;border:2px solid #d0d7ea;
+    .pgrid{display:grid;gap:8px;margin-bottom:14px}
+    .pgrid-2{grid-template-columns:1fr 1fr}
+    .pgrid-3{grid-template-columns:1fr 1fr 1fr}
+    .pbtn{padding:12px 6px;border-radius:10px;border:2px solid #d0d7ea;
       background:white;color:#64748b;font-size:12px;font-weight:700;
       cursor:pointer;text-align:center;transition:all .15s}
     .pbtn.active{border-color:#0d1b3e;background:#0d1b3e;color:#fbbf24}
+    .pbtn.locked{opacity:.4;cursor:not-allowed;background:#f8fafc}
 
     /* FARE BOX */
     .farebox{background:#f0f3f9;border-radius:10px;padding:14px;
@@ -118,12 +156,12 @@
     .mlive{position:absolute;bottom:6px;left:6px;background:rgba(255,255,255,.9);
       border-radius:6px;padding:2px 7px;font-size:10px;color:#0d1b3e;font-weight:bold}
 
-    /* RATING STARS */
+    /* RATING */
     .stars{display:flex;gap:6px;justify-content:center;margin:8px 0}
     .star{font-size:28px;cursor:pointer;color:#d0d7ea;transition:color .15s}
     .star.active{color:#fbbf24}
 
-    /* MODAL — slides up from bottom */
+    /* MODAL */
     .moverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);
       z-index:200;align-items:flex-end;justify-content:center}
     .moverlay.open{display:flex}
@@ -137,13 +175,12 @@
     .mbtn{flex:1;padding:14px;border-radius:10px;font-size:14px;
       font-weight:bold;border:none;cursor:pointer}
 
-    /* AUTH MODAL */
+    /* AUTH */
     .auth-toggle{display:flex;background:#f0f3f9;border-radius:10px;
       padding:4px;margin-bottom:18px}
     .at-btn{flex:1;padding:10px;border:none;background:none;border-radius:8px;
       font-size:14px;font-weight:600;color:#64748b;cursor:pointer}
-    .at-btn.active{background:white;color:#0d1b3e;
-      box-shadow:0 1px 4px rgba(0,0,0,.1)}
+    .at-btn.active{background:white;color:#0d1b3e;box-shadow:0 1px 4px rgba(0,0,0,.1)}
     .type-toggle{display:flex;background:#f0f3f9;border-radius:10px;
       padding:4px;margin-bottom:14px}
 
@@ -156,12 +193,9 @@
       display:flex;align-items:center;justify-content:center;
       font-size:10px;font-weight:bold;flex-shrink:0}
     .cav.sup{background:#0d9488}
-    .cbubble{max-width:72%;padding:8px 12px;border-radius:12px;
-      font-size:13px;line-height:1.4}
-    .cmsg.mine .cbubble{background:#0d1b3e;color:#fbbf24;
-      border-radius:12px 12px 4px 12px}
-    .cmsg.other .cbubble{background:#f1f5f9;color:#0d1b3e;
-      border-radius:12px 12px 12px 4px}
+    .cbubble{max-width:72%;padding:8px 12px;border-radius:12px;font-size:13px;line-height:1.4}
+    .cmsg.mine .cbubble{background:#0d1b3e;color:#fbbf24;border-radius:12px 12px 4px 12px}
+    .cmsg.other .cbubble{background:#f1f5f9;color:#0d1b3e;border-radius:12px 12px 12px 4px}
     .cinput-row{display:flex;gap:8px}
     .cinput{flex:1;padding:9px 12px;border-radius:24px;border:1px solid #d0d7ea;
       background:#f8fafc;font-size:13px;color:#0d1b3e;outline:none}
@@ -195,8 +229,8 @@
     /* HISTORY */
     .hist-card{background:white;border-radius:12px;padding:14px;
       margin-bottom:10px;border:1px solid #d0d7ea}
-    .hist-top{display:flex;justify-content:space-between;margin-bottom:6px;
-      align-items:center}
+    .hist-card.urgent{border-color:#f97316;box-shadow:0 0 0 3px #fed7aa}
+    .hist-top{display:flex;justify-content:space-between;margin-bottom:6px;align-items:center}
     .hist-ref{font-size:12px;font-weight:700;color:#1a56db}
     .hist-route{font-size:13px;font-weight:600;color:#0d1b3e;margin-bottom:4px}
     .hist-detail{font-size:11px;color:#64748b;margin-bottom:8px}
@@ -210,13 +244,12 @@
       color:#64748b;cursor:pointer;border-bottom:2.5px solid transparent}
     .tab.active{color:#0d1b3e;font-weight:700;border-bottom-color:#0d1b3e}
 
-    /* LOGIN GATE BANNER */
+    /* LOGIN GATE */
     .login-gate{background:linear-gradient(135deg,#0d1b3e,#1a3066);
-      border-radius:12px;padding:18px;text-align:center;margin-bottom:14px;
-      color:white}
+      border-radius:12px;padding:24px;text-align:center;margin-bottom:14px;color:white}
     .gate-icon{font-size:36px;margin-bottom:8px}
     .gate-title{font-size:16px;font-weight:bold;margin-bottom:4px}
-    .gate-sub{font-size:13px;color:#6b82b8;margin-bottom:14px}
+    .gate-sub{font-size:13px;color:#6b82b8;margin-bottom:16px}
   </style>
 </head>
 <body>
@@ -225,178 +258,171 @@
 <div class="screen active" id="sLoad">
   <div class="load-logo">▲</div>
   <div class="load-name">WAYGO</div>
-  <div class="load-sub">Din taxi, direkt</div>
+  <div class="load-sub" id="loadSub">Din taxi, direkt</div>
   <div class="dots">
-    <div class="dot"></div>
-    <div class="dot"></div>
-    <div class="dot"></div>
+    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
   </div>
 </div>
 
-<!-- MAIN APP (always shown, login gated per action) -->
+<!-- WELCOME SCREEN -->
+<div class="screen" id="sWelcome">
+  <div style="text-align:center;margin-bottom:10px">
+    <div class="welcome-logo">▲</div>
+    <div class="welcome-name">WAYGO</div>
+    <div class="welcome-sub" id="welcomeSub">Sveriges snabbaste taxi</div>
+  </div>
+
+  <button class="welcome-btn welcome-btn-now" onclick="startBooking('now')">
+    <div class="welcome-btn-icon">🚖</div>
+    <div class="welcome-btn-text">
+      <div class="wbt-title" id="wbNowTitle">I need a car right away</div>
+      <div class="wbt-sub" id="wbNowSub">Driver dispatched immediately</div>
+    </div>
+    <div style="margin-left:auto;font-size:20px;color:#94a3b8">›</div>
+  </button>
+
+  <button class="welcome-btn welcome-btn-pre" onclick="startBooking('pre')">
+    <div class="welcome-btn-icon">📅</div>
+    <div class="welcome-btn-text">
+      <div class="wbt-title" id="wbPreTitle">I want to pre-book</div>
+      <div class="wbt-sub" id="wbPreSub">Schedule for a specific date & time</div>
+    </div>
+    <div style="margin-left:auto;font-size:20px;color:#6b82b8">›</div>
+  </button>
+
+  <div class="welcome-lang">
+    <button class="lang-btn active" id="langSV" onclick="setLang('sv')">🇸🇪 Svenska</button>
+    <button class="lang-btn" id="langEN" onclick="setLang('en')">🇬🇧 English</button>
+  </div>
+</div>
+
+<!-- MAIN APP -->
 <div class="screen" id="sApp">
   <div class="topbar">
-    <div class="tlogo">▲ WAYGO</div>
-    <button class="tright" id="topAuthBtn" onclick="topAuthAction()">
-      Logga in
-    </button>
+    <div class="tlogo" onclick="goWelcome()">▲ WAYGO</div>
+    <div class="topbar-right">
+      <button class="tlang" onclick="toggleLang()" id="langToggle">🇬🇧</button>
+      <button class="tauth" id="topAuthBtn" onclick="topAuthAction()">
+        Logga in
+      </button>
+    </div>
   </div>
 
   <div style="flex:1;overflow-y:auto" id="tabContent"></div>
 
   <div class="bnav">
     <button class="bni active" id="bni0" onclick="showTab(0)">
-      <span class="bni-icon">🚖</span><span>Boka</span>
+      <span class="bni-icon">🚖</span><span id="nav0">Boka</span>
     </button>
     <button class="bni" id="bni1" onclick="showTab(1)">
-      <span class="bni-icon">📋</span><span>Resor</span>
+      <span class="bni-icon">📋</span><span id="nav1">Resor</span>
     </button>
     <button class="bni" id="bni2" onclick="showTab(2)">
-      <span class="bni-icon">👤</span><span>Profil</span>
+      <span class="bni-icon">👤</span><span id="nav2">Profil</span>
     </button>
     <button class="bni" id="bni3" onclick="showTab(3)">
-      <span class="bni-icon">💳</span><span>Betalning</span>
+      <span class="bni-icon">💳</span><span id="nav3">Betalning</span>
     </button>
   </div>
 </div>
 
-<!-- AUTH MODAL (slides up when needed) -->
+<!-- AUTH MODAL -->
 <div class="moverlay" id="authModal">
   <div class="mbox">
-
-    <!-- Summary of pending booking shown above login -->
     <div id="pendingBookingSummary" style="display:none">
       <div class="infobox ib-blue" id="pendingInfo"></div>
     </div>
-
     <div class="auth-toggle">
-      <button class="at-btn active" id="atLogin"
-              onclick="switchAuth('login')">
-        Logga in
-      </button>
-      <button class="at-btn" id="atReg"
-              onclick="switchAuth('register')">
-        Ny kund
-      </button>
+      <button class="at-btn active" id="atLogin" onclick="switchAuth('login')" id="atLoginBtn"></button>
+      <button class="at-btn" id="atReg" onclick="switchAuth('register')" id="atRegBtn"></button>
     </div>
 
     <!-- LOGIN -->
     <div id="authLoginForm">
-      <div class="mtitle">Välkommen tillbaka</div>
-      <label class="flabel">E-postadress</label>
+      <div class="mtitle" id="loginTitle">Välkommen tillbaka</div>
+      <label class="flabel" id="lblLoginEmail">E-postadress</label>
       <input class="finput" id="loginEmail" type="email" placeholder="din@email.se"/>
-      <label class="flabel">Lösenord</label>
+      <label class="flabel" id="lblLoginPwd">Lösenord</label>
       <input class="finput" id="loginPassword" type="password" placeholder="••••••••"
              onkeydown="if(event.key==='Enter')doLogin()"/>
       <div class="infobox ib-red" id="loginErr" style="display:none"></div>
-      <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">
-        Logga in →
-      </button>
-      <div style="text-align:center;margin-top:12px;font-size:12px;color:#94a3b8">
-        BankID &amp; SMS-kod kommer snart
+      <button class="btn btn-primary" id="loginBtn" onclick="doLogin()"></button>
+      <div style="text-align:center;margin-top:12px;font-size:12px;color:#94a3b8" id="bankidNote">
+        BankID & SMS-kod kommer snart
       </div>
     </div>
 
     <!-- REGISTER -->
     <div id="authRegForm" style="display:none">
-      <div class="mtitle">Skapa konto</div>
-
+      <div class="mtitle" id="regTitle">Skapa konto</div>
       <div class="type-toggle">
-        <button class="at-btn active" id="tPrivate"
-                onclick="switchType('private')">
-          👤 Privat
-        </button>
-        <button class="at-btn" id="tBusiness"
-                onclick="switchType('business')">
-          🏢 Företag
-        </button>
+        <button class="at-btn active" id="tPrivate" onclick="switchType('private')">👤 Privat</button>
+        <button class="at-btn" id="tBusiness" onclick="switchType('business')">🏢 Företag</button>
       </div>
-
-      <label class="flabel">Fullständigt namn *</label>
+      <label class="flabel" id="lblName">Fullständigt namn *</label>
       <input class="finput" id="rName" type="text" placeholder="För- och efternamn"/>
-      <label class="flabel">Telefon *</label>
+      <label class="flabel" id="lblPhone">Telefon *</label>
       <input class="finput" id="rPhone" type="tel" placeholder="070-000 00 00"/>
-      <label class="flabel">E-post *</label>
+      <label class="flabel" id="lblEmail">E-post *</label>
       <input class="finput" id="rEmail" type="email" placeholder="din@email.se"/>
-      <label class="flabel">Lösenord * (minst 6 tecken)</label>
+      <label class="flabel" id="lblPwd">Lösenord * (minst 6 tecken)</label>
       <input class="finput" id="rPassword" type="password" placeholder="••••••••"/>
-
       <div id="bizFields" style="display:none">
-        <label class="flabel">Organisationsnummer</label>
+        <label class="flabel" id="lblOrg">Organisationsnummer</label>
         <input class="finput" id="rOrgNr" type="text" placeholder="556xxx-xxxx"/>
-        <label class="flabel">Faktureringsadress</label>
+        <label class="flabel" id="lblBilling">Faktureringsadress</label>
         <input class="finput" id="rBilling" type="text" placeholder="Gatuadress, stad"/>
       </div>
-
-      <label class="flabel">Betalningsmetod</label>
+      <label class="flabel" id="lblPayPref">Betalningsmetod</label>
       <select class="finput" id="rPayment">
         <option value="swish">📱 Swish</option>
         <option value="card">💳 Kort</option>
-        <option value="invoice">📄 Faktura</option>
       </select>
-
       <div class="infobox ib-red" id="regErr" style="display:none"></div>
-      <button class="btn btn-primary" id="regBtn" onclick="doRegister()">
-        Skapa konto →
-      </button>
+      <button class="btn btn-primary" id="regBtn" onclick="doRegister()"></button>
     </div>
 
-    <button class="btn btn-gray" style="margin-top:10px"
-            onclick="closeMod('authModal')">
-      Avbryt
-    </button>
+    <button class="btn btn-gray" style="margin-top:10px" onclick="closeMod('authModal')" id="cancelAuthBtn">Avbryt</button>
   </div>
 </div>
 
 <!-- SUPPORT MODAL -->
-<div class="moverlay" id="supportModal"
-     onclick="closeMIfOut(event,'supportModal')">
+<div class="moverlay" id="supportModal" onclick="closeMIfOut(event,'supportModal')">
   <div class="mbox">
-    <div class="mtitle">📞 Kundtjänst · Waygo</div>
+    <div class="mtitle" id="suppTitle">📞 Kundtjänst · Waygo</div>
     <div class="minfo" id="suppInfo"></div>
-    <a href="tel:+46101234567"
-       style="text-decoration:none;display:block;margin-bottom:12px">
-      <button class="btn btn-success">📞 Ring kundtjänst direkt</button>
+    <a href="tel:+46101234567" style="text-decoration:none;display:block;margin-bottom:12px">
+      <button class="btn btn-success" id="suppCallBtn">📞 Ring kundtjänst direkt</button>
     </a>
-    <div class="stitle" style="margin-bottom:8px">Chatta med oss</div>
     <div class="chatbox" id="suppChat"></div>
     <div class="cinput-row">
-      <input class="cinput" id="suppInput"
-             placeholder="Beskriv ditt problem..."
-             onkeydown="if(event.key==='Enter')sendSupp()"/>
+      <input class="cinput" id="suppInput" onkeydown="if(event.key==='Enter')sendSupp()"/>
       <button class="csend" onclick="sendSupp()">➤</button>
     </div>
-    <div class="infobox ib-yellow" style="margin-top:10px">
+    <div class="infobox ib-yellow" style="margin-top:10px" id="suppWarning">
       ⚠️ Kontakta kundtjänst innan du avbokar en tilldelad resa.
     </div>
-    <button class="btn btn-gray" style="margin-top:10px"
-            onclick="closeMod('supportModal')">
-      Stäng
-    </button>
+    <button class="btn btn-gray" style="margin-top:10px" onclick="closeMod('supportModal')" id="suppCloseBtn">Stäng</button>
   </div>
 </div>
 
 <!-- CANCEL MODAL -->
-<div class="moverlay" id="cancelModal"
-     onclick="closeMIfOut(event,'cancelModal')">
+<div class="moverlay" id="cancelModal" onclick="closeMIfOut(event,'cancelModal')">
   <div class="mbox">
-    <div class="mtitle">Bekräfta avbokning</div>
+    <div class="mtitle" id="cancelTitle">Bekräfta avbokning</div>
     <div class="infobox ib-red" id="cancelWarn"></div>
     <div class="minfo" id="cancelInfo"></div>
     <div class="mbtns">
-      <button class="mbtn" style="background:#f1f5f9;color:#64748b"
-              onclick="closeMod('cancelModal')">Avbryt</button>
-      <button class="mbtn" style="background:#dc2626;color:white"
-              onclick="doCancel()">Avboka</button>
+      <button class="mbtn" style="background:#f1f5f9;color:#64748b" onclick="closeMod('cancelModal')" id="cancelNoBtn">Avbryt</button>
+      <button class="mbtn" style="background:#dc2626;color:white" onclick="doCancel()" id="cancelYesBtn">Avboka</button>
     </div>
   </div>
 </div>
 
 <!-- RATE MODAL -->
-<div class="moverlay" id="rateModal"
-     onclick="closeMIfOut(event,'rateModal')">
+<div class="moverlay" id="rateModal" onclick="closeMIfOut(event,'rateModal')">
   <div class="mbox">
-    <div class="mtitle">⭐ Betygsätt din resa</div>
+    <div class="mtitle" id="rateTitle">⭐ Betygsätt din resa</div>
     <div class="minfo" id="rateInfo"></div>
     <div class="stars" id="starRow">
       <span class="star" onclick="setStar(1)">★</span>
@@ -405,27 +431,19 @@
       <span class="star" onclick="setStar(4)">★</span>
       <span class="star" onclick="setStar(5)">★</span>
     </div>
-    <button class="btn btn-primary" onclick="submitRating()">
-      Skicka betyg
-    </button>
-    <button class="btn btn-gray" style="margin-top:8px"
-            onclick="closeMod('rateModal')">
-      Hoppa över
-    </button>
+    <button class="btn btn-primary" onclick="submitRating()" id="rateSendBtn">Skicka betyg</button>
+    <button class="btn btn-gray" style="margin-top:8px" onclick="closeMod('rateModal')" id="rateSkipBtn">Hoppa över</button>
   </div>
 </div>
 
 <!-- EDIT MODAL -->
-<div class="moverlay" id="editModal"
-     onclick="closeMIfOut(event,'editModal')">
+<div class="moverlay" id="editModal" onclick="closeMIfOut(event,'editModal')">
   <div class="mbox">
     <div class="mtitle" id="editTitle">Redigera</div>
     <input class="finput" id="editInput" type="text"/>
     <div class="mbtns">
-      <button class="mbtn" style="background:#f1f5f9;color:#64748b"
-              onclick="closeMod('editModal')">Avbryt</button>
-      <button class="mbtn" style="background:#0d1b3e;color:#fbbf24"
-              onclick="saveEdit()">Spara</button>
+      <button class="mbtn" style="background:#f1f5f9;color:#64748b" onclick="closeMod('editModal')" id="editCancelBtn">Avbryt</button>
+      <button class="mbtn" style="background:#0d1b3e;color:#fbbf24" onclick="saveEdit()" id="editSaveBtn">Spara</button>
     </div>
   </div>
 </div>
@@ -435,10 +453,15 @@
 
 <script>
 const API = 'https://16.16.153.106.sslip.io';
+
+// ── STATE ──
 let customer = null;
 let token = null;
 let myBookings = [];
 let selectedPay = 'swish';
+let bookingMode = 'now'; // 'now' or 'pre'
+let preBookDate = '';
+let preBookTime = '';
 let currentTab = 0;
 let cancelBookingId = null;
 let cancelBookingRef = null;
@@ -449,32 +472,255 @@ let contactedSupport = {};
 let editField = null;
 let driverAnimations = {};
 let customerType = 'private';
-
-// Pending booking — filled before login
 let pendingBooking = null;
+let lang = localStorage.getItem('waygo_lang') || 'sv';
+
+// ── TRANSLATIONS ──
+const T = {
+  sv: {
+    loading_sub: 'Din taxi, direkt',
+    welcome_sub: 'Sveriges snabbaste taxi',
+    now_title: 'Jag behöver en bil nu',
+    now_sub: 'Förare skickas direkt',
+    pre_title: 'Jag vill förboka',
+    pre_sub: 'Välj datum och tid',
+    book: 'Boka', rides: 'Resor', profile: 'Profil', payment: 'Betalning',
+    login: 'Logga in', register: 'Ny kund', logout: 'Logga ut',
+    book_title: 'Boka din resa',
+    book_sub: 'Fyll i resan — logga in vid bokning',
+    pickup: 'Upphämtning', destination: 'Destination',
+    payment_method: 'Betalningsmetod',
+    estimated_cost: 'Uppskattad kostnad', incl_vat: 'Inkl. 25% moms',
+    book_btn: 'Beställ Taxi →', continue_btn: 'Fortsätt till bokning →',
+    login_note: 'BankID & SMS-kod kommer snart',
+    invoice_private: '⚠️ Faktura är endast tillgängligt för företagskunder. Välj Swish eller Kort.',
+    invoice_biz: 'ℹ️ Faktura skickas via e-post. 30 dagar netto. Org.nr krävs.',
+    pre_badge: 'Förbokning', pre_change: 'Ändra',
+    pre_date: 'Datum', pre_time: 'Tid',
+    fill_fields: '⚠️ Fyll i upphämtning och destination',
+    fill_datetime: '⚠️ Välj datum och tid för förbokning',
+    booked: '✓ Resa bokad!',
+    booking_failed: '⚠️ Kunde inte boka. Försök igen.',
+    no_active: 'Inga aktiva resor',
+    no_history: 'Ingen historik ännu',
+    active: 'Aktiva', history: 'Historik',
+    assigned: 'Tilldelad', pending_driver: 'Väntar på förare',
+    cancelled: 'Avbokad', completed: 'Avslutad',
+    looking_driver: 'Söker förare...',
+    driver_late: 'Föraren är',
+    mins_late: 'minuter försenad',
+    support: '💬 Support',
+    contact_support: '📞 Kontakta support för att avboka',
+    cancel_ride: 'Avboka',
+    cancel_request: 'Begär avbokning',
+    rate: '⭐ Betygsätt',
+    receipt: '📄 Kvitto',
+    login_gate_rides: 'Logga in för att se din reshistorik',
+    login_gate_profile: 'Logga in för att hantera ditt konto',
+    login_gate_payment: 'Logga in för att se dina betalningar',
+    login_cta: 'Logga in / Skapa konto',
+    saved_addresses: 'Sparade adresser',
+    home: '🏠 Hem', work: '🏢 Jobb', other: '📍 Annan',
+    from_home: '🏠 Från hem', from_work: '🏢 Från jobb',
+    to_home: '🏠 Till hem', to_work: '💼 Till jobb',
+    personal_info: 'Personuppgifter',
+    name: 'Namn', phone: 'Telefon', email: 'E-post',
+    org_nr: 'Org.nummer', billing_addr: 'Faktureringsadress',
+    payment_settings: 'Betalningsinställningar',
+    pref_payment: 'Föredragen betalning',
+    account: 'Konto', change_pwd: '🔒 Ändra lösenord',
+    total_paid: 'Totalt betalt', paid: 'Betalda', pending_pay: 'Väntar',
+    vat_note: 'varav moms',
+    cancel_confirm: 'Bekräfta avbokning',
+    cancel_no_fee: '✓ Ingen avgift tillkommer vid avbokning innan förare tilldelats.',
+    cancel_central: '⚠️ Avbokningsförfrågan skickas till central för godkännande.',
+    cancel_direct: 'Avboka direkt', cancel_req: 'Begär avbokning',
+    cancel_no: 'Avbryt', cancel_yes: 'Avboka',
+    rate_send: 'Skicka betyg', rate_skip: 'Hoppa över',
+    save: 'Spara', cancel: 'Avbryt',
+    saved: '✓ Sparat!', save_failed: '⚠️ Kunde inte spara',
+    welcome_back: 'Välkommen tillbaka',
+    create_account: 'Skapa konto',
+    full_name: 'Fullständigt namn *',
+    pwd_min: 'Lösenord * (minst 6 tecken)',
+    pay_pref: 'Betalningsmetod',
+    fill_required: '⚠️ Fyll i alla obligatoriska fält',
+    pwd_short: '⚠️ Lösenordet måste vara minst 6 tecken',
+    server_error: '⚠️ Kunde inte ansluta till servern',
+    logging_in: 'Loggar in...', creating: 'Skapar konto...',
+    login_btn: 'Logga in →', reg_btn: 'Skapa konto →',
+    welcome_msg: '✓ Välkommen,',
+    account_created: '✓ Konto skapat! Välkommen,',
+    logged_out: 'Du har loggats ut',
+    completing: '⏳ Slutför din bokning...',
+    complete_fail: '⚠️ Kunde inte slutföra bokning. Försök igen.',
+    driver_assigned: '🚖 Förare tilldelad:',
+    customer_since: 'Waygo Sverige · Kund sedan',
+    pwd_coming: 'Lösenordsändring — kommer snart',
+    supp_title: '📞 Kundtjänst · Waygo',
+    supp_call: '📞 Ring kundtjänst direkt',
+    supp_warning: '⚠️ Kontakta kundtjänst innan du avbokar en tilldelad resa.',
+    supp_close: 'Stäng',
+    supp_greeting: 'Hej! Hur kan vi hjälpa dig med bokning',
+    supp_reply: 'Tack! Vi återkommer inom 2 minuter.',
+    supp_placeholder: 'Beskriv ditt problem...',
+    cancel_failed: '⚠️ Kunde inte avboka',
+    rate_thanks: '⭐ Tack för ditt betyg!',
+    rate_choose: '⚠️ Välj ett betyg',
+    rate_failed: '⚠️ Kunde inte spara betyg',
+    pending_booking_title: '🚖 Din resa är klar att bokas!',
+    pending_complete: 'Logga in eller skapa konto för att slutföra bokningen.',
+    pre_booked_badge: '📅 Förbokning',
+    swish: '📱 Swish', card: '💳 Kort', invoice: '📄 Faktura',
+    prebook_label: 'Förbokning',
+  },
+  en: {
+    loading_sub: 'Your taxi, directly',
+    welcome_sub: "Sweden's fastest taxi",
+    now_title: 'I need a car right away',
+    now_sub: 'Driver dispatched immediately',
+    pre_title: 'I want to pre-book',
+    pre_sub: 'Choose date and time',
+    book: 'Book', rides: 'Rides', profile: 'Profile', payment: 'Payment',
+    login: 'Log in', register: 'Sign up', logout: 'Log out',
+    book_title: 'Book your ride',
+    book_sub: 'Fill in your trip — log in to complete',
+    pickup: 'Pickup', destination: 'Destination',
+    payment_method: 'Payment method',
+    estimated_cost: 'Estimated cost', incl_vat: 'Incl. 25% VAT',
+    book_btn: 'Order Taxi →', continue_btn: 'Continue to booking →',
+    login_note: 'BankID & SMS code coming soon',
+    invoice_private: '⚠️ Invoice is only available for business customers. Please choose Swish or Card.',
+    invoice_biz: 'ℹ️ Invoice sent by email. Net 30 days. Org. number required.',
+    pre_badge: 'Pre-booking', pre_change: 'Change',
+    pre_date: 'Date', pre_time: 'Time',
+    fill_fields: '⚠️ Please fill in pickup and destination',
+    fill_datetime: '⚠️ Please select date and time for pre-booking',
+    booked: '✓ Ride booked!',
+    booking_failed: '⚠️ Could not complete booking. Please try again.',
+    no_active: 'No active rides',
+    no_history: 'No history yet',
+    active: 'Active', history: 'History',
+    assigned: 'Assigned', pending_driver: 'Finding driver',
+    cancelled: 'Cancelled', completed: 'Completed',
+    looking_driver: 'Finding driver...',
+    driver_late: 'Driver is',
+    mins_late: 'minutes late',
+    support: '💬 Support',
+    contact_support: '📞 Contact support to cancel',
+    cancel_ride: 'Cancel ride',
+    cancel_request: 'Request cancellation',
+    rate: '⭐ Rate',
+    receipt: '📄 Receipt',
+    login_gate_rides: 'Log in to see your ride history',
+    login_gate_profile: 'Log in to manage your account',
+    login_gate_payment: 'Log in to see your payments',
+    login_cta: 'Log in / Create account',
+    saved_addresses: 'Saved addresses',
+    home: '🏠 Home', work: '🏢 Work', other: '📍 Other',
+    from_home: '🏠 From home', from_work: '🏢 From work',
+    to_home: '🏠 To home', to_work: '💼 To work',
+    personal_info: 'Personal information',
+    name: 'Name', phone: 'Phone', email: 'Email',
+    org_nr: 'Org. number', billing_addr: 'Billing address',
+    payment_settings: 'Payment settings',
+    pref_payment: 'Preferred payment',
+    account: 'Account', change_pwd: '🔒 Change password',
+    total_paid: 'Total paid', paid: 'Paid', pending_pay: 'Pending',
+    vat_note: 'incl. VAT',
+    cancel_confirm: 'Confirm cancellation',
+    cancel_no_fee: '✓ No charge for cancellation before driver is assigned.',
+    cancel_central: '⚠️ Cancellation request sent to dispatch for approval.',
+    cancel_direct: 'Cancel directly', cancel_req: 'Request cancellation',
+    cancel_no: 'No', cancel_yes: 'Cancel ride',
+    rate_send: 'Submit rating', rate_skip: 'Skip',
+    save: 'Save', cancel: 'Cancel',
+    saved: '✓ Saved!', save_failed: '⚠️ Could not save',
+    welcome_back: 'Welcome back',
+    create_account: 'Create account',
+    full_name: 'Full name *',
+    pwd_min: 'Password * (min. 6 characters)',
+    pay_pref: 'Payment method',
+    fill_required: '⚠️ Please fill in all required fields',
+    pwd_short: '⚠️ Password must be at least 6 characters',
+    server_error: '⚠️ Could not connect to server',
+    logging_in: 'Logging in...', creating: 'Creating account...',
+    login_btn: 'Log in →', reg_btn: 'Create account →',
+    welcome_msg: '✓ Welcome,',
+    account_created: '✓ Account created! Welcome,',
+    logged_out: 'You have been logged out',
+    completing: '⏳ Completing your booking...',
+    complete_fail: '⚠️ Could not complete booking. Please try again.',
+    driver_assigned: '🚖 Driver assigned:',
+    customer_since: 'Waygo Sweden · Customer since',
+    pwd_coming: 'Password change — coming soon',
+    supp_title: '📞 Customer Support · Waygo',
+    supp_call: '📞 Call support directly',
+    supp_warning: '⚠️ Contact support before cancelling an assigned ride.',
+    supp_close: 'Close',
+    supp_greeting: 'Hi! How can we help you with booking',
+    supp_reply: 'Thank you! We will get back to you within 2 minutes.',
+    supp_placeholder: 'Describe your issue...',
+    cancel_failed: '⚠️ Could not cancel ride',
+    rate_thanks: '⭐ Thank you for your rating!',
+    rate_choose: '⚠️ Please choose a rating',
+    rate_failed: '⚠️ Could not save rating',
+    pending_booking_title: '🚖 Your ride is ready to book!',
+    pending_complete: 'Log in or create an account to complete your booking.',
+    pre_booked_badge: '📅 Pre-booking',
+    swish: '📱 Swish', card: '💳 Card', invoice: '📄 Invoice',
+    prebook_label: 'Pre-booking',
+  }
+};
+
+function t(key) { return T[lang][key] || T['sv'][key] || key; }
+
+// ── LANGUAGE ──
+function setLang(l) {
+  lang = l;
+  localStorage.setItem('waygo_lang', l);
+  document.getElementById('langSV').classList.toggle('active', l === 'sv');
+  document.getElementById('langEN').classList.toggle('active', l === 'en');
+  document.getElementById('loadSub').textContent = t('loading_sub');
+  document.getElementById('welcomeSub').textContent = t('welcome_sub');
+  document.getElementById('wbNowTitle').textContent = t('now_title');
+  document.getElementById('wbNowSub').textContent = t('now_sub');
+  document.getElementById('wbPreTitle').textContent = t('pre_title');
+  document.getElementById('wbPreSub').textContent = t('pre_sub');
+}
+
+function toggleLang() {
+  setLang(lang === 'sv' ? 'en' : 'sv');
+  document.getElementById('langToggle').textContent = lang === 'sv' ? '🇬🇧' : '🇸🇪';
+  if (currentTab !== undefined) showTab(currentTab);
+  updateTopbar();
+}
 
 // ── INIT ──
 window.addEventListener('load', () => {
+  setLang(lang);
   setTimeout(() => {
     const saved = localStorage.getItem('waygo_customer');
     const savedToken = localStorage.getItem('waygo_token');
+    const savedSupport = localStorage.getItem('waygo_support');
+    if (savedSupport) contactedSupport = JSON.parse(savedSupport);
     if (saved && savedToken) {
       customer = JSON.parse(saved);
       token = savedToken;
+      selectedPay = customer.preferred_payment || 'swish';
       updateTopbar();
       loadMyBookings();
       connectSocket();
+      showScreen('sApp');
+      showTab(0);
+    } else {
+      showScreen('sWelcome');
     }
-    const savedSupport = localStorage.getItem('waygo_support');
-    if (savedSupport) contactedSupport = JSON.parse(savedSupport);
-    showScreen('sApp');
-    showTab(0);
   }, 2000);
 });
 
 function showScreen(id) {
-  document.querySelectorAll('.screen')
-    .forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
 
@@ -482,7 +728,7 @@ function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+  setTimeout(() => t.classList.remove('show'), 3500);
 }
 
 function closeMod(id) {
@@ -493,15 +739,39 @@ function closeMIfOut(e, id) {
   if (e.target === document.getElementById(id)) closeMod(id);
 }
 
+function goWelcome() {
+  showScreen('sWelcome');
+}
+
+// ── WELCOME ACTIONS ──
+function startBooking(mode) {
+  bookingMode = mode;
+  if (mode === 'pre') {
+    // Set default date to tomorrow
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    preBookDate = tomorrow.toISOString().split('T')[0];
+    preBookTime = '09:00';
+  }
+  showScreen('sApp');
+  showTab(0);
+}
+
+// ── TOPBAR ──
 function updateTopbar() {
   const btn = document.getElementById('topAuthBtn');
+  document.getElementById('langToggle').textContent = lang === 'sv' ? '🇬🇧' : '🇸🇪';
   if (customer) {
     btn.textContent = customer.name.split(' ')[0];
     btn.onclick = () => showTab(2);
   } else {
-    btn.textContent = 'Logga in';
+    btn.textContent = t('login');
     btn.onclick = topAuthAction;
   }
+  document.getElementById('nav0').textContent = t('book');
+  document.getElementById('nav1').textContent = t('rides');
+  document.getElementById('nav2').textContent = t('profile');
+  document.getElementById('nav3').textContent = t('payment');
 }
 
 function topAuthAction() {
@@ -509,291 +779,156 @@ function topAuthAction() {
   openAuthModal(null);
 }
 
-// ── AUTH MODAL ──
-function openAuthModal(pendingData) {
-  pendingBooking = pendingData;
-
-  // Show pending booking summary above login
-  const summary = document.getElementById('pendingBookingSummary');
-  const info = document.getElementById('pendingInfo');
-  if (pendingData) {
-    summary.style.display = '';
-    info.innerHTML =
-      '🚖 <strong>Din resa är klar att bokas!</strong><br>' +
-      '📍 ' + pendingData.from + ' → 🏁 ' + pendingData.to + '<br>' +
-      '💳 ' + pendingData.payLabel + ' · ' + pendingData.fare + ' kr<br>' +
-      '<strong>Logga in eller skapa konto för att slutföra bokningen.</strong>';
-  } else {
-    summary.style.display = 'none';
-  }
-
-  switchAuth('login');
-  document.getElementById('authModal').classList.add('open');
+// ── PAYMENT LOGIC ──
+// Business customers: Swish, Card, Invoice
+// Private/guest customers: Swish, Card ONLY
+function isBusinessCustomer() {
+  return customer && customer.customer_type === 'business';
 }
 
-function switchAuth(mode) {
-  document.getElementById('authLoginForm').style.display =
-    mode === 'login' ? '' : 'none';
-  document.getElementById('authRegForm').style.display =
-    mode === 'register' ? '' : 'none';
-  document.getElementById('atLogin').classList.toggle('active', mode === 'login');
-  document.getElementById('atReg').classList.toggle('active', mode === 'register');
+function getPaymentOptions() {
+  const opts = [
+    { id: 'swish', label: t('swish') },
+    { id: 'card', label: t('card') },
+  ];
+  if (isBusinessCustomer()) {
+    opts.push({ id: 'invoice', label: t('invoice') });
+  }
+  return opts;
 }
 
-function switchType(type) {
-  customerType = type;
-  document.getElementById('tPrivate').classList.toggle('active', type === 'private');
-  document.getElementById('tBusiness').classList.toggle('active', type === 'business');
-  document.getElementById('bizFields').style.display =
-    type === 'business' ? '' : 'none';
+function renderPaymentGrid() {
+  const opts = getPaymentOptions();
+  const gridClass = opts.length === 3 ? 'pgrid-3' : 'pgrid-2';
+
+  // Make sure selectedPay is valid for this customer type
+  if (!isBusinessCustomer() && selectedPay === 'invoice') {
+    selectedPay = 'swish';
+  }
+
+  let html = `<div class="pgrid ${gridClass}">`;
+  opts.forEach(o => {
+    html += `<button class="pbtn ${selectedPay===o.id?'active':''}"
+      onclick="selPay('${o.id}')">${o.label}</button>`;
+  });
+  html += '</div>';
+
+  if (selectedPay === 'invoice' && isBusinessCustomer()) {
+    html += `<div class="infobox ib-yellow">${t('invoice_biz')}</div>`;
+  }
+
+  return html;
 }
 
-async function doLogin() {
-  const email = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value.trim();
-  const errEl = document.getElementById('loginErr');
-  const btn = document.getElementById('loginBtn');
-  errEl.style.display = 'none';
-
-  if (!email || !password) {
-    errEl.textContent = '⚠️ Fyll i e-post och lösenord';
-    errEl.style.display = ''; return;
+function selPay(method) {
+  // Block invoice for private/guest customers
+  if (method === 'invoice' && !isBusinessCustomer()) {
+    showToast(t('invoice_private'));
+    return;
   }
-
-  btn.textContent = 'Loggar in...'; btn.disabled = true;
-
-  try {
-    const res = await fetch(API + '/customers/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
-    const data = await res.json();
-
-    if (data.token) {
-      customer = data.customer;
-      token = data.token;
-      localStorage.setItem('waygo_customer', JSON.stringify(customer));
-      localStorage.setItem('waygo_token', token);
-      closeMod('authModal');
-      updateTopbar();
-      selectedPay = customer.preferred_payment || 'swish';
-      loadMyBookings();
-      connectSocket();
-      showToast('✓ Välkommen, ' + customer.name.split(' ')[0] + '!');
-
-      // Complete pending booking if exists
-      if (pendingBooking) {
-        await completePendingBooking();
-      } else {
-        showTab(0);
-      }
-    } else {
-      errEl.textContent = '⚠️ ' + (data.error || 'Fel uppgifter');
-      errEl.style.display = '';
-    }
-  } catch (err) {
-    errEl.textContent = '⚠️ Kunde inte ansluta till servern';
-    errEl.style.display = '';
-  }
-
-  btn.textContent = 'Logga in →'; btn.disabled = false;
-}
-
-async function doRegister() {
-  const name = document.getElementById('rName').value.trim();
-  const phone = document.getElementById('rPhone').value.trim();
-  const email = document.getElementById('rEmail').value.trim();
-  const password = document.getElementById('rPassword').value.trim();
-  const errEl = document.getElementById('regErr');
-  const btn = document.getElementById('regBtn');
-  errEl.style.display = 'none';
-
-  if (!name || !phone || !email || !password) {
-    errEl.textContent = '⚠️ Fyll i alla obligatoriska fält';
-    errEl.style.display = ''; return;
-  }
-  if (password.length < 6) {
-    errEl.textContent = '⚠️ Lösenordet måste vara minst 6 tecken';
-    errEl.style.display = ''; return;
-  }
-
-  btn.textContent = 'Skapar konto...'; btn.disabled = true;
-
-  try {
-    const res = await fetch(API + '/customers/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name, phone, email, password,
-        customer_type: customerType,
-        preferred_payment: document.getElementById('rPayment').value,
-        org_number: document.getElementById('rOrgNr')?.value || null,
-        billing_address: document.getElementById('rBilling')?.value || null,
-      })
-    });
-    const data = await res.json();
-
-    if (data.token) {
-      customer = data.customer;
-      token = data.token;
-      localStorage.setItem('waygo_customer', JSON.stringify(customer));
-      localStorage.setItem('waygo_token', token);
-      closeMod('authModal');
-      updateTopbar();
-      selectedPay = customer.preferred_payment || 'swish';
-      connectSocket();
-      showToast('✓ Konto skapat! Välkommen, ' + customer.name.split(' ')[0] + '!');
-
-      if (pendingBooking) {
-        await completePendingBooking();
-      } else {
-        showTab(0);
-      }
-    } else {
-      errEl.textContent = '⚠️ ' + (data.error || 'Registrering misslyckades');
-      errEl.style.display = '';
-    }
-  } catch (err) {
-    errEl.textContent = '⚠️ Kunde inte ansluta till servern';
-    errEl.style.display = '';
-  }
-
-  btn.textContent = 'Skapa konto →'; btn.disabled = false;
-}
-
-// ── COMPLETE PENDING BOOKING AFTER LOGIN ──
-async function completePendingBooking() {
-  if (!pendingBooking || !customer) return;
-  showToast('⏳ Slutför din bokning...');
-  try {
-    const res = await fetch(API + '/bookings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        customer_name: customer.name,
-        customer_phone: customer.phone,
-        from_address: pendingBooking.from,
-        to_address: pendingBooking.to,
-        payment_method: pendingBooking.pay,
-        fare_sek: pendingBooking.fare
-      })
-    });
-    const data = await res.json();
-    if (data.booking) {
-      myBookings.unshift(data.booking);
-      saveBookings();
-      pendingBooking = null;
-      showToast('✓ Resa bokad! ' + data.booking.booking_ref);
-      showTab(1);
-    }
-  } catch (err) {
-    showToast('⚠️ Kunde inte slutföra bokning. Försök igen.');
-    showTab(0);
-  }
-}
-
-// ── LOGOUT ──
-function logout() {
-  localStorage.removeItem('waygo_customer');
-  localStorage.removeItem('waygo_token');
-  localStorage.removeItem('waygo_bookings');
-  customer = null; token = null; myBookings = [];
-  updateTopbar();
-  showToast('Du har loggats ut');
+  selectedPay = method;
   showTab(0);
 }
 
 // ── TABS ──
 function showTab(i) {
   currentTab = i;
-  document.querySelectorAll('.bni')
-    .forEach((b, j) => b.classList.toggle('active', i === j));
+  document.querySelectorAll('.bni').forEach((b, j) => b.classList.toggle('active', i === j));
   const content = document.getElementById('tabContent');
   if (i === 0) content.innerHTML = renderBookTab();
   else if (i === 1) { content.innerHTML = renderHistoryTab(); loadMyBookings(); }
   else if (i === 2) content.innerHTML = renderProfileTab();
   else if (i === 3) content.innerHTML = renderPaymentTab();
+  updateTopbar();
 }
 
 // ── BOOK TAB ──
-// Always visible — no login required to see form
 function renderBookTab() {
-  const payLabel = { swish:'📱 Swish', card:'💳 Kort', invoice:'📄 Faktura' };
   const homeAddr = customer?.home_address || '';
   const workAddr = customer?.work_address || '';
+  const isPreBook = bookingMode === 'pre';
+
+  // Min date = today, max = 30 days from now
+  const today = new Date().toISOString().split('T')[0];
+  const maxDate = new Date();
+  maxDate.setDate(maxDate.getDate() + 30);
+  const maxDateStr = maxDate.toISOString().split('T')[0];
 
   return `
     <div style="background:linear-gradient(135deg,#0d1b3e,#1a3066);
          padding:20px 20px 24px;color:white">
       <div style="font-size:20px;font-weight:bold;margin-bottom:4px">
-        Boka din resa
+        ${t('book_title')}
       </div>
       <div style="color:#6b82b8;font-size:13px">
-        Fyll i resan — logga in vid bokning
+        ${t('book_sub')}
       </div>
     </div>
 
     <div class="page">
       <div class="card">
 
-        <div class="stitle">Vart ska du?</div>
+        ${isPreBook ? `
+        <div class="prebook-badge">
+          <div class="prebook-badge-icon">📅</div>
+          <div class="prebook-badge-text">${t('pre_booked_badge')}</div>
+          <div class="prebook-badge-change" onclick="bookingMode='now';showTab(0)">
+            ${t('pre_change')} →
+          </div>
+        </div>
+        <div class="dt-row">
+          <div>
+            <label class="flabel">${t('pre_date')}</label>
+            <input class="finput" type="date" id="preDate"
+              value="${preBookDate}"
+              min="${today}" max="${maxDateStr}"
+              onchange="preBookDate=this.value"/>
+          </div>
+          <div>
+            <label class="flabel">${t('pre_time')}</label>
+            <input class="finput" type="time" id="preTime"
+              value="${preBookTime}"
+              onchange="preBookTime=this.value"/>
+          </div>
+        </div>` : ''}
 
-        <label class="flabel">📍 Upphämtning</label>
+        <label class="flabel">📍 ${t('pickup')}</label>
         <input class="finput" id="bFrom" type="text"
-               placeholder="Din adress..."
+               placeholder="${t('pickup')}..."
                value="${homeAddr}"/>
 
-        <label class="flabel">🏁 Destination</label>
+        <label class="flabel">🏁 ${t('destination')}</label>
         <input class="finput" id="bTo" type="text"
-               placeholder="Vart ska du?"
+               placeholder="${t('destination')}?"
                onblur="calcFare()"/>
 
         ${customer && (homeAddr || workAddr) ? `
         <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-          ${homeAddr ? `<button class="btn btn-sm btn-gray" onclick="setAddr('bFrom','${homeAddr}')">🏠 Från hem</button>` : ''}
-          ${workAddr ? `<button class="btn btn-sm btn-gray" onclick="setAddr('bFrom','${workAddr}')">💼 Från jobb</button>` : ''}
-          ${homeAddr ? `<button class="btn btn-sm btn-gray" onclick="setAddr('bTo','${homeAddr}')">🏠 Till hem</button>` : ''}
-          ${workAddr ? `<button class="btn btn-sm btn-gray" onclick="setAddr('bTo','${workAddr}')">💼 Till jobb</button>` : ''}
+          ${homeAddr ? `<button class="btn btn-sm btn-gray" onclick="setAddr('bFrom','${homeAddr}')">${t('from_home')}</button>` : ''}
+          ${workAddr ? `<button class="btn btn-sm btn-gray" onclick="setAddr('bFrom','${workAddr}')">${t('from_work')}</button>` : ''}
+          ${homeAddr ? `<button class="btn btn-sm btn-gray" onclick="setAddr('bTo','${homeAddr}')">${t('to_home')}</button>` : ''}
+          ${workAddr ? `<button class="btn btn-sm btn-gray" onclick="setAddr('bTo','${workAddr}')">${t('to_work')}</button>` : ''}
         </div>` : ''}
 
-        <label class="flabel">💳 Betalningsmetod</label>
-        <div class="pgrid">
-          <button class="pbtn ${selectedPay==='swish'?'active':''}"
-                  onclick="selPay('swish',this)">📱 Swish</button>
-          <button class="pbtn ${selectedPay==='card'?'active':''}"
-                  onclick="selPay('card',this)">💳 Kort</button>
-          <button class="pbtn ${selectedPay==='invoice'?'active':''}"
-                  onclick="selPay('invoice',this)">📄 Faktura</button>
-        </div>
-        ${selectedPay==='invoice' ? `
-          <div class="infobox ib-yellow">
-            ℹ️ Faktura skickas via e-post.
-            30 dagar netto. Org.nr krävs.
-          </div>` : ''}
+        <label class="flabel">💳 ${t('payment_method')}</label>
+        ${renderPaymentGrid()}
 
         <div class="farebox">
           <div>
-            <div style="font-size:13px;color:#64748b">
-              Uppskattad kostnad
-            </div>
-            <div style="font-size:11px;color:#94a3b8;margin-top:2px">
-              Inkl. 25% moms
-            </div>
+            <div style="font-size:13px;color:#64748b">${t('estimated_cost')}</div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:2px">${t('incl_vat')}</div>
           </div>
           <div class="fare-amt" id="fareAmt">150 kr</div>
         </div>
 
         ${!customer ? `
         <div class="infobox ib-blue" style="margin-bottom:14px">
-          ℹ️ Du behöver logga in för att slutföra bokningen.
-          Du kan fylla i resan redan nu!
+          ℹ️ ${lang === 'sv' ? 'Du behöver logga in för att slutföra bokningen.' : 'You need to log in to complete your booking.'}
         </div>` : ''}
 
         <button class="btn btn-primary" id="bookBtn" onclick="tryBook()">
-          ${customer ? 'Beställ Taxi →' : 'Fortsätt till bokning →'}
+          ${customer ? t('book_btn') : t('continue_btn')}
         </button>
-
       </div>
       <div class="bspace"></div>
     </div>`;
@@ -802,11 +937,6 @@ function renderBookTab() {
 function setAddr(fieldId, addr) {
   const el = document.getElementById(fieldId);
   if (el) el.value = addr;
-}
-
-function selPay(method) {
-  selectedPay = method;
-  showTab(0);
 }
 
 function calcFare() {
@@ -819,148 +949,345 @@ function calcFare() {
   }
 }
 
-// ── KEY FUNCTION: Try to book — gate login if needed ──
 function tryBook() {
   const from = document.getElementById('bFrom')?.value.trim();
   const to = document.getElementById('bTo')?.value.trim();
+  if (!from || !to) { showToast(t('fill_fields')); return; }
 
-  if (!from || !to) {
-    showToast('⚠️ Fyll i upphämtning och destination');
-    return;
+  // Validate pre-book date/time
+  if (bookingMode === 'pre') {
+    if (!preBookDate || !preBookTime) {
+      showToast(t('fill_datetime')); return;
+    }
   }
 
   const fareText = document.getElementById('fareAmt')?.textContent || '150 kr';
   const fare = parseInt(fareText) || 150;
-  const payLabels = { swish:'📱 Swish', card:'💳 Kort', invoice:'📄 Faktura' };
 
   if (!customer) {
-    // Save booking details — show login
-    openAuthModal({
-      from, to,
-      pay: selectedPay,
-      fare,
-      payLabel: payLabels[selectedPay]
-    });
+    openAuthModal({ from, to, pay: selectedPay, fare,
+      payLabel: selectedPay === 'swish' ? t('swish') :
+                selectedPay === 'card' ? t('card') : t('invoice'),
+      mode: bookingMode, date: preBookDate, time: preBookTime });
     return;
   }
 
-  // Already logged in — book directly
+  // Double check invoice for private customers
+  if (selectedPay === 'invoice' && !isBusinessCustomer()) {
+    showToast(t('invoice_private'));
+    selectedPay = 'swish';
+    showTab(0);
+    return;
+  }
+
   doBook(from, to, fare);
 }
 
 async function doBook(from, to, fare) {
   const btn = document.getElementById('bookBtn');
-  if (btn) { btn.textContent = 'Bokar...'; btn.disabled = true; }
-
+  if (btn) { btn.textContent = '...'; btn.disabled = true; }
   try {
+    const bookingData = {
+      customer_name: customer.name,
+      customer_phone: customer.phone,
+      from_address: from,
+      to_address: to,
+      payment_method: selectedPay,
+      fare_sek: fare,
+    };
+    if (bookingMode === 'pre' && preBookDate && preBookTime) {
+      bookingData.scheduled_at = preBookDate + 'T' + preBookTime + ':00';
+      bookingData.booking_type = 'pre';
+    }
     const res = await fetch(API + '/bookings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        customer_name: customer.name,
-        customer_phone: customer.phone,
-        from_address: from,
-        to_address: to,
-        payment_method: selectedPay,
-        fare_sek: fare
-      })
+      body: JSON.stringify(bookingData)
     });
     const data = await res.json();
     if (data.booking) {
       myBookings.unshift(data.booking);
       saveBookings();
-      showToast('✓ Resa bokad! ' + data.booking.booking_ref);
+      bookingMode = 'now'; // reset to now after booking
+      showToast(t('booked') + ' ' + data.booking.booking_ref);
       showTab(1);
     }
   } catch (err) {
-    showToast('⚠️ Kunde inte boka. Försök igen.');
+    showToast(t('booking_failed'));
+  }
+  if (btn) { btn.textContent = t('book_btn'); btn.disabled = false; }
+}
+
+// ── AUTH MODAL ──
+function openAuthModal(pendingData) {
+  pendingBooking = pendingData;
+  const summary = document.getElementById('pendingBookingSummary');
+  const info = document.getElementById('pendingInfo');
+  if (pendingData) {
+    summary.style.display = '';
+    const dateStr = pendingData.mode === 'pre' && pendingData.date
+      ? '<br>📅 ' + pendingData.date + ' kl. ' + pendingData.time
+      : '';
+    info.innerHTML =
+      '<strong>' + t('pending_booking_title') + '</strong><br>' +
+      '📍 ' + pendingData.from + ' → 🏁 ' + pendingData.to + '<br>' +
+      '💳 ' + pendingData.payLabel + ' · ' + pendingData.fare + ' kr' +
+      dateStr + '<br>' +
+      '<strong>' + t('pending_complete') + '</strong>';
+  } else {
+    summary.style.display = 'none';
   }
 
-  if (btn) { btn.textContent = 'Beställ Taxi →'; btn.disabled = false; }
+  // Set labels from translations
+  document.getElementById('atLogin').textContent = t('login');
+  document.getElementById('atReg').textContent = t('register');
+  document.getElementById('loginTitle').textContent = t('welcome_back');
+  document.getElementById('loginBtn').textContent = t('login_btn');
+  document.getElementById('bankidNote').textContent = t('login_note');
+  document.getElementById('regTitle').textContent = t('create_account');
+  document.getElementById('regBtn').textContent = t('reg_btn');
+  document.getElementById('cancelAuthBtn').textContent = t('cancel');
+  document.getElementById('lblLoginEmail').textContent = t('email');
+  document.getElementById('lblLoginPwd').textContent = t('pwd_min');
+  document.getElementById('lblName').textContent = t('full_name');
+  document.getElementById('lblPhone').textContent = t('phone') + ' *';
+  document.getElementById('lblEmail').textContent = t('email') + ' *';
+  document.getElementById('lblPwd').textContent = t('pwd_min');
+
+  // Update invoice option in register form based on type
+  updateRegPaymentOptions();
+  switchAuth('login');
+  document.getElementById('authModal').classList.add('open');
+}
+
+function updateRegPaymentOptions() {
+  const sel = document.getElementById('rPayment');
+  if (!sel) return;
+  const isBiz = customerType === 'business';
+  sel.innerHTML =
+    '<option value="swish">' + t('swish') + '</option>' +
+    '<option value="card">' + t('card') + '</option>' +
+    (isBiz ? '<option value="invoice">' + t('invoice') + '</option>' : '');
+}
+
+function switchAuth(mode) {
+  document.getElementById('authLoginForm').style.display = mode === 'login' ? '' : 'none';
+  document.getElementById('authRegForm').style.display = mode === 'register' ? '' : 'none';
+  document.getElementById('atLogin').classList.toggle('active', mode === 'login');
+  document.getElementById('atReg').classList.toggle('active', mode === 'register');
+}
+
+function switchType(type) {
+  customerType = type;
+  document.getElementById('tPrivate').classList.toggle('active', type === 'private');
+  document.getElementById('tBusiness').classList.toggle('active', type === 'business');
+  document.getElementById('bizFields').style.display = type === 'business' ? '' : 'none';
+  updateRegPaymentOptions();
+}
+
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value.trim();
+  const errEl = document.getElementById('loginErr');
+  const btn = document.getElementById('loginBtn');
+  errEl.style.display = 'none';
+  if (!email || !password) { errEl.textContent = '⚠️ ' + t('fill_required'); errEl.style.display = ''; return; }
+  btn.textContent = t('logging_in'); btn.disabled = true;
+  try {
+    const res = await fetch(API + '/customers/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (data.token) {
+      customer = data.customer; token = data.token;
+      localStorage.setItem('waygo_customer', JSON.stringify(customer));
+      localStorage.setItem('waygo_token', token);
+      closeMod('authModal');
+      updateTopbar();
+      selectedPay = customer.preferred_payment || 'swish';
+      // Block invoice if private customer
+      if (!isBusinessCustomer() && selectedPay === 'invoice') selectedPay = 'swish';
+      loadMyBookings(); connectSocket();
+      showToast(t('welcome_msg') + ' ' + customer.name.split(' ')[0] + '!');
+      if (pendingBooking) await completePendingBooking();
+      else showTab(0);
+    } else {
+      errEl.textContent = '⚠️ ' + (data.error || t('server_error'));
+      errEl.style.display = '';
+    }
+  } catch (err) {
+    errEl.textContent = t('server_error'); errEl.style.display = '';
+  }
+  btn.textContent = t('login_btn'); btn.disabled = false;
+}
+
+async function doRegister() {
+  const name = document.getElementById('rName').value.trim();
+  const phone = document.getElementById('rPhone').value.trim();
+  const email = document.getElementById('rEmail').value.trim();
+  const password = document.getElementById('rPassword').value.trim();
+  const errEl = document.getElementById('regErr');
+  const btn = document.getElementById('regBtn');
+  errEl.style.display = 'none';
+  if (!name || !phone || !email || !password) {
+    errEl.textContent = t('fill_required'); errEl.style.display = ''; return;
+  }
+  if (password.length < 6) {
+    errEl.textContent = t('pwd_short'); errEl.style.display = ''; return;
+  }
+  btn.textContent = t('creating'); btn.disabled = true;
+  try {
+    const payVal = document.getElementById('rPayment').value;
+    // Final safety check — no invoice for private
+    const finalPay = (payVal === 'invoice' && customerType !== 'business') ? 'swish' : payVal;
+    const res = await fetch(API + '/customers/register', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name, phone, email, password,
+        customer_type: customerType,
+        preferred_payment: finalPay,
+        org_number: document.getElementById('rOrgNr')?.value || null,
+        billing_address: document.getElementById('rBilling')?.value || null,
+      })
+    });
+    const data = await res.json();
+    if (data.token) {
+      customer = data.customer; token = data.token;
+      localStorage.setItem('waygo_customer', JSON.stringify(customer));
+      localStorage.setItem('waygo_token', token);
+      closeMod('authModal');
+      updateTopbar();
+      selectedPay = customer.preferred_payment || 'swish';
+      connectSocket();
+      showToast(t('account_created') + ' ' + customer.name.split(' ')[0] + '!');
+      if (pendingBooking) await completePendingBooking();
+      else showTab(0);
+    } else {
+      errEl.textContent = '⚠️ ' + (data.error || t('server_error'));
+      errEl.style.display = '';
+    }
+  } catch (err) {
+    errEl.textContent = t('server_error'); errEl.style.display = '';
+  }
+  btn.textContent = t('reg_btn'); btn.disabled = false;
+}
+
+async function completePendingBooking() {
+  if (!pendingBooking || !customer) return;
+  // Block invoice for private customer even in pending booking
+  let payMethod = pendingBooking.pay;
+  if (payMethod === 'invoice' && !isBusinessCustomer()) {
+    payMethod = 'swish';
+    showToast(t('invoice_private'));
+  }
+  showToast(t('completing'));
+  try {
+    const body = {
+      customer_name: customer.name,
+      customer_phone: customer.phone,
+      from_address: pendingBooking.from,
+      to_address: pendingBooking.to,
+      payment_method: payMethod,
+      fare_sek: pendingBooking.fare,
+    };
+    if (pendingBooking.mode === 'pre' && pendingBooking.date) {
+      body.scheduled_at = pendingBooking.date + 'T' + pendingBooking.time + ':00';
+      body.booking_type = 'pre';
+    }
+    const res = await fetch(API + '/bookings', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.booking) {
+      myBookings.unshift(data.booking);
+      saveBookings();
+      pendingBooking = null;
+      bookingMode = 'now';
+      showToast(t('booked') + ' ' + data.booking.booking_ref);
+      showTab(1);
+    }
+  } catch (err) {
+    showToast(t('complete_fail'));
+    showTab(0);
+  }
+}
+
+function logout() {
+  localStorage.removeItem('waygo_customer');
+  localStorage.removeItem('waygo_token');
+  localStorage.removeItem('waygo_bookings');
+  customer = null; token = null; myBookings = [];
+  updateTopbar();
+  showToast(t('logged_out'));
+  showScreen('sWelcome');
 }
 
 // ── HISTORY TAB ──
 function renderHistoryTab() {
-  if (!customer) {
-    return `<div class="page">
-      <div class="login-gate">
-        <div class="gate-icon">📋</div>
-        <div class="gate-title">Se dina resor</div>
-        <div class="gate-sub">Logga in för att se din reshistorik</div>
-        <button class="btn btn-primary" onclick="openAuthModal(null)">
-          Logga in / Skapa konto
-        </button>
-      </div>
-    </div>`;
-  }
-
-  const active = myBookings.filter(b =>
-    ['pending','assigned'].includes(b.status));
-  const past = myBookings.filter(b =>
-    ['cancelled','completed'].includes(b.status));
-
+  if (!customer) return loginGate(t('login_gate_rides'));
+  const active = myBookings.filter(b => ['pending','assigned'].includes(b.status));
+  const past = myBookings.filter(b => ['cancelled','completed'].includes(b.status));
   return `
     <div class="tabbar">
-      <div class="tab active" id="htab0" onclick="switchHTab(0)">
-        Aktiva (${active.length})
-      </div>
-      <div class="tab" id="htab1" onclick="switchHTab(1)">
-        Historik (${past.length})
-      </div>
+      <div class="tab active" id="htab0" onclick="switchHTab(0)">${t('active')} (${active.length})</div>
+      <div class="tab" id="htab1" onclick="switchHTab(1)">${t('history')} (${past.length})</div>
     </div>
-    <div id="histContent" class="page">
-      ${renderActiveBookings(active)}
-    </div>
+    <div id="histContent" class="page">${renderActiveBookings(active)}</div>
     <div class="bspace"></div>`;
 }
 
 function switchHTab(i) {
-  document.querySelectorAll('.tab')
-    .forEach((t, j) => t.classList.toggle('active', i === j));
-  const active = myBookings.filter(b =>
-    ['pending','assigned'].includes(b.status));
-  const past = myBookings.filter(b =>
-    ['cancelled','completed'].includes(b.status));
+  document.querySelectorAll('.tab').forEach((t2, j) => t2.classList.toggle('active', i === j));
+  const active = myBookings.filter(b => ['pending','assigned'].includes(b.status));
+  const past = myBookings.filter(b => ['cancelled','completed'].includes(b.status));
   document.getElementById('histContent').innerHTML =
     i === 0 ? renderActiveBookings(active) : renderPastBookings(past);
 }
 
+function loginGate(subtitle) {
+  return `<div class="page"><div class="login-gate">
+    <div class="gate-icon">🔐</div>
+    <div class="gate-title">${t('login')}</div>
+    <div class="gate-sub">${subtitle}</div>
+    <button class="btn btn-primary" onclick="openAuthModal(null)">${t('login_cta')}</button>
+  </div></div>`;
+}
+
 function getBadge(status) {
   const m = {
-    assigned:'<span class="badge b-green">Tilldelad</span>',
-    pending:'<span class="badge b-yellow">Väntar på förare</span>',
-    cancelled:'<span class="badge b-red">Avbokad</span>',
-    completed:'<span class="badge b-gray">Avslutad</span>',
+    assigned: '<span class="badge b-green">' + t('assigned') + '</span>',
+    pending: '<span class="badge b-yellow">' + t('pending_driver') + '</span>',
+    cancelled: '<span class="badge b-red">' + t('cancelled') + '</span>',
+    completed: '<span class="badge b-gray">' + t('completed') + '</span>',
   };
   return m[status] || '<span class="badge b-gray">' + status + '</span>';
 }
 
 function minsAgo(ts) {
   if (!ts) return 0;
-  return Math.floor(
-    (Date.now() - new Date(ts).getTime()) / 60000);
+  return Math.floor((Date.now() - new Date(ts).getTime()) / 60000);
 }
 
 function renderActiveBookings(bookings) {
-  if (bookings.length === 0) {
-    return '<div style="text-align:center;padding:40px;color:#94a3b8;font-size:13px">Inga aktiva resor</div>';
-  }
+  if (bookings.length === 0) return '<div style="text-align:center;padding:40px;color:#94a3b8;font-size:13px">' + t('no_active') + '</div>';
   return bookings.map(b => {
     const mins = minsAgo(b.assigned_at);
     const isLate = b.status === 'assigned' && mins >= 10;
     const hasSupp = contactedSupport[b.id];
+    const isPre = b.booking_type === 'pre';
 
     let mapHtml = '';
     if (b.status === 'assigned' && b.driver_name) {
       mapHtml = `
-        <div class="mmap" id="mmap-${b.id}">
+        <div class="mmap">
           <div class="mmap-bg"></div>
           <div class="mroad-h" style="top:35%"></div>
           <div class="mroad-h" style="top:65%"></div>
           <div class="mroad-v" style="left:30%"></div>
           <div class="mroad-v" style="left:65%"></div>
-          <div class="dmarker" id="dm-${b.id}"
-               style="left:30%;top:30%">🚖</div>
+          <div class="dmarker" id="dm-${b.id}" style="left:30%;top:30%">🚖</div>
           <div class="cmarker" style="left:70%;top:65%">👤</div>
           <div class="meta">~${Math.max(1,12-mins)} min</div>
           <div class="mlive">🔴 Live</div>
@@ -970,37 +1297,32 @@ function renderActiveBookings(bookings) {
 
     let cancelBtn = '';
     if (b.status === 'pending') {
-      cancelBtn = `<button class="btn btn-sm btn-danger"
-        onclick="openCancel(${b.id},'${b.booking_ref}','pending')">
-        Avboka</button>`;
+      cancelBtn = `<button class="btn btn-sm btn-danger" onclick="openCancel(${b.id},'${b.booking_ref}','pending')">${t('cancel_ride')}</button>`;
     } else if (hasSupp) {
-      cancelBtn = `<button class="btn btn-sm btn-danger"
-        onclick="openCancel(${b.id},'${b.booking_ref}','assigned')">
-        Begär avbokning</button>`;
+      cancelBtn = `<button class="btn btn-sm btn-danger" onclick="openCancel(${b.id},'${b.booking_ref}','assigned')">${t('cancel_request')}</button>`;
     } else if (b.status === 'assigned') {
-      cancelBtn = `<button class="btn btn-sm btn-teal"
-        onclick="openSupp(${b.id},'${b.booking_ref}')">
-        📞 Kontakta support för att avboka</button>`;
+      cancelBtn = `<button class="btn btn-sm btn-teal" onclick="openSupp(${b.id},'${b.booking_ref}')">${t('contact_support')}</button>`;
     }
 
     return `
       <div class="hist-card ${isLate?'urgent':''}">
         <div class="hist-top">
           <span class="hist-ref">${b.booking_ref}</span>
-          ${getBadge(b.status)}
+          <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
+            ${isPre ? '<span class="badge b-purple">' + t('prebook_label') + '</span>' : ''}
+            ${getBadge(b.status)}
+          </div>
         </div>
-        <div class="hist-route">
-          📍 ${b.from_address} → 🏁 ${b.to_address}
-        </div>
+        ${isPre && b.scheduled_at ? `<div style="font-size:11px;color:#7c3aed;font-weight:700;margin-bottom:4px">📅 ${new Date(b.scheduled_at).toLocaleString(lang === 'sv' ? 'sv-SE' : 'en-GB', {dateStyle:'medium',timeStyle:'short'})}</div>` : ''}
+        <div class="hist-route">📍 ${b.from_address} → 🏁 ${b.to_address}</div>
         <div class="hist-detail">
-          ${b.driver_name ? '🚖 '+b.driver_name+' · ' : 'Söker förare · '}
+          ${b.driver_name ? '🚖 '+b.driver_name+' · ' : t('looking_driver')+' · '}
           ${b.fare_sek} kr · ${b.payment_method}
         </div>
-        ${isLate ? `<div class="infobox ib-red">⏱ Föraren är ${mins} minuter försenad</div>` : ''}
+        ${isLate ? `<div class="infobox ib-red">⏱ ${t('driver_late')} ${mins} ${t('mins_late')}</div>` : ''}
         ${mapHtml}
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
-          ${b.status==='assigned' ? `<button class="btn btn-sm btn-primary"
-            onclick="openSupp(${b.id},'${b.booking_ref}')">💬 Support</button>` : ''}
+          ${b.status==='assigned' ? `<button class="btn btn-sm btn-primary" onclick="openSupp(${b.id},'${b.booking_ref}')">${t('support')}</button>` : ''}
           ${cancelBtn}
         </div>
       </div>`;
@@ -1008,41 +1330,27 @@ function renderActiveBookings(bookings) {
 }
 
 function renderPastBookings(bookings) {
-  if (bookings.length === 0) {
-    return '<div style="text-align:center;padding:40px;color:#94a3b8;font-size:13px">Ingen historik ännu</div>';
-  }
+  if (bookings.length === 0) return '<div style="text-align:center;padding:40px;color:#94a3b8;font-size:13px">' + t('no_history') + '</div>';
   return bookings.map(b => {
     const vat = Math.round(b.fare_sek * 0.25 / 1.25);
-    const ps = { pending:'⏳ Väntar', paid:'✅ Betald', refunded:'↩ Återbetald' };
+    const ps = { pending: '⏳ ' + t('pending_pay'), paid: '✅ ' + t('paid'), refunded: '↩ Återbetald' };
     return `
       <div class="hist-card">
         <div class="hist-top">
           <span class="hist-ref">${b.booking_ref}</span>
           ${getBadge(b.status)}
         </div>
-        <div class="hist-route">
-          📍 ${b.from_address} → 🏁 ${b.to_address}
-        </div>
-        <div class="hist-detail">
-          ${b.driver_name ? '🚖 '+b.driver_name+' · ' : ''}
-          ${new Date(b.created_at).toLocaleDateString('sv-SE')}
-        </div>
+        <div class="hist-route">📍 ${b.from_address} → 🏁 ${b.to_address}</div>
+        <div class="hist-detail">${b.driver_name ? '🚖 '+b.driver_name+' · ' : ''}${new Date(b.created_at).toLocaleDateString(lang==='sv'?'sv-SE':'en-GB')}</div>
         <div class="hist-footer">
           <div>
             <div class="hist-fare">${b.fare_sek} kr</div>
-            <div class="hist-vat">moms ${vat} kr · ${b.payment_method}</div>
+            <div class="hist-vat">${t('vat_note')} ${vat} kr · ${b.payment_method}</div>
           </div>
           <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
-            <span style="font-size:11px;color:#64748b">
-              ${ps[b.payment_status]||'—'}
-            </span>
-            ${b.status==='completed' && b.driver_id
-              ? `<button class="btn btn-sm btn-primary"
-                  onclick="openRate(${b.id},'${b.booking_ref}','${b.driver_name||'Föraren'}')">
-                  ⭐ Betygsätt</button>` : ''}
-            <button class="btn btn-sm btn-gray"
-              onclick="showToast('📄 Kvitto: ${b.booking_ref} · ${b.fare_sek} kr')">
-              📄 Kvitto</button>
+            <span style="font-size:11px;color:#64748b">${ps[b.payment_status]||'—'}</span>
+            ${b.status==='completed'&&b.driver_id?`<button class="btn btn-sm btn-primary" onclick="openRate(${b.id},'${b.booking_ref}','${b.driver_name||''}')">${t('rate')}</button>`:''}
+            <button class="btn btn-sm btn-gray" onclick="showToast('📄 ${b.booking_ref} · ${b.fare_sek} kr')">${t('receipt')}</button>
           </div>
         </div>
       </div>`;
@@ -1051,25 +1359,11 @@ function renderPastBookings(bookings) {
 
 // ── PROFILE TAB ──
 function renderProfileTab() {
-  if (!customer) {
-    return `<div class="page">
-      <div class="login-gate">
-        <div class="gate-icon">👤</div>
-        <div class="gate-title">Din profil</div>
-        <div class="gate-sub">Logga in för att hantera ditt konto</div>
-        <button class="btn btn-primary" onclick="openAuthModal(null)">
-          Logga in / Skapa konto
-        </button>
-      </div>
-    </div>`;
-  }
-  const typeLabel = customer.customer_type === 'business'
-    ? '🏢 Företagskund' : '👤 Privatperson';
+  if (!customer) return loginGate(t('login_gate_profile'));
+  const typeLabel = customer.customer_type === 'business' ? '🏢 ' + (lang==='sv'?'Företagskund':'Business') : '👤 ' + (lang==='sv'?'Privatperson':'Private');
   return `
     <div class="profile-header">
-      <div class="avatar">
-        ${customer.profile_initial || customer.name?.charAt(0) || '?'}
-      </div>
+      <div class="avatar">${customer.profile_initial||customer.name?.charAt(0)||'?'}</div>
       <div>
         <div style="font-size:18px;font-weight:bold">${customer.name}</div>
         <div style="color:#6b82b8;font-size:13px;margin-top:2px">${customer.email}</div>
@@ -1078,93 +1372,60 @@ function renderProfileTab() {
     </div>
     <div class="page">
       <div class="card">
-        <div class="stitle">Personuppgifter</div>
-        <div class="list-item" onclick="openEdit('name','Namn','${customer.name}')">
-          <span class="li-label">Namn</span>
-          <div style="display:flex;align-items:center">
-            <span class="li-value">${customer.name}</span>
-            <span class="li-arrow">›</span>
-          </div>
+        <div class="stitle">${t('personal_info')}</div>
+        <div class="list-item" onclick="openEdit('name','${t('name')}','${customer.name}')">
+          <span class="li-label">${t('name')}</span>
+          <div style="display:flex;align-items:center"><span class="li-value">${customer.name}</span><span class="li-arrow">›</span></div>
         </div>
-        <div class="list-item" onclick="openEdit('phone','Telefon','${customer.phone||''}')">
-          <span class="li-label">Telefon</span>
-          <div style="display:flex;align-items:center">
-            <span class="li-value">${customer.phone||'—'}</span>
-            <span class="li-arrow">›</span>
-          </div>
+        <div class="list-item" onclick="openEdit('phone','${t('phone')}','${customer.phone||''}')">
+          <span class="li-label">${t('phone')}</span>
+          <div style="display:flex;align-items:center"><span class="li-value">${customer.phone||'—'}</span><span class="li-arrow">›</span></div>
         </div>
-        <div class="list-item">
-          <span class="li-label">E-post</span>
-          <span class="li-value">${customer.email}</span>
+        <div class="list-item"><span class="li-label">${t('email')}</span><span class="li-value">${customer.email}</span></div>
+        ${customer.customer_type==='business'?`
+        <div class="list-item" onclick="openEdit('org_number','${t('org_nr')}','${customer.org_number||''}')">
+          <span class="li-label">${t('org_nr')}</span>
+          <div style="display:flex;align-items:center"><span class="li-value">${customer.org_number||'—'}</span><span class="li-arrow">›</span></div>
         </div>
-        ${customer.customer_type==='business' ? `
-        <div class="list-item" onclick="openEdit('org_number','Org.nummer','${customer.org_number||''}')">
-          <span class="li-label">Org.nummer</span>
-          <div style="display:flex;align-items:center">
-            <span class="li-value">${customer.org_number||'—'}</span>
-            <span class="li-arrow">›</span>
-          </div>
-        </div>
-        <div class="list-item" onclick="openEdit('billing_address','Faktureringsadress','${customer.billing_address||''}')">
-          <span class="li-label">Faktureringsadress</span>
-          <div style="display:flex;align-items:center">
-            <span class="li-value">${customer.billing_address||'—'}</span>
-            <span class="li-arrow">›</span>
-          </div>
-        </div>` : ''}
+        <div class="list-item" onclick="openEdit('billing_address','${t('billing_addr')}','${customer.billing_address||''}')">
+          <span class="li-label">${t('billing_addr')}</span>
+          <div style="display:flex;align-items:center"><span class="li-value">${customer.billing_address||'—'}</span><span class="li-arrow">›</span></div>
+        </div>`:''}
       </div>
-
       <div class="card">
-        <div class="stitle">Sparade adresser</div>
-        <div class="list-item" onclick="openEdit('home_address','Hemadress','${customer.home_address||''}')">
-          <span class="li-label">🏠 Hem</span>
-          <div style="display:flex;align-items:center">
-            <span class="li-value">${customer.home_address||'Lägg till'}</span>
-            <span class="li-arrow">›</span>
-          </div>
+        <div class="stitle">${t('saved_addresses')}</div>
+        <div class="list-item" onclick="openEdit('home_address','${t('home')}','${customer.home_address||''}')">
+          <span class="li-label">${t('home')}</span>
+          <div style="display:flex;align-items:center"><span class="li-value">${customer.home_address||'+'}</span><span class="li-arrow">›</span></div>
         </div>
-        <div class="list-item" onclick="openEdit('work_address','Jobbadress','${customer.work_address||''}')">
-          <span class="li-label">💼 Jobb</span>
-          <div style="display:flex;align-items:center">
-            <span class="li-value">${customer.work_address||'Lägg till'}</span>
-            <span class="li-arrow">›</span>
-          </div>
+        <div class="list-item" onclick="openEdit('work_address','${t('work')}','${customer.work_address||''}')">
+          <span class="li-label">${t('work')}</span>
+          <div style="display:flex;align-items:center"><span class="li-value">${customer.work_address||'+'}</span><span class="li-arrow">›</span></div>
         </div>
-        <div class="list-item" onclick="openEdit('other_address','Annan adress','${customer.other_address||''}')">
-          <span class="li-label">📍 Annan</span>
-          <div style="display:flex;align-items:center">
-            <span class="li-value">${customer.other_address||'Lägg till'}</span>
-            <span class="li-arrow">›</span>
-          </div>
+        <div class="list-item" onclick="openEdit('other_address','${t('other')}','${customer.other_address||''}')">
+          <span class="li-label">${t('other')}</span>
+          <div style="display:flex;align-items:center"><span class="li-value">${customer.other_address||'+'}</span><span class="li-arrow">›</span></div>
         </div>
       </div>
-
       <div class="card">
-        <div class="stitle">Betalningsinställningar</div>
-        <div class="list-item" onclick="openEdit('preferred_payment','Betalningsmetod','${customer.preferred_payment||'swish'}')">
-          <span class="li-label">💳 Föredragen betalning</span>
-          <div style="display:flex;align-items:center">
-            <span class="li-value">${customer.preferred_payment||'swish'}</span>
-            <span class="li-arrow">›</span>
-          </div>
+        <div class="stitle">${t('payment_settings')}</div>
+        <div class="list-item" onclick="openEdit('preferred_payment','${t('pref_payment')}','${customer.preferred_payment||'swish'}')">
+          <span class="li-label">${t('pref_payment')}</span>
+          <div style="display:flex;align-items:center"><span class="li-value">${customer.preferred_payment||'swish'}</span><span class="li-arrow">›</span></div>
         </div>
       </div>
-
       <div class="card">
-        <div class="stitle">Konto</div>
-        <div class="list-item" onclick="showToast('Lösenordsändring — kommer snart')">
-          <span class="li-label">🔒 Ändra lösenord</span>
-          <span class="li-arrow">›</span>
+        <div class="stitle">${t('account')}</div>
+        <div class="list-item" onclick="showToast('${t('pwd_coming')}')">
+          <span class="li-label">${t('change_pwd')}</span><span class="li-arrow">›</span>
         </div>
         <div class="list-item" onclick="logout()">
-          <span class="li-label" style="color:#dc2626">Logga ut</span>
+          <span class="li-label" style="color:#dc2626">${t('logout')}</span>
           <span class="li-arrow" style="color:#dc2626">›</span>
         </div>
       </div>
-
       <div style="text-align:center;padding:16px;font-size:11px;color:#94a3b8">
-        Waygo Sverige · Kund sedan
-        ${new Date(customer.created_at).toLocaleDateString('sv-SE')}
+        ${t('customer_since')} ${new Date(customer.created_at).toLocaleDateString(lang==='sv'?'sv-SE':'en-GB')}
       </div>
       <div class="bspace"></div>
     </div>`;
@@ -1172,96 +1433,50 @@ function renderProfileTab() {
 
 // ── PAYMENT TAB ──
 function renderPaymentTab() {
-  if (!customer) {
-    return `<div class="page">
-      <div class="login-gate">
-        <div class="gate-icon">💳</div>
-        <div class="gate-title">Betalningar</div>
-        <div class="gate-sub">Logga in för att se dina betalningar och kvitton</div>
-        <button class="btn btn-primary" onclick="openAuthModal(null)">
-          Logga in / Skapa konto
-        </button>
-      </div>
-    </div>`;
-  }
-
+  if (!customer) return loginGate(t('login_gate_payment'));
   const paid = myBookings.filter(b => b.payment_status === 'paid');
-  const pending = myBookings.filter(b =>
-    b.payment_status === 'pending' && b.status !== 'cancelled');
+  const pending = myBookings.filter(b => b.payment_status === 'pending' && b.status !== 'cancelled');
   const totalPaid = paid.reduce((s, b) => s + (b.fare_sek||0), 0);
-  const payMethods = { swish:'📱 Swish', card:'💳 Kort', invoice:'📄 Faktura' };
-
+  const pm = { swish: t('swish'), card: t('card'), invoice: t('invoice') };
   return `
-    <div style="background:linear-gradient(135deg,#0d1b3e,#1a3066);
-         padding:20px;color:white">
-      <div style="font-size:13px;color:#6b82b8;margin-bottom:4px">
-        Totalt betalt
-      </div>
-      <div style="font-size:32px;font-weight:bold;color:#fbbf24">
-        ${totalPaid} kr
-      </div>
-      <div style="font-size:11px;color:#4a6090;margin-top:4px">
-        varav moms ${Math.round(totalPaid*0.25/1.25)} kr
-      </div>
+    <div style="background:linear-gradient(135deg,#0d1b3e,#1a3066);padding:20px;color:white">
+      <div style="font-size:13px;color:#6b82b8;margin-bottom:4px">${t('total_paid')}</div>
+      <div style="font-size:32px;font-weight:bold;color:#fbbf24">${totalPaid} kr</div>
+      <div style="font-size:11px;color:#4a6090;margin-top:4px">${t('vat_note')} ${Math.round(totalPaid*0.25/1.25)} kr</div>
     </div>
     <div class="page">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
         <div class="card" style="text-align:center;padding:14px">
           <div style="font-size:22px;font-weight:bold;color:#15803d">${paid.length}</div>
-          <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px">Betalda</div>
+          <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px">${t('paid')}</div>
         </div>
         <div class="card" style="text-align:center;padding:14px">
           <div style="font-size:22px;font-weight:bold;color:#d97706">${pending.length}</div>
-          <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px">Väntar</div>
+          <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px">${t('pending_pay')}</div>
         </div>
       </div>
-
-      ${pending.length > 0 ? `
-      <div class="stitle">⏳ Väntande betalningar</div>
-      ${pending.map(b => `
+      ${pending.length>0?`
+      <div class="stitle">⏳ ${t('pending_pay')}</div>
+      ${pending.map(b=>`
         <div class="hist-card" style="border-color:#d97706">
-          <div class="hist-top">
-            <span class="hist-ref">${b.booking_ref}</span>
-            <span class="badge b-yellow">Väntar</span>
-          </div>
+          <div class="hist-top"><span class="hist-ref">${b.booking_ref}</span><span class="badge b-yellow">${t('pending_pay')}</span></div>
           <div class="hist-route">${b.from_address} → ${b.to_address}</div>
           <div class="hist-footer" style="margin-top:8px">
-            <div>
-              <div class="hist-fare">${b.fare_sek} kr</div>
-              <div class="hist-vat">${payMethods[b.payment_method]||b.payment_method}</div>
-            </div>
+            <div><div class="hist-fare">${b.fare_sek} kr</div><div class="hist-vat">${pm[b.payment_method]||b.payment_method}</div></div>
           </div>
-        </div>`).join('')}` : ''}
-
-      <div class="stitle">✅ Betalningshistorik</div>
-      ${paid.length === 0
-        ? '<div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px">Inga betalningar ännu</div>'
-        : paid.map(b => {
-          const vat = Math.round(b.fare_sek * 0.25 / 1.25);
-          return `
-            <div class="hist-card">
-              <div class="hist-top">
-                <span class="hist-ref">${b.booking_ref}</span>
-                <span class="badge b-green">Betald</span>
-              </div>
-              <div class="hist-route">
-                ${b.from_address} → ${b.to_address}
-              </div>
-              <div class="hist-detail">
-                ${new Date(b.created_at).toLocaleDateString('sv-SE')}
-              </div>
-              <div class="hist-footer">
-                <div>
-                  <div class="hist-fare">${b.fare_sek} kr</div>
-                  <div class="hist-vat">moms ${vat} kr · ${payMethods[b.payment_method]}</div>
-                </div>
-                <button class="btn btn-sm btn-gray"
-                  onclick="showToast('📄 Kvitto: ${b.booking_ref} · ${b.fare_sek} kr')">
-                  📄 Kvitto
-                </button>
-              </div>
-            </div>`; }).join('')}
-
+        </div>`).join('')}`:''}
+      <div class="stitle">✅ ${t('paid')}</div>
+      ${paid.length===0?`<div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px">${t('no_history')}</div>`
+        :paid.map(b=>{const vat=Math.round(b.fare_sek*0.25/1.25);return`
+        <div class="hist-card">
+          <div class="hist-top"><span class="hist-ref">${b.booking_ref}</span><span class="badge b-green">${t('paid')}</span></div>
+          <div class="hist-route">${b.from_address} → ${b.to_address}</div>
+          <div class="hist-detail">${new Date(b.created_at).toLocaleDateString(lang==='sv'?'sv-SE':'en-GB')}</div>
+          <div class="hist-footer">
+            <div><div class="hist-fare">${b.fare_sek} kr</div><div class="hist-vat">${t('vat_note')} ${vat} kr · ${pm[b.payment_method]}</div></div>
+            <button class="btn btn-sm btn-gray" onclick="showToast('📄 ${b.booking_ref} · ${b.fare_sek} kr')">${t('receipt')}</button>
+          </div>
+        </div>`;}).join('')}
       <div class="bspace"></div>
     </div>`;
 }
@@ -1271,11 +1486,15 @@ function openSupp(id, ref) {
   suppBookingId = id;
   contactedSupport[id] = true;
   localStorage.setItem('waygo_support', JSON.stringify(contactedSupport));
+  document.getElementById('suppTitle').textContent = t('supp_title');
+  document.getElementById('suppCallBtn').textContent = t('supp_call');
+  document.getElementById('suppWarning').textContent = t('supp_warning');
+  document.getElementById('suppCloseBtn').textContent = t('supp_close');
+  document.getElementById('suppInput').placeholder = t('supp_placeholder');
   document.getElementById('suppInfo').innerHTML =
-    '<strong>Bokning:</strong> ' + ref + '<br><strong>Vi hjälper dig direkt!</strong>';
+    '<strong>' + (lang==='sv'?'Bokning':'Booking') + ':</strong> ' + ref + '<br><strong>' + (lang==='sv'?'Vi hjälper dig direkt!':'We will help you right away!') + '</strong>';
   document.getElementById('suppChat').innerHTML =
-    '<div class="cmsg other"><div class="cav sup">W</div>' +
-    '<div class="cbubble">Hej! Hur kan vi hjälpa dig med bokning ' + ref + '?</div></div>';
+    '<div class="cmsg other"><div class="cav sup">W</div><div class="cbubble">' + t('supp_greeting') + ' ' + ref + '?</div></div>';
   document.getElementById('supportModal').classList.add('open');
   if (currentTab === 1) showTab(1);
 }
@@ -1285,99 +1504,85 @@ function sendSupp() {
   const text = input.value.trim();
   if (!text) return;
   const chat = document.getElementById('suppChat');
-  chat.innerHTML +=
-    '<div class="cmsg mine"><div class="cav">Du</div>' +
-    '<div class="cbubble">' + text + '</div></div>';
+  chat.innerHTML += '<div class="cmsg mine"><div class="cav">Du</div><div class="cbubble">' + text + '</div></div>';
   input.value = '';
   chat.scrollTop = chat.scrollHeight;
   setTimeout(() => {
-    chat.innerHTML +=
-      '<div class="cmsg other"><div class="cav sup">W</div>' +
-      '<div class="cbubble">Tack! Vi återkommer inom 2 minuter.</div></div>';
+    chat.innerHTML += '<div class="cmsg other"><div class="cav sup">W</div><div class="cbubble">' + t('supp_reply') + '</div></div>';
     chat.scrollTop = chat.scrollHeight;
   }, 1500);
   fetch(API + '/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      thread_key: 'customer-central-' + suppBookingId,
-      sender_name: customer?.name || 'Kund',
-      sender_role: 'customer',
-      content: text
-    })
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ thread_key: 'customer-central-' + suppBookingId,
+      sender_name: customer?.name || 'Kund', sender_role: 'customer', content: text })
   }).catch(() => {});
 }
 
 // ── CANCEL ──
 function openCancel(id, ref, type) {
   cancelBookingId = id; cancelBookingRef = ref;
-  document.getElementById('cancelWarn').textContent = type === 'pending'
-    ? '✓ Ingen avgift tillkommer vid avbokning innan förare tilldelats.'
-    : '⚠️ Avbokningsförfrågan skickas till central för godkännande.';
+  document.getElementById('cancelTitle').textContent = t('cancel_confirm');
+  document.getElementById('cancelNoBtn').textContent = t('cancel_no');
+  document.getElementById('cancelYesBtn').textContent = t('cancel_yes');
+  document.getElementById('cancelWarn').textContent = type === 'pending' ? t('cancel_no_fee') : t('cancel_central');
   document.getElementById('cancelInfo').innerHTML =
-    '<strong>Bokning:</strong> ' + ref + '<br>' +
-    '<strong>Typ:</strong> ' + (type === 'pending' ? 'Avboka direkt' : 'Begär avbokning');
+    '<strong>' + (lang==='sv'?'Bokning':'Booking') + ':</strong> ' + ref + '<br>' +
+    '<strong>' + (lang==='sv'?'Typ':'Type') + ':</strong> ' + (type==='pending'?t('cancel_direct'):t('cancel_req'));
   document.getElementById('cancelModal').classList.add('open');
 }
 
 async function doCancel() {
   closeMod('cancelModal');
   try {
-    const res = await fetch(
-      API + '/bookings/' + cancelBookingId + '/cancel',
-      { method: 'PATCH' }
-    );
+    const res = await fetch(API + '/bookings/' + cancelBookingId + '/cancel', { method: 'PATCH' });
     if (res.ok) {
-      myBookings = myBookings.map(b =>
-        b.id === cancelBookingId
-          ? { ...b, status: 'cancelled', driver_id: null, driver_name: null }
-          : b
-      );
+      myBookings = myBookings.map(b => b.id === cancelBookingId ? { ...b, status: 'cancelled', driver_id: null, driver_name: null } : b);
       saveBookings();
-      showToast('✓ ' + cancelBookingRef + ' avbokad');
+      showToast('✓ ' + cancelBookingRef + ' ' + t('cancelled').toLowerCase());
       showTab(1);
     }
-  } catch (err) { showToast('⚠️ Kunde inte avboka'); }
+  } catch (err) { showToast(t('cancel_failed')); }
 }
 
 // ── RATE ──
 function openRate(id, ref, driverName) {
   rateBookingId = id; currentRating = 0;
+  document.getElementById('rateTitle').textContent = t('rate');
+  document.getElementById('rateSendBtn').textContent = t('rate_send');
+  document.getElementById('rateSkipBtn').textContent = t('rate_skip');
   document.getElementById('rateInfo').innerHTML =
-    '<strong>Bokning:</strong> ' + ref +
-    '<br><strong>Förare:</strong> ' + driverName;
+    '<strong>' + (lang==='sv'?'Bokning':'Booking') + ':</strong> ' + ref +
+    '<br><strong>' + (lang==='sv'?'Förare':'Driver') + ':</strong> ' + driverName;
   document.querySelectorAll('.star').forEach(s => s.classList.remove('active'));
   document.getElementById('rateModal').classList.add('open');
 }
 
 function setStar(n) {
   currentRating = n;
-  document.querySelectorAll('.star')
-    .forEach((s, i) => s.classList.toggle('active', i < n));
+  document.querySelectorAll('.star').forEach((s, i) => s.classList.toggle('active', i < n));
 }
 
 async function submitRating() {
-  if (!currentRating) { showToast('⚠️ Välj ett betyg'); return; }
+  if (!currentRating) { showToast(t('rate_choose')); return; }
   closeMod('rateModal');
   try {
     await fetch(API + '/bookings/' + rateBookingId + '/rate', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + token
-      },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify({ rating: currentRating })
     });
-    showToast('⭐ Tack för ditt betyg!');
-  } catch (err) { showToast('⚠️ Kunde inte spara betyg'); }
+    showToast(t('rate_thanks'));
+  } catch (err) { showToast(t('rate_failed')); }
 }
 
 // ── EDIT PROFILE ──
 function openEdit(field, label, current) {
   editField = field;
-  document.getElementById('editTitle').textContent = 'Ändra ' + label;
+  document.getElementById('editTitle').textContent = (lang==='sv'?'Ändra ':'Edit ') + label;
   document.getElementById('editInput').value = current || '';
   document.getElementById('editInput').placeholder = label;
+  document.getElementById('editSaveBtn').textContent = t('save');
+  document.getElementById('editCancelBtn').textContent = t('cancel');
   document.getElementById('editModal').classList.add('open');
 }
 
@@ -1387,22 +1592,24 @@ async function saveEdit() {
   try {
     const body = {};
     body[editField] = val;
+    // Prevent private customer from setting invoice as preferred payment
+    if (editField === 'preferred_payment' && val === 'invoice' && !isBusinessCustomer()) {
+      showToast(t('invoice_private'));
+      return;
+    }
     const res = await fetch(API + '/customers/profile', {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + token
-      },
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
       body: JSON.stringify(body)
     });
     const data = await res.json();
     if (data.customer) {
       customer = { ...customer, ...data.customer };
       localStorage.setItem('waygo_customer', JSON.stringify(customer));
-      showToast('✓ Sparat!');
+      showToast(t('saved'));
       showTab(2);
     }
-  } catch (err) { showToast('⚠️ Kunde inte spara'); }
+  } catch (err) { showToast(t('save_failed')); }
 }
 
 // ── DRIVER ANIMATION ──
@@ -1425,9 +1632,8 @@ async function loadMyBookings() {
   try {
     const res = await fetch(API + '/bookings');
     const data = await res.json();
-    const all = data.bookings;
     myBookings = myBookings.map(mb => {
-      const updated = all.find(b => b.id === mb.id);
+      const updated = data.bookings.find(b => b.id === mb.id);
       return updated || mb;
     });
     saveBookings();
@@ -1444,16 +1650,14 @@ function saveBookings() {
 function connectSocket() {
   try {
     const socket = io(API);
-    socket.on('booking:assigned', (b) => {
-      myBookings = myBookings.map(mb =>
-        mb.id === b.id ? { ...mb, ...b } : mb);
+    socket.on('booking:assigned', b => {
+      myBookings = myBookings.map(mb => mb.id === b.id ? { ...mb, ...b } : mb);
       saveBookings();
-      if (b.driver_name) showToast('🚖 Förare tilldelad: ' + b.driver_name);
+      if (b.driver_name) showToast(t('driver_assigned') + ' ' + b.driver_name);
       if (currentTab === 1) showTab(1);
     });
-    socket.on('booking:cancelled', (d) => {
-      myBookings = myBookings.map(b =>
-        b.id === d.id ? { ...b, status: 'cancelled' } : b);
+    socket.on('booking:cancelled', d => {
+      myBookings = myBookings.map(b => b.id === d.id ? { ...b, status: 'cancelled' } : b);
       saveBookings();
       if (currentTab === 1) showTab(1);
     });
