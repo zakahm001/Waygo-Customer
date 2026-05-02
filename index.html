@@ -226,7 +226,7 @@
     .li-value{font-size:13px;color:#64748b;max-width:55%;text-align:right}
     .li-arrow{color:#94a3b8;font-size:16px;margin-left:6px}
 
-    /* HISTORY */
+    /*  */
     .hist-card{background:white;border-radius:12px;padding:14px;
       margin-bottom:10px;border:1px solid #d0d7ea}
     .hist-card.urgent{border-color:#f97316;box-shadow:0 0 0 3px #fed7aa}
@@ -502,8 +502,8 @@ const T = {
     booked: '✓ Resa bokad!',
     booking_failed: '⚠️ Kunde inte boka. Försök igen.',
     no_active: 'Inga aktiva resor',
-    no_history: 'Ingen historik ännu',
-    active: 'Aktiva', history: 'Historik',
+    no_: 'Ingen historik ännu',
+    active: 'Aktiva', : 'Historik',
     assigned: 'Tilldelad', pending_driver: 'Väntar på förare',
     cancelled: 'Avbokad', completed: 'Avslutad',
     looking_driver: 'Söker förare...',
@@ -599,8 +599,8 @@ const T = {
     booked: '✓ Ride booked!',
     booking_failed: '⚠️ Could not complete booking. Please try again.',
     no_active: 'No active rides',
-    no_history: 'No history yet',
-    active: 'Active', history: 'History',
+    no_: 'No  yet',
+    active: 'Active', : '',
     assigned: 'Assigned', pending_driver: 'Finding driver',
     cancelled: 'Cancelled', completed: 'Completed',
     looking_driver: 'Finding driver...',
@@ -612,7 +612,7 @@ const T = {
     cancel_request: 'Request cancellation',
     rate: '⭐ Rate',
     receipt: '📄 Receipt',
-    login_gate_rides: 'Log in to see your ride history',
+    login_gate_rides: 'Log in to see your ride ',
     login_gate_profile: 'Log in to manage your account',
     login_gate_payment: 'Log in to see your payments',
     login_cta: 'Log in / Create account',
@@ -836,7 +836,7 @@ function showTab(i) {
   document.querySelectorAll('.bni').forEach((b, j) => b.classList.toggle('active', i === j));
   const content = document.getElementById('tabContent');
   if (i === 0) content.innerHTML = renderBookTab();
-  else if (i === 1) { content.innerHTML = renderHistoryTab(); loadMyBookings(); }
+  else if (i === 1) { content.innerHTML = renderTab(); loadMyBookings(); }
   else if (i === 2) content.innerHTML = renderProfileTab();
   else if (i === 3) content.innerHTML = renderPaymentTab();
   updateTopbar();
@@ -1224,26 +1224,58 @@ function logout() {
   showScreen('sWelcome');
 }
 
-// ── HISTORY TAB ──
+// ──  TAB ──
 function renderHistoryTab() {
   if (!customer) return loginGate(t('login_gate_rides'));
-  const active = myBookings.filter(b => ['pending','assigned'].includes(b.status));
-  const past = myBookings.filter(b => ['cancelled','completed'].includes(b.status));
+  const active = myBookings.filter(b =>
+    ['pending','assigned'].includes(b.status));
+  const past = myBookings.filter(b =>
+    ['cancelled','completed'].includes(b.status));
   return `
     <div class="tabbar">
-      <div class="tab active" id="htab0" onclick="switchHTab(0)">${t('active')} (${active.length})</div>
-      <div class="tab" id="htab1" onclick="switchHTab(1)">${t('history')} (${past.length})</div>
+      <div class="tab active" id="htab0"
+           onclick="switchHTab(0)">
+        ${t('active')} (${active.length})
+      </div>
+      <div class="tab" id="htab1"
+           onclick="switchHTab(1)">
+        ${t('history')} (${past.length})
+      </div>
     </div>
-    <div id="histContent" class="page">${renderActiveBookings(active)}</div>
+    <div id="histContent" class="page">
+      ${renderActiveBookings(active)}
+    </div>
     <div class="bspace"></div>`;
 }
 
 function switchHTab(i) {
-  document.querySelectorAll('.tab').forEach((t2, j) => t2.classList.toggle('active', i === j));
-  const active = myBookings.filter(b => ['pending','assigned'].includes(b.status));
-  const past = myBookings.filter(b => ['cancelled','completed'].includes(b.status));
-  document.getElementById('histContent').innerHTML =
-    i === 0 ? renderActiveBookings(active) : renderPastBookings(past);
+  try {
+    // Update tab styling
+    const tabs = document.querySelectorAll('.tab');
+    tabs.forEach((tab, j) => {
+      if (i === 0) {
+        tab.classList.toggle('active', j === 0);
+      } else {
+        tab.classList.toggle('active', j === 1);
+      }
+    });
+
+    const active = myBookings.filter(b =>
+      ['pending','assigned'].includes(b.status));
+    const past = myBookings.filter(b =>
+      ['cancelled','completed'].includes(b.status));
+
+    const content =
+      document.getElementById('histContent');
+    if (!content) return;
+
+    content.innerHTML = i === 0
+      ? renderActiveBookings(active)
+      : renderPastBookings(past);
+
+  } catch(e) {
+    console.log('switchHTab error:', e);
+  }
 }
 
 function loginGate(subtitle) {
@@ -1330,7 +1362,7 @@ function renderActiveBookings(bookings) {
 }
 
 function renderPastBookings(bookings) {
-  if (bookings.length === 0) return '<div style="text-align:center;padding:40px;color:#94a3b8;font-size:13px">' + t('no_history') + '</div>';
+  if (bookings.length === 0) return '<div style="text-align:center;padding:40px;color:#94a3b8;font-size:13px">' + t('no_') + '</div>';
   return bookings.map(b => {
     const vat = Math.round(b.fare_sek * 0.25 / 1.25);
     const ps = { pending: '⏳ ' + t('pending_pay'), paid: '✅ ' + t('paid'), refunded: '↩ Återbetald' };
@@ -1466,7 +1498,7 @@ function renderPaymentTab() {
           </div>
         </div>`).join('')}`:''}
       <div class="stitle">✅ ${t('paid')}</div>
-      ${paid.length===0?`<div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px">${t('no_history')}</div>`
+      ${paid.length===0?`<div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px">${t('no_')}</div>`
         :paid.map(b=>{const vat=Math.round(b.fare_sek*0.25/1.25);return`
         <div class="hist-card">
           <div class="hist-top"><span class="hist-ref">${b.booking_ref}</span><span class="badge b-green">${t('paid')}</span></div>
