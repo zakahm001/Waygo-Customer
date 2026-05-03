@@ -748,7 +748,7 @@ function showTab(i) {
     const content = document.getElementById('tabContent');
     if (!content) return;
     if (i===0) content.innerHTML = renderBookTab();
-    else if (i===1) { content.innerHTML = renderHistoryTab(); loadMyBookings(); }
+    else if (i === 1) { content.innerHTML = renderHistoryTab(); loadMyBookings(); }
     else if (i===2) content.innerHTML = renderProfileTab();
     else if (i===3) content.innerHTML = renderPaymentTab();
     updateTopbar();
