@@ -57,16 +57,20 @@
       border:none;cursor:pointer;width:100%;text-align:center;transition:opacity .2s}
     .btn:disabled{opacity:.6;cursor:default}
     .btn-primary{background:#0d1b3e;color:#fbbf24}
+    .btn-success{background:#15803d;color:white}
+    .btn-danger{background:#dc2626;color:white}
     .btn-gray{background:#f1f5f9;color:#64748b}
     .btn-sm{padding:8px 14px;font-size:12px;width:auto;border-radius:8px}
 
     .badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
     .b-green{background:#dcfce7;color:#15803d;border:1px solid #86efac}
+    .b-yellow{background:#fef3c7;color:#d97706;border:1px solid #fde68a}
     .b-red{background:#fee2e2;color:#dc2626;border:1px solid #fecaca}
     .b-blue{background:#dbeafe;color:#1a56db;border:1px solid #93c5fd}
 
     .hist-card{background:white;border-radius:12px;padding:14px;
       margin-bottom:10px;border:1px solid #d0d7ea}
+    .hist-card.urgent{border-color:#f97316;box-shadow:0 0 0 3px #fed7aa}
     .hist-top{display:flex;justify-content:space-between;margin-bottom:6px;align-items:center}
     .hist-ref{font-size:12px;font-weight:700;color:#1a56db}
     .hist-route{font-size:13px;font-weight:600;color:#0d1b3e;margin-bottom:4px}
@@ -77,16 +81,28 @@
 
     .tabbar{display:flex;background:white;border-bottom:1px solid #d0d7ea;padding:0 16px}
     .tab{flex:1;padding:13px 8px;text-align:center;font-size:13px;font-weight:500;
-      color:#64748b;cursor:pointer;border-bottom:2.5px solid transparent}
+      color:#64748b;cursor:pointer;border-bottom:2.5px solid transparent;
+      user-select:none;-webkit-tap-highlight-color:transparent}
     .tab.active{color:#0d1b3e;font-weight:700;border-bottom-color:#0d1b3e}
 
     .login-gate{background:linear-gradient(135deg,#0d1b3e,#1a3066);
       border-radius:12px;padding:24px;text-align:center;margin-bottom:14px;color:white}
+    .toast{position:fixed;bottom:90px;left:20px;right:20px;background:#0d1b3e;
+      color:#fbbf24;padding:14px 20px;border-radius:12px;font-size:14px;
+      font-weight:bold;text-align:center;z-index:500;display:none;
+      box-shadow:0 4px 20px rgba(0,0,0,.3)}
+    .toast.show{display:block}
+    
+    .moverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);
+      z-index:200;align-items:flex-end;justify-content:center}
+    .moverlay.open{display:flex}
+    .mbox{background:white;border-radius:20px 20px 0 0;padding:24px 20px;
+      width:100%;max-width:500px;max-height:90vh;overflow-y:auto}
   </style>
 </head>
 <body>
 
-<!-- LOADING SCREEN -->
+<!-- LOADING -->
 <div class="screen active" id="sLoad">
   <div class="load-logo">▲</div>
   <div class="load-name">WAYGO</div>
@@ -96,14 +112,14 @@
   </div>
 </div>
 
-<!-- WELCOME SCREEN -->
+<!-- WELCOME -->
 <div class="screen" id="sWelcome" style="background:#0d1b3e; align-items:center; justify-content:center; padding:24px;">
   <div style="text-align:center;margin-bottom:24px">
     <div style="font-size:56px;color:#fbbf24">▲</div>
     <div style="font-size:28px;font-weight:bold;color:#fbbf24;letter-spacing:3px">WAYGO</div>
   </div>
-  <button class="btn btn-primary" onclick="startBooking('now')" style="margin-bottom:12px; padding:20px;">Jag behöver en bil nu</button>
-  <button class="btn btn-gray" onclick="startBooking('pre')" style="background:#1a2f5e; color:white;">Jag vill förboka</button>
+  <button class="btn btn-primary" onclick="startBooking('now')" style="margin-bottom:16px; padding:22px;">🚖 Jag behöver en bil nu</button>
+  <button class="btn btn-gray" onclick="startBooking('pre')" style="background:#1a2f5e; color:white; padding:22px;">📅 Jag vill förboka</button>
 </div>
 
 <!-- MAIN APP -->
@@ -111,120 +127,155 @@
   <div class="topbar">
     <div class="tlogo" onclick="goWelcome()">▲ WAYGO</div>
     <div class="topbar-right">
-      <button class="tauth" id="topAuthBtn" onclick="toggleLogin()">Logga in</button>
+      <button class="tlang" onclick="toggleLang()" id="langToggle">🇬🇧</button>
+      <button class="tauth" id="topAuthBtn" onclick="topAuthAction()">Logga in</button>
     </div>
   </div>
   <div id="tabContent" style="flex:1; overflow-y:auto;"></div>
   <div class="bnav">
     <button class="bni active" id="bni0" onclick="showTab(0)">
-      <span class="bni-icon">🚖</span><span>Boka</span>
+      <span class="bni-icon">🚖</span><span id="nav0">Boka</span>
     </button>
     <button class="bni" id="bni1" onclick="showTab(1)">
-      <span class="bni-icon">📋</span><span>Resor</span>
+      <span class="bni-icon">📋</span><span id="nav1">Resor</span>
     </button>
     <button class="bni" id="bni2" onclick="showTab(2)">
-      <span class="bni-icon">👤</span><span>Profil</span>
+      <span class="bni-icon">👤</span><span id="nav2">Profil</span>
+    </button>
+    <button class="bni" id="bni3" onclick="showTab(3)">
+      <span class="bni-icon">💳</span><span id="nav3">Betalning</span>
     </button>
   </div>
 </div>
 
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
 <script>
-// --- DATA & STATE ---
-let customer = null; // Simulera inloggad kund här
-let myBookings = [
-    {id: 'B12345', pickup: 'Gorgielsgatan 1', destination: 'Centralstationen', status: 'completed', price: '245', date: '2023-10-20', time: '14:30'},
-    {id: 'B12346', pickup: 'Storgatan 5', destination: 'Arlanda Terminal 5', status: 'completed', price: '595', date: '2023-10-22', time: '08:15'}
-];
+const API = 'https://16.16.153.106.sslip.io';
+
+let customer = null;
+let token = null;
+let myBookings = [];
+let lang = localStorage.getItem('waygo_lang') || 'sv';
 
 const T = {
-    sv: {
-        active: "Aktiva", history: "Historik", no_history: "Inga resor hittades",
-        incl_vat: "inkl. 25% moms", rate: "Betygsätt", completed: "Avslutad",
-        cancelled: "Avbokad", assigned: "Tilldelad", pending: "Söker..."
-    }
+  sv: {
+    loading_sub:'Din taxi, direkt',
+    book:'Boka', rides:'Resor', profile:'Profil', payment:'Betalning',
+    active:'Aktiva', history:'Historik', no_history:'Ingen historik ännu',
+    incl_vat:'Inkl. 25% moms', rate:'⭐ Betygsätt', cancel_ride:'Avboka',
+    completed:'Avslutad', cancelled:'Avbokad', assigned:'Tilldelad', pending:'Väntar',
+    login_gate_rides:'Logga in för att se din reshistorik',
+    login_cta:'Logga in / Skapa konto'
+  },
+  en: {
+    loading_sub:'Your taxi, directly',
+    book:'Book', rides:'Rides', profile:'Profile', payment:'Payment',
+    active:'Active', history:'History', no_history:'No history yet',
+    incl_vat:'Incl. 25% VAT', rate:'⭐ Rate', cancel_ride:'Cancel',
+    completed:'Completed', cancelled:'Cancelled', assigned:'Assigned', pending:'Pending',
+    login_gate_rides:'Log in to see your ride history',
+    login_cta:'Log in / Create account'
+  }
 };
 
-function t(k) { return T.sv[k] || k; }
+function t(k){ return (T[lang]&&T[lang][k]) || (T.sv[k]) || k; }
 
-// --- NAVIGATION ---
 window.addEventListener('load', () => {
-    setTimeout(() => {
-        showScreen('sWelcome');
-    }, 1500);
+  setTimeout(() => { showScreen('sWelcome'); }, 2000);
 });
 
 function showScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
 }
 
 function startBooking(mode) {
-    showScreen('sApp');
-    showTab(0);
+  showScreen('sApp');
+  showTab(0);
 }
 
 function goWelcome() { showScreen('sWelcome'); }
 
 function showTab(index) {
-    const content = document.getElementById('tabContent');
-    document.querySelectorAll('.bni').forEach((btn, i) => {
-        btn.classList.toggle('active', i === index);
-    });
+  const content = document.getElementById('tabContent');
+  document.querySelectorAll('.bni').forEach((btn, i) => {
+    btn.classList.toggle('active', i === index);
+  });
 
-    if (index === 0) {
-        content.innerHTML = '<div class="page"><div class="card"><h2>Boka Taxi</h2><br><input class="finput" placeholder="Från..."><input class="finput" placeholder="Till..."><button class="btn btn-primary">Beställ nu</button></div></div>';
-    } else if (index === 1) {
-        renderRides();
-    } else if (index === 2) {
-        content.innerHTML = '<div class="page"><div class="card" style="text-align:center"><h3>Din Profil</h3><p>Logga in för att se dina uppgifter.</p></div></div>';
-    }
-}
-
-// --- RENDER HISTORY (THE FIX) ---
-function renderRides() {
-    const content = document.getElementById('tabContent');
-    
-    // Header med flikar inuti sidan
-    let html = `
-        <div class="tabbar">
-            <div class="tab active">${t('history')} (${myBookings.length})</div>
-        </div>
-        <div class="page">
-    `;
-
-    if (myBookings.length === 0) {
-        html += `<div class="card" style="text-align:center; color:#64748b;">${t('no_history')}</div>`;
+  if (index === 0) {
+    content.innerHTML = `<div class="page"><div class="card"><div class="stitle">Boka Resa</div><label class="flabel">Hämta från</label><input class="finput" placeholder="Gata, stad..."><label class="flabel">Vart ska du?</label><input class="finput" placeholder="Destination..."><button class="btn btn-primary">Sök taxi</button></div></div>`;
+  } else if (index === 1) {
+    if (!customer && myBookings.length === 0) {
+        renderLoginGate('rides');
     } else {
-        myBookings.forEach(b => {
-            html += `
-                <div class="hist-card">
-                    <div class="hist-top">
-                        <span class="hist-ref">#${b.id}</span>
-                        <span class="badge ${b.status==='completed'?'b-green':'b-blue'}">${t(b.status)}</span>
-                    </div>
-                    <div class="hist-route">
-                        <strong>Från:</strong> ${b.pickup}<br>
-                        <strong>Till:</strong> ${b.destination}
-                    </div>
-                    <div style="margin: 8px 0; font-size:11px; color:#64748b;">${b.date} • ${b.time}</div>
-                    <div class="hist-footer">
-                        <div>
-                            <div class="hist-fare">${b.price} SEK</div>
-                            <div class="hist-vat">${t('incl_vat')}</div>
-                        </div>
-                        <button class="btn btn-sm btn-gray">${t('rate')}</button>
-                    </div>
-                </div>
-            `;
-        });
+        renderRides();
     }
-
-    html += `</div><div class="bspace"></div>`;
-    content.innerHTML = html;
+  } else {
+    content.innerHTML = `<div class="page"><div class="card" style="text-align:center; padding:40px;">Kommer snart</div></div>`;
+  }
 }
 
-function toggleLogin() {
-    alert("Inloggning kommer snart!");
+function renderLoginGate(type) {
+  const content = document.getElementById('tabContent');
+  content.innerHTML = `
+    <div class="page">
+      <div class="login-gate">
+        <div style="font-size:40px; margin-bottom:10px;">🔒</div>
+        <div style="font-weight:bold; margin-bottom:10px;">${t('login_gate_' + type)}</div>
+        <button class="btn btn-primary" onclick="alert('Öppna login')">${t('login_cta')}</button>
+      </div>
+    </div>`;
+}
+
+// --- FIXEN FÖR HISTORIKEN ---
+function renderRides() {
+  const content = document.getElementById('tabContent');
+  
+  const active = myBookings.filter(b => b.status !== 'completed' && b.status !== 'cancelled');
+  const history = myBookings.filter(b => b.status === 'completed' || b.status === 'cancelled');
+
+  let html = `
+    <div class="tabbar">
+      <div class="tab active">${t('history')} (${myBookings.length})</div>
+    </div>
+    <div class="page">
+  `;
+
+  if (myBookings.length === 0) {
+    html += `<div class="card" style="text-align:center; color:#64748b; padding:40px 20px;">${t('no_history')}</div>`;
+  } else {
+    myBookings.forEach(b => {
+      html += `
+        <div class="hist-card">
+          <div class="hist-top">
+            <span class="hist-ref">#${b.id ? b.id.toString().slice(-6).toUpperCase() : 'WAYGO'}</span>
+            <span class="badge ${b.status==='completed'?'b-green':b.status==='cancelled'?'b-red':'b-blue'}">
+              ${t(b.status)}
+            </span>
+          </div>
+          <div class="hist-route">📍 ${b.pickup || 'Hämtning'} <br> 🏁 ${b.destination || 'Destination'}</div>
+          <div class="hist-detail">${b.date || ''} • ${b.time || ''}</div>
+          <div class="hist-footer">
+            <div>
+              <div class="hist-fare">${b.price || '0'} SEK</div>
+              <div class="hist-vat">${t('incl_vat')}</div>
+            </div>
+            ${b.status === 'completed' ? `<button class="btn btn-sm btn-gray">${t('rate')}</button>` : ''}
+          </div>
+        </div>`;
+    });
+  }
+
+  html += `</div><div class="bspace"></div>`;
+  content.innerHTML = html;
+}
+
+function toggleLang() {
+  lang = lang === 'sv' ? 'en' : 'sv';
+  localStorage.setItem('waygo_lang', lang);
+  location.reload();
 }
 </script>
 </body>
