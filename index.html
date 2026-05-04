@@ -888,8 +888,16 @@ function tabRides() {
   const past=myBookings.filter(b=>['cancelled','completed'].includes(b.status));
   return `
     <div class="tabbar">
-      <div class="tab active" id="htab0" onclick="switchH(0)">${t('active')} (${active.length})</div>
-      <div class="tab" id="htab1" onclick="switchH(1)">${t('history')} (${past.length})</div>
+      <div class="tab active" id="htab0"
+  onclick="switchH(0)"
+  ontouchend="event.preventDefault();switchH(0)">
+  ${t('active')} (${active.length})
+</div>
+<div class="tab" id="htab1"
+  onclick="switchH(1)"
+  ontouchend="event.preventDefault();switchH(1)">
+  ${t('history')} (${past.length})
+</div>
     </div>
     <div id="hContent" class="page">${activeCards(active)}</div>
     <div class="bspace"></div>`;
@@ -897,16 +905,40 @@ function tabRides() {
 
 function switchH(i) {
   try {
-    const t0=document.getElementById('htab0');
-    const t1=document.getElementById('htab1');
-    const c=document.getElementById('hContent');
-    if (!t0||!t1||!c) return;
-    t0.classList.toggle('active', i===0);
-    t1.classList.toggle('active', i===1);
-    const active=myBookings.filter(b=>['pending','assigned'].includes(b.status));
-    const past=myBookings.filter(b=>['cancelled','completed'].includes(b.status));
-    c.innerHTML = i===0 ? activeCards(active) : pastCards(past);
-  } catch(e) { console.log('switchH error:', e); }
+    const t0 = document.getElementById('htab0');
+    const t1 = document.getElementById('htab1');
+    const c = document.getElementById('hContent');
+    if (!t0 || !t1 || !c) return;
+
+    // Force active state
+    if (i === 0) {
+      t0.style.color = '#0d1b3e';
+      t0.style.borderBottomColor = '#0d1b3e';
+      t0.style.fontWeight = '700';
+      t1.style.color = '#64748b';
+      t1.style.borderBottomColor = 'transparent';
+      t1.style.fontWeight = '500';
+      const active = myBookings.filter(b =>
+        ['pending','assigned'].includes(b.status));
+      c.innerHTML = activeCards(active);
+    } else {
+      t1.style.color = '#0d1b3e';
+      t1.style.borderBottomColor = '#0d1b3e';
+      t1.style.fontWeight = '700';
+      t0.style.color = '#64748b';
+      t0.style.borderBottomColor = 'transparent';
+      t0.style.fontWeight = '500';
+      const past = myBookings.filter(b =>
+        ['cancelled','completed'].includes(b.status));
+      c.innerHTML = pastCards(past);
+    }
+
+    // Scroll to top of content
+    c.scrollTop = 0;
+
+  } catch(e) {
+    console.log('switchH error:', e);
+  }
 }
 
 function gate(sub) {
