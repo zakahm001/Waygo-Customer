@@ -882,29 +882,45 @@ function logout() {
 }
 
 // ── RIDES TAB — FIXED ──
-function tabRides() {
-  if (!customer) return gate(t('gate_rides'));
-  const active=myBookings.filter(b=>['pending','assigned'].includes(b.status));
-  const past=myBookings.filter(b=>['cancelled','completed'].includes(b.status));
-  return `
-    <div class="tabbar">
-  <button id="htab0"
-    style="flex:1;padding:13px 8px;text-align:center;font-size:13px;
-    font-weight:700;color:#0d1b3e;border:none;background:white;
-    border-bottom:2.5px solid #0d1b3e;cursor:pointer"
-    onclick="switchH(0)">
-    ${t('active')} (${active.length})
-  </button>
-  <button id="htab1"
-    style="flex:1;padding:13px 8px;text-align:center;font-size:13px;
-    font-weight:500;color:#64748b;border:none;background:white;
-    border-bottom:2.5px solid transparent;cursor:pointer"
-    onclick="switchH(1)">
-    ${t('history')} (${past.length})
-  </button>
-</div>
-    <div id="hContent" class="page">${activeCards(active)}</div>
-    <div class="bspace"></div>`;
+function switchH(i) {
+  try {
+    const t0 = document.getElementById('htab0');
+    const t1 = document.getElementById('htab1');
+    const c = document.getElementById('hContent');
+    if (!t0 || !t1 || !c) {
+      showToast('Debug: elements not found');
+      return;
+    }
+
+    const active = myBookings.filter(b =>
+      ['pending','assigned'].includes(b.status));
+    const past = myBookings.filter(b =>
+      ['cancelled','completed'].includes(b.status));
+
+    if (i === 0) {
+      t0.style.cssText = 'flex:1;padding:14px 8px;font-size:14px;' +
+        'font-weight:700;color:#0d1b3e;border:none;background:white;' +
+        'border-bottom:3px solid #0d1b3e;margin-bottom:-2px;cursor:pointer';
+      t1.style.cssText = 'flex:1;padding:14px 8px;font-size:14px;' +
+        'font-weight:500;color:#64748b;border:none;background:white;' +
+        'border-bottom:3px solid transparent;margin-bottom:-2px;cursor:pointer';
+      c.innerHTML = activeCards(active);
+    } else {
+      t1.style.cssText = 'flex:1;padding:14px 8px;font-size:14px;' +
+        'font-weight:700;color:#0d1b3e;border:none;background:white;' +
+        'border-bottom:3px solid #0d1b3e;margin-bottom:-2px;cursor:pointer';
+      t0.style.cssText = 'flex:1;padding:14px 8px;font-size:14px;' +
+        'font-weight:500;color:#64748b;border:none;background:white;' +
+        'border-bottom:3px solid transparent;margin-bottom:-2px;cursor:pointer';
+      c.innerHTML = pastCards(past);
+    }
+
+    window.scrollTo(0, 0);
+
+  } catch(e) {
+    showToast('Error: ' + e.message);
+  }
+}
 }
 
 function switchH(i) {
