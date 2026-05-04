@@ -1,1 +1,110 @@
-https://zakahm001.github.io/waygo-customer/debug.html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Debug</title>
+  <style>
+    body{font-family:Arial,sans-serif;background:#eef1f8;padding:16px}
+    .log{background:#0d1b3e;color:#fbbf24;padding:12px;border-radius:8px;
+      font-size:12px;margin-bottom:16px;font-family:monospace;word-break:break-all}
+    .tabs{display:flex;background:white;border-radius:10px;padding:4px;
+      gap:4px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+    .tab{flex:1;padding:14px 8px;text-align:center;font-size:15px;
+      font-weight:700;border:none;border-radius:8px;cursor:pointer;
+      background:none;color:#64748b}
+    .tab.on{background:#0d1b3e;color:#fbbf24}
+    .card{background:white;border-radius:10px;padding:14px;margin-bottom:10px;
+      border:1px solid #d0d7ea}
+    .ref{font-weight:700;color:#1a56db;margin-bottom:4px;font-size:13px}
+    .route{font-size:13px;color:#0d1b3e;margin-bottom:4px}
+    .detail{font-size:12px;color:#64748b}
+    .empty{text-align:center;padding:40px;color:#94a3b8;font-size:14px;
+      background:white;border-radius:10px}
+  </style>
+</head>
+<body>
+
+<div class="log" id="log">Starting...</div>
+
+<div class="tabs">
+  <button class="tab on" id="t0" onclick="sw(0)">Aktiva</button>
+  <button class="tab" id="t1" onclick="sw(1)">Historik</button>
+</div>
+
+<div id="content"></div>
+
+<script>
+const API = 'https://16.16.153.106.sslip.io';
+let books = [];
+
+function log(m) {
+  document.getElementById('log').textContent = m;
+}
+
+function sw(i) {
+  log('Tapped tab ' + i + ' — working...');
+
+  document.getElementById('t0').classList.toggle('on', i===0);
+  document.getElementById('t1').classList.toggle('on', i===1);
+
+  const active = books.filter(b =>
+    ['pending','assigned'].includes(b.status));
+  const past = books.filter(b =>
+    ['cancelled','completed'].includes(b.status));
+
+  document.getElementById('t0').textContent =
+    'Aktiva (' + active.length + ')';
+  document.getElementById('t1').textContent =
+    'Historik (' + past.length + ')';
+
+  const list = i === 0 ? active : past;
+  const c = document.getElementById('content');
+
+  if (list.length === 0) {
+    c.innerHTML = '<div class="empty">' +
+      (i===0 ? 'Inga aktiva resor' : 'Ingen historik') +
+      '</div>';
+    return;
+  }
+
+  c.innerHTML = list.map(b =>
+    '<div class="card">' +
+    '<div class="ref">' + b.booking_ref + '</div>' +
+    '<div class="route">' + b.from_address +
+    ' → ' + b.to_address + '</div>' +
+    '<div class="detail">' + b.status +
+    ' · ' + b.fare_sek + ' kr · ' +
+    new Date(b.created_at).toLocaleDateString('sv-SE') +
+    '</div></div>'
+  ).join('');
+
+  log('Showing ' + list.length + ' bookings in tab ' + i);
+}
+
+async function load() {
+  log('Loading from API...');
+  try {
+    const res = await fetch(API + '/bookings');
+    const data = await res.json();
+    books = data.bookings || [];
+    const a = books.filter(b =>
+      ['pending','assigned'].includes(b.status));
+    const p = books.filter(b =>
+      ['cancelled','completed'].includes(b.status));
+    log('Loaded ' + books.length +
+      ' total. Active: ' + a.length +
+      ' History: ' + p.length);
+    sw(0);
+  } catch(e) {
+    log('ERROR: ' + e.message);
+    document.getElementById('content').innerHTML =
+      '<div class="empty" style="color:#dc2626">' +
+      'Could not load: ' + e.message + '</div>';
+  }
+}
+
+load();
+</script>
+</body>
+</html>
