@@ -783,7 +783,8 @@ async function doBook(from, to, fare) {
   if (btn) { btn.textContent = '...'; btn.disabled = true; }
   try {
     const body = {customer_name: customer.name, customer_phone: customer.phone,
-      from_address: from, to_address: to, payment_method: selPay, fare_sek: fare};
+      from_address: from, to_address: to, payment_method: selPay, fare_sek: fare,
+      customer_id: customer.id};
     if (bookMode === 'pre' && preDate && preTime) {
       body.scheduled_at = preDate + 'T' + preTime + ':00';
       body.booking_type = 'pre';
@@ -939,7 +940,8 @@ async function completePending() {
   try {
     const body = {customer_name: customer.name, customer_phone: customer.phone,
       from_address: pendingBook.from, to_address: pendingBook.to,
-      payment_method: pm, fare_sek: pendingBook.fare};
+      payment_method: pm, fare_sek: pendingBook.fare,
+      customer_id: customer.id};
     if (pendingBook.mode === 'pre' && pendingBook.date) {
       body.scheduled_at = pendingBook.date + 'T' + pendingBook.time + ':00';
       body.booking_type = 'pre';
