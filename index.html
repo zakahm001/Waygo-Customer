@@ -1366,21 +1366,39 @@ function trySocket() {
   try {
     if (typeof io === 'undefined') return;
     var s = io(API, {timeout: 5000});
+
     s.on('booking:assigned', function(b) {
       myBookings = myBookings.map(function(mb) {
-        return mb.id === b.id ? Object.assign({}, mb, b) : mb;
+        return mb.id === b.id
+          ? Object.assign({}, mb, b) : mb;
       });
       saveBooks();
       if (b.driver_name) showToast(t('drvassigned') + ' ' + b.driver_name);
       if (curTab === 1) showTab(1);
     });
+
     s.on('booking:cancelled', function(d) {
       myBookings = myBookings.map(function(b) {
-        return b.id === d.id ? Object.assign({}, b, {status:'cancelled'}) : b;
+        return b.id === d.id
+          ? Object.assign({}, b, {status:'cancelled'}) : b;
       });
       saveBooks();
       if (curTab === 1) showTab(1);
     });
+
+    s.on('booking:completed', function(b) {
+      myBookings = myBookings.map(function(mb) {
+        return mb.id === b.id
+          ? Object.assign({}, mb, {
+              status: 'completed',
+              payment_status: 'pending'
+            }) : mb;
+      });
+      saveBooks();
+      showToast('✅ Resa avslutad! Betygsätt din förare.');
+      if (curTab === 1) showTab(1);
+    });
+
   } catch(e) {}
 }
 
