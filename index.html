@@ -1343,13 +1343,24 @@ function animDrv(id) {
 
 // DATA
 async function loadBookings() {
-  if (!customer) return;
+  if (!customer || !token) return;
   var sv = localStorage.getItem('waygo_bookings');
   if (sv) { try { myBookings = JSON.parse(sv); } catch(e) {} }
   try {
-    const res = await fetch(API + '/bookings');
+    const res = await fetch(API + '/my-bookings', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
     const data = await res.json();
     if (data.bookings) {
+      myBookings = data.bookings;
+      saveBooks();
+      if (curTab === 1) showTab(1);
+      if (curTab === 3) showTab(3);
+    }
+  } catch(e) {
+    console.log('Load bookings error:', e);
+  }
+} {
       myBookings = myBookings.map(function(mb) {
         var updated = data.bookings.find(function(b) { return b.id === mb.id; });
         return updated || mb;
