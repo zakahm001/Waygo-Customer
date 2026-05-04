@@ -937,7 +937,1198 @@ function renderPast(books){
   if(!books||books.length===0)return '<div style="text-align:center;padding:40px;color:#94a3b8;font-size:14px">'+t('nohistory')+'</div>';
   return books.map(function(b){
     var vat=Math.round(b.fare_sek*0.25/1.25);
-    var payStatus=b.payment_status==='paid'?'✅ '+t('paid'):b.payment_status==='refunded'?'↩ Återbetald':'⏳ '+t('pending');
+    var payStatus=b.status==='cancelled'?'':b.payment_status==='paid'?'✅ '+t('paid'):b.payment_status==='refunded'?'↩ Återbetald':'⏳ '+t('pending');
+    return '<div class="bcard">'+
+      '<div class="bcardtop"><span class="bref">'+b.booking_ref+'</span>'+getBadge(b.status)+'</div>'+
+      '<div class="broute">📍 '+b.from_address+' → 🏁 '+b.to_address+'</div>'+
+      '<div class="bdetail">'+(b.driver_name?'🚖 '+b.driver_name+' · ':'')+new Date(b.created_at).toLocaleDateString(lang==='sv'?'sv-SE':'en-GB')+'</div>'+
+      '<div class="bfooter"><div>'+
+      '<div class="bfare">'+b.fare_sek+' kr</div>'+
+      '<div class="bvat">'+t('vatof')+' '+vat+' kr · '+b.payment_method+'</div></div>'+
+      '<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">'+
+      '<span style="font-size:11px;color:#64748b">'+payStatus+'</span>'+
+      (b.status==='completed'&&b.driver_id?'<button class="btn btn-sm btn-primary" onclick="openRate('+b.id+',\''+b.booking_ref+'\',\''+(b.driver_name||'')+'\')">'+t('rate')+'</button>':'')+
+      '<button class="btn btn-sm btn-gray" onclick="showToast(\'📄 '+b.booking_ref+' · '+b.fare_sek+' kr\')">'+t('receipt')+'</button>'+
+      '</div></div></div>';
+  }).join('');
+}
+
+function tabProfile(){
+  if(!customer)return '<div class="page"><div class="gate"><div class="gate-icon">👤</div><div class="gate-title">'+t('login')+'</div><div class="gate-sub">'+t('gate_profile')+'</div><button class="btn btn-primary" onclick="openAuth(null)">'+t('login_cta')+'</button></div></div>';
+  var tl=customer.customer_type==='business'?'🏢 '+(lang==='sv'?'Företagskund':'Business'):'👤 '+(lang==='sv'?'Privatperson':'Private');
+  return '<div class="profhdr"><div class="avatar">'+(customer.profile_initial||customer.name.charAt(0)||'?')+'</div>'+
+    '<div><div style="font-size:18px;font-weight:bold">'+customer.name+'</div>'+
+    '<div style="color:#6b82b8;font-size:13px;margin-top:2px">'+customer.email+'</div>'+
+    '<div style="margin-top:6px"><span class="badge bb">'+tl+'</span></div></div></div>'+
+    '<div class="page"><div class="card"><div class="stitle">'+t('personal')+'</div>'+
+    liEdit('name',t('name'),customer.name)+
+    liEdit('phone',t('phone'),customer.phone||'—')+
+    '<div class="litem"><span class="lilab">'+t('email')+'</span><span class="lival">'+customer.email+'</span></div>'+
+    (customer.customer_type==='business'?liEdit('org_number',t('org'),customer.org_number||'—'):'')+
+    '</div><div class="card"><div class="stitle">'+(lang==='sv'?'Sparade adresser':'Saved addresses')+'</div>'+
+    liEdit('home_address',t('home'),customer.home_address||'+')+
+    liEdit('work_address',t('work'),customer.work_address||'+')+
+    liEdit('other_address',t('other'),customer.other_address||'+')+
+    '</div><div class="card"><div class="stitle">'+t('paysettings')+'</div>'+
+    liEdit('preferred_payment',t('prefpay'),customer.preferred_payment||'swish')+
+    '</div><div class="card"><div class="stitle">'+t('account')+'</div>'+
+    '<div class="litem" onclick="showToast(\''+t('pwdcoming')+'\')"><span class="lilab">'+t('changepwd')+'</span><span class="liarr">›</span></div>'+
+    '<div class="litem" onclick="logout()"><span class="lilab" style="color:#dc2626">'+t('logout')+'</span><span class="liarr" style="color:#dc2626">›</span></div>'+
+    '</div><div style="text-align:center;padding:16px;font-size:11px;color:#94a3b8">'+
+    t('since')+' '+new Date(customer.created_at).toLocaleDateString(lang==='sv'?'sv-SE':'en-GB')+
+    '</div><div class="bspace"></div></div>';
+}
+
+function liEdit(field,label,val){
+  return '<div class="litem" onclick="openEdit(\''+field+'\',\''+label+'\',\''+val+'\')">'+
+    '<span class="lilab">'+label+'</span>'+
+    '<div style="display:flex;align-items:center"><span class="lival">'+val+'</span><span class="liarr">›</span></div></div>';
+}
+
+function tabPay(){
+  if(!customer)return '<div class="page"><div class="gate"><div class="gate-icon">💳</div><div class="gate-title">'+t('login')+'</div><div class="gate-sub">'+t('gate_pay')+'</div><button class="btn btn-primary" onclick="openAuth(null)">'+t('login_cta')+'</button></div></div>';
+  var paid=myBookings.filter(function(b){return b.payment_status==='paid';});
+  var pend=myBookings.filter(function(b){return b.payment_status==='pending'&&b.status!=='cancelled';});
+  var total=paid.reduce(function(s,b){return s+(b.fare_sek||0);},0);
+  var pm={swish:t('swish'),card:t('card'),invoice:t('invoice')};
+  return '<div style="background:linear-gradient(135deg,#0d1b3e,#1a3066);padding:20px;color:white">'+
+    '<div style="font-size:13px;color:#6b82b8;margin-bottom:4px">'+t('totalpaid')+'</div>'+
+    '<div style="font-size:32px;font-weight:bold;color:#fbbf24">'+total+' kr</div>'+
+    '<div style="font-size:11px;color:#4a6090;margin-top:4px">'+t('vatof')+' '+Math.round(total*0.25/1.25)+' kr</div>'+
+    '</div><div class="page">'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">'+
+    '<div class="card" style="text-align:center;padding:14px"><div style="font-size:22px;font-weight:bold;color:#15803d">'+paid.length+'</div>'+
+    '<div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px">'+t('paid')+'</div></div>'+
+    '<div class="card" style="text-align:center;padding:14px"><div style="font-size:22px;font-weight:bold;color:#d97706">'+pend.length+'</div>'+
+    '<div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px">'+t('pending')+'</div></div></div>'+
+    '<div class="stitle">✅ '+t('paid')+'</div>'+
+    (paid.length===0?'<div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px">'+t('nohistory')+'</div>':
+    paid.map(function(b){var v=Math.round(b.fare_sek*0.25/1.25);return'<div class="bcard">'+
+      '<div class="bcardtop"><span class="bref">'+b.booking_ref+'</span><span class="badge bg">'+t('paid')+'</span></div>'+
+      '<div class="broute">'+b.from_address+' → '+b.to_address+'</div>'+
+      '<div class="bdetail">'+new Date(b.created_at).toLocaleDateString(lang==='sv'?'sv-SE':'en-GB')+'</div>'+
+      '<div class="bfooter"><div><div class="bfare">'+b.fare_sek+' kr</div>'+
+      '<div class="bvat">'+t('vatof')+' '+v+' kr · '+(pm[b.payment_method]||b.payment_method)+'</div></div>'+
+      '<button class="btn btn-sm btn-gray" onclick="showToast(\'📄 '+b.booking_ref+' · '+b.fare_sek+' kr\')">'+t('receipt')+'</button>'+
+      '</div></div>';}).join(''))+
+    '<div class="bspace"></div></div>';
+}
+
+function openSupp(id,ref){
+  suppId=id;suppContacted[id]=true;
+  localStorage.setItem('wsupp',JSON.stringify(suppContacted));
+  const suppInfo=document.getElementById('suppInfo');
+  const suppChat=document.getElementById('suppChat');
+  const suppIn=document.getElementById('suppIn');
+  if(suppInfo)suppInfo.innerHTML='<strong>'+(lang==='sv'?'Bokning':'Booking')+':</strong> '+ref+'<br><strong>'+(lang==='sv'?'Vi hjälper dig!':'We will help you!')+'</strong>';
+  if(suppChat)suppChat.innerHTML='<div class="cmsg other"><div class="cav sup">W</div><div class="cbub">'+t('supp_hi')+' '+ref+'?</div></div>';
+  if(suppIn)suppIn.placeholder=lang==='sv'?'Beskriv ditt problem...':'Describe your issue...';
+  document.getElementById('suppModal').classList.add('open');
+  if(curTab===1)showTab(1);
+}
+
+function sendSupp(){
+  const inp=document.getElementById('suppIn');
+  const chat=document.getElementById('suppChat');
+  if(!inp||!chat)return;
+  const txt=inp.value.trim();if(!txt)return;
+  chat.innerHTML+='<div class="cmsg me"><div class="cav">Du</div><div class="cbub">'+txt+'</div></div>';
+  inp.value='';chat.scrollTop=chat.scrollHeight;
+  setTimeout(function(){
+    chat.innerHTML+='<div class="cmsg other"><div class="cav sup">W</div><div class="cbub">'+t('supp_reply')+'</div></div>';
+    chat.scrollTop=chat.scrollHeight;
+  },1500);
+  fetch(API+'/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({thread_key:'customer-central-'+suppId,
+      sender_name:customer?customer.name:'Kund',sender_role:'customer',content:txt})
+  }).catch(function(){});
+}
+
+function openCancel(id,ref,type){
+  cancelId=id;cancelRef=ref;
+  const cw=document.getElementById('cancelWarn');const ci=document.getElementById('cancelInfo');
+  if(cw)cw.textContent=type==='pending'?t('cancel_nofee'):t('cancel_cen');
+  if(ci)ci.innerHTML='<strong>'+(lang==='sv'?'Bokning':'Booking')+':</strong> '+ref;
+  document.getElementById('cancelModal').classList.add('open');
+}
+
+async function doCancel(){
+  closeMod('cancelModal');
+  try{
+    const res=await fetch(API+'/bookings/'+cancelId+'/cancel',{method:'PATCH'});
+    if(res.ok){
+      myBookings=myBookings.map(function(b){
+        return b.id===cancelId?Object.assign({},{},b,{status:'cancelled',driver_id:null,driver_name:null}):b;
+      });
+      saveBooks();
+      showToast('✓ '+cancelRef+' '+(lang==='sv'?'avbokad':'cancelled'));
+      histTab=0;showTab(1);
+    }
+  }catch(e){showToast(t('cancelfail'));}
+}
+
+function openRate(id,ref,drv){
+  rateId=id;curRating=0;
+  const ri=document.getElementById('rateInfo');
+  if(ri)ri.innerHTML='<strong>'+(lang==='sv'?'Bokning':'Booking')+':</strong> '+ref+'<br><strong>'+(lang==='sv'?'Förare':'Driver')+':</strong> '+drv;
+  document.querySelectorAll('.star').forEach(function(s){s.classList.remove('on');});
+  document.getElementById('rateModal').classList.add('open');
+}
+
+function setStar(n){
+  curRating=n;
+  document.querySelectorAll('.star').forEach(function(s,i){s.classList.toggle('on',i<n);});
+}
+
+async function submitRate(){
+  if(!curRating){showToast(t('ratechoose'));return;}
+  closeMod('rateModal');
+  try{
+    await fetch(API+'/bookings/'+rateId+'/rate',{method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({rating:curRating})});
+    showToast(t('ratethanks'));
+  }catch(e){}
+}
+
+function openEdit(field,label,cur){
+  editField=field;
+  const et=document.getElementById('editTitle');const ei=document.getElementById('editInput');
+  if(et)et.textContent=(lang==='sv'?'Ändra ':'Edit ')+label;
+  if(ei)ei.value=cur==='+'?'':(cur||'');
+  document.getElementById('editModal').classList.add('open');
+}
+
+async function saveEdit(){
+  const ei=document.getElementById('editInput');if(!ei)return;
+  const val=ei.value.trim();closeMod('editModal');
+  try{
+    if(editField==='preferred_payment'&&val==='invoice'&&!isBiz()){showToast(t('inv_priv'));return;}
+    var body={};body[editField]=val;
+    const res=await fetch(API+'/customers/profile',{method:'PATCH',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify(body)});
+    const data=await res.json();
+    if(data.customer){
+      customer=Object.assign({},customer,data.customer);
+      localStorage.setItem('waygo_customer',JSON.stringify(customer));
+      showToast(t('saved'));showTab(2);
+    }
+  }catch(e){showToast(t('savefail'));}
+}
+
+function animDrv(id){
+  if(driverAnims[id])return;
+  var x=30;var y=30;
+  driverAnims[id]=setInterval(function(){
+    x=Math.min(75,Math.max(15,x+(Math.random()-.4)*8));
+    y=Math.min(75,Math.max(15,y+(Math.random()-.4)*8));
+    var m=document.getElementById('dm-'+id);
+    if(m){m.style.left=x+'%';m.style.top=y+'%';}
+  },3000);
+}
+
+// ── LOAD BOOKINGS — non-blocking, with timeout ──
+async function loadBookings(){
+  if(!customer||!token)return;
+  // First show cached bookings immediately
+  var sv=localStorage.getItem('waygo_bookings');
+  if(sv){try{myBookings=JSON.parse(sv);}catch(e){}}
+  try{
+    const controller=new AbortController();
+    const timeoutId=setTimeout(()=>controller.abort(),8000);
+    const res=await fetch(API+'/my-bookings',{
+      headers:{'Authorization':'Bearer '+token},
+      signal:controller.signal
+    });
+    clearTimeout(timeoutId);
+    if(res.ok){
+      const data=await res.json();
+      if(data.bookings){
+        myBookings=data.bookings;
+        saveBooks();
+        if(curTab===1)showTab(1);
+        if(curTab===3)showTab(3);
+      }
+    }
+  }catch(e){
+    // Timeout or network error — silently use cached data
+    console.log('loadBookings error:',e.message);
+  }
+}
+
+function saveBooks(){localStorage.setItem('waygo_bookings',JSON.stringify(myBookings));}
+
+function trySocket(){
+  try{
+    if(typeof io==='undefined')return;
+    var s=io(API,{timeout:5000});
+    s.on('booking:assigned',function(b){
+      myBookings=myBookings.map(function(mb){return mb.id===b.id?Object.assign({},mb,b):mb;});
+      saveBooks();
+      if(b.driver_name)showToast(t('drvassigned')+' '+b.driver_name);
+      if(curTab===1)showTab(1);
+    });
+    s.on('booking:cancelled',function(d){
+      myBookings=myBookings.map(function(b){return b.id===d.id?Object.assign({},b,{status:'cancelled'}):b;});
+      saveBooks();if(curTab===1)showTab(1);
+    });
+    s.on('booking:completed',function(b){
+      myBookings=myBookings.map(function(mb){
+        return mb.id===b.id?Object.assign({},mb,{status:'completed',payment_status:'pending'}):mb;
+      });
+      saveBooks();
+      showToast('✅ Resa avslutad! Betygsätt din förare.');
+      if(curTab===1)showTab(1);
+    });
+  }catch(e){}
+}
+
+setInterval(loadBookings,30000);
+</script>
+<script async src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Waygo — Din Taxi</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:Arial,sans-serif;background:#eef1f8;color:#0d1b3e;min-height:100vh}
+.screen{display:none;min-height:100vh;flex-direction:column}
+.screen.active{display:flex}
+#sLoad{background:#0d1b3e;align-items:center;justify-content:center;gap:12px}
+.load-logo{font-size:64px;color:#fbbf24;animation:bounce 1s infinite}
+.load-name{color:#fbbf24;font-size:28px;font-weight:bold;letter-spacing:4px}
+.load-sub{color:#4a6090;font-size:13px}
+.dots{display:flex;gap:8px;margin-top:12px}
+.dot{width:10px;height:10px;background:#fbbf24;border-radius:50%;animation:dp 1.2s infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes dp{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+#sWelcome{background:#0d1b3e;align-items:center;justify-content:center;padding:30px 24px}
+.wlogo{font-size:56px;color:#fbbf24;text-align:center}
+.wname{color:#fbbf24;font-size:30px;font-weight:bold;letter-spacing:4px;text-align:center;margin-bottom:6px}
+.wsub{color:#4a6090;font-size:14px;text-align:center;margin-bottom:40px}
+.wbtn{width:100%;max-width:400px;padding:22px 20px;border-radius:14px;border:none;
+  cursor:pointer;margin-bottom:16px;text-align:left;display:flex;align-items:center;gap:16px}
+.wbtn-now{background:white;color:#0d1b3e}
+.wbtn-pre{background:#1a2f5e;color:white;border:2px solid #2a4080}
+.wbtn-icon{font-size:28px;flex-shrink:0}
+.wbtn-title{font-size:17px;font-weight:800}
+.wbtn-sub{font-size:12px;opacity:.7;margin-top:2px}
+.wlangs{display:flex;gap:10px;margin-top:20px}
+.lbtn{background:#1a2f5e;border:1px solid #2a4080;color:#94a3b8;
+  padding:8px 16px;border-radius:20px;font-size:13px;cursor:pointer;font-weight:600}
+.lbtn.on{background:#fbbf24;color:#0d1b3e;border-color:#fbbf24}
+.topbar{background:#0d1b3e;padding:14px 20px;display:flex;align-items:center;
+  justify-content:space-between;position:sticky;top:0;z-index:200;border-bottom:1px solid #1a2f5e}
+.tlogo{color:#fbbf24;font-size:18px;font-weight:bold;cursor:pointer}
+.tright{display:flex;align-items:center;gap:8px}
+.tauth{color:#fbbf24;font-size:12px;cursor:pointer;background:#1a2f5e;
+  padding:6px 12px;border-radius:8px;border:none;font-weight:700}
+.tlang{color:#4a6090;font-size:18px;cursor:pointer;background:none;border:none;padding:4px}
+.bnav{position:fixed;bottom:0;left:0;right:0;background:#0d1b3e;
+  display:flex;justify-content:space-around;padding:10px 0;
+  border-top:1px solid #1a2f5e;z-index:200}
+.bni{display:flex;flex-direction:column;align-items:center;gap:3px;
+  color:#4a6090;font-size:10px;cursor:pointer;border:none;background:none;padding:4px 8px}
+.bni.on{color:#fbbf24}
+.bni-icon{font-size:20px}
+.bspace{height:80px}
+.page{padding:16px}
+.card{background:white;border-radius:14px;padding:18px;margin-bottom:14px;
+  border:1px solid #d0d7ea;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.stitle{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;
+  letter-spacing:1.5px;margin-bottom:10px}
+.flabel{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;
+  letter-spacing:1px;margin-bottom:5px;display:block}
+.finput{width:100%;padding:12px 14px;border-radius:10px;border:1px solid #d0d7ea;
+  background:#f8fafc;color:#0d1b3e;font-size:15px;outline:none;
+  box-sizing:border-box;transition:border-color .2s;margin-bottom:14px}
+.finput:focus{border-color:#0d1b3e}
+.finput::placeholder{color:#94a3b8}
+select.finput{appearance:none}
+.dtrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.btn{padding:14px;border-radius:10px;font-size:15px;font-weight:700;
+  border:none;cursor:pointer;width:100%;text-align:center;display:block}
+.btn:disabled{opacity:.6;cursor:default}
+.btn-primary{background:#0d1b3e;color:#fbbf24}
+.btn-success{background:#15803d;color:white}
+.btn-danger{background:#dc2626;color:white}
+.btn-teal{background:#0d9488;color:white}
+.btn-gray{background:#f1f5f9;color:#64748b}
+.btn-sm{padding:8px 14px;font-size:12px;width:auto;border-radius:8px;display:inline-block}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;display:inline-block}
+.bg{background:#dcfce7;color:#15803d;border:1px solid #86efac}
+.by{background:#fef3c7;color:#d97706;border:1px solid #fde68a}
+.br{background:#fee2e2;color:#dc2626;border:1px solid #fecaca}
+.bgr{background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0}
+.bb{background:#dbeafe;color:#1a56db;border:1px solid #93c5fd}
+.bp{background:#ede9fe;color:#7c3aed;border:1px solid #ddd6fe}
+.pgrid{display:grid;gap:8px;margin-bottom:14px}
+.pg2{grid-template-columns:1fr 1fr}
+.pg3{grid-template-columns:1fr 1fr 1fr}
+.pbtn{padding:12px 6px;border-radius:10px;border:2px solid #d0d7ea;
+  background:white;color:#64748b;font-size:12px;font-weight:700;cursor:pointer;text-align:center}
+.pbtn.on{border-color:#0d1b3e;background:#0d1b3e;color:#fbbf24}
+.farebox{background:#f0f3f9;border-radius:10px;padding:14px;
+  display:flex;justify-content:space-between;align-items:center;
+  border:1px solid #d0d7ea;margin-bottom:14px}
+.fareamt{font-size:24px;font-weight:bold;color:#0d1b3e}
+.mmap{background:#d4e8d4;border-radius:10px;height:130px;position:relative;
+  overflow:hidden;margin-bottom:10px;border:1px solid #b8d4b8}
+.mmapbg{position:absolute;inset:0;
+  background-image:linear-gradient(#b8d4b8 1px,transparent 1px),
+  linear-gradient(90deg,#b8d4b8 1px,transparent 1px);
+  background-size:20px 20px;opacity:.5}
+.mroad-h{position:absolute;height:4px;background:white;left:0;right:0;opacity:.8}
+.mroad-v{position:absolute;width:4px;background:white;top:0;bottom:0;opacity:.8}
+.dmark{position:absolute;width:30px;height:30px;border-radius:50%;
+  background:#0d1b3e;border:3px solid #fbbf24;display:flex;align-items:center;
+  justify-content:center;font-size:13px;transform:translate(-50%,-50%);
+  transition:left 2s ease,top 2s ease}
+.cmark{position:absolute;width:22px;height:22px;border-radius:50%;
+  background:#1a56db;border:3px solid white;display:flex;align-items:center;
+  justify-content:center;font-size:10px;transform:translate(-50%,-50%)}
+.meta{position:absolute;top:6px;right:6px;background:#0d1b3e;color:#fbbf24;
+  border-radius:6px;padding:3px 8px;font-size:10px;font-weight:bold}
+.mlive{position:absolute;bottom:6px;left:6px;background:rgba(255,255,255,.9);
+  border-radius:6px;padding:2px 7px;font-size:10px;color:#0d1b3e;font-weight:bold}
+.stars{display:flex;gap:6px;justify-content:center;margin:8px 0}
+.star{font-size:28px;cursor:pointer;color:#d0d7ea}
+.star.on{color:#fbbf24}
+.moverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);
+  z-index:500;align-items:flex-end;justify-content:center}
+.moverlay.open{display:flex}
+.mbox{background:white;border-radius:20px 20px 0 0;padding:24px 20px;
+  width:100%;max-width:500px;max-height:88vh;overflow-y:auto}
+.mtitle{font-size:17px;font-weight:bold;color:#0d1b3e;margin-bottom:16px}
+.minfo{background:#f0f3f9;border-radius:10px;padding:12px 14px;
+  font-size:13px;color:#64748b;margin-bottom:14px;line-height:1.8}
+.minfo strong{color:#0d1b3e}
+.mbtns{display:flex;gap:10px}
+.mbtn{flex:1;padding:14px;border-radius:10px;font-size:14px;font-weight:bold;border:none;cursor:pointer}
+.atoggle{display:flex;background:#f0f3f9;border-radius:10px;padding:4px;margin-bottom:18px}
+.atbtn{flex:1;padding:10px;border:none;background:none;border-radius:8px;
+  font-size:14px;font-weight:600;color:#64748b;cursor:pointer}
+.atbtn.on{background:white;color:#0d1b3e;box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.ttoggle{display:flex;background:#f0f3f9;border-radius:10px;padding:4px;margin-bottom:14px}
+.chatbox{height:180px;overflow-y:auto;padding:8px 0;
+  display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.cmsg{display:flex;gap:8px;align-items:flex-end}
+.cmsg.me{flex-direction:row-reverse}
+.cav{width:26px;height:26px;border-radius:50%;background:#0d1b3e;color:#fbbf24;
+  display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;flex-shrink:0}
+.cav.sup{background:#0d9488}
+.cbub{max-width:72%;padding:8px 12px;border-radius:12px;font-size:13px;line-height:1.4}
+.cmsg.me .cbub{background:#0d1b3e;color:#fbbf24;border-radius:12px 12px 4px 12px}
+.cmsg.other .cbub{background:#f1f5f9;color:#0d1b3e;border-radius:12px 12px 12px 4px}
+.cinrow{display:flex;gap:8px}
+.cin{flex:1;padding:9px 12px;border-radius:24px;border:1px solid #d0d7ea;
+  background:#f8fafc;font-size:13px;color:#0d1b3e;outline:none}
+.csend{width:38px;height:38px;border-radius:50%;background:#0d1b3e;
+  border:none;color:#fbbf24;font-size:15px;cursor:pointer;flex-shrink:0}
+.toast{position:fixed;bottom:90px;left:20px;right:20px;background:#0d1b3e;
+  color:#fbbf24;padding:14px 20px;border-radius:12px;font-size:14px;
+  font-weight:bold;text-align:center;z-index:999;display:none;
+  box-shadow:0 4px 20px rgba(0,0,0,.3);pointer-events:none}
+.toast.show{display:block}
+.ib{border-radius:8px;padding:10px 12px;font-size:12px;margin-bottom:10px}
+.ib-y{background:#fef3c7;border:1px solid #fde68a;color:#d97706}
+.ib-b{background:#dbeafe;border:1px solid #93c5fd;color:#1a56db}
+.ib-r{background:#fee2e2;border:1px solid #fecaca;color:#dc2626}
+.ib-g{background:#dcfce7;border:1px solid #86efac;color:#15803d}
+.profhdr{background:linear-gradient(135deg,#0d1b3e,#1a3066);
+  padding:24px 20px;display:flex;align-items:center;gap:16px;color:white}
+.avatar{width:56px;height:56px;border-radius:50%;background:#fbbf24;
+  color:#0d1b3e;display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:bold;flex-shrink:0}
+.litem{display:flex;justify-content:space-between;align-items:center;
+  padding:12px 0;border-bottom:1px solid #f8fafc;cursor:pointer}
+.litem:last-child{border-bottom:none}
+.lilab{font-size:14px;color:#0d1b3e}
+.lival{font-size:13px;color:#64748b;max-width:55%;text-align:right}
+.liarr{color:#94a3b8;font-size:16px;margin-left:6px}
+.bcard{background:white;border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid #d0d7ea}
+.bcard.late{border-color:#f97316;box-shadow:0 0 0 3px #fed7aa}
+.bcardtop{display:flex;justify-content:space-between;margin-bottom:6px;align-items:center;flex-wrap:wrap;gap:4px}
+.bref{font-size:12px;font-weight:700;color:#1a56db}
+.broute{font-size:13px;font-weight:600;color:#0d1b3e;margin-bottom:4px}
+.bdetail{font-size:11px;color:#64748b;margin-bottom:8px}
+.bfooter{display:flex;justify-content:space-between;align-items:flex-end}
+.bfare{font-size:14px;font-weight:bold;color:#0d1b3e}
+.bvat{font-size:10px;color:#94a3b8;margin-top:1px}
+.htabs{display:flex;background:white;border-bottom:2px solid #eef1f8}
+.htab{flex:1;padding:14px 8px;font-size:14px;font-weight:600;
+  color:#64748b;border:none;background:transparent;cursor:pointer;
+  border-bottom:3px solid transparent;margin-bottom:-2px}
+.htab.on{color:#0d1b3e;font-weight:700;border-bottom-color:#0d1b3e}
+.gate{background:linear-gradient(135deg,#0d1b3e,#1a3066);
+  border-radius:12px;padding:24px;text-align:center;color:white;margin-bottom:14px}
+.gate-icon{font-size:36px;margin-bottom:8px}
+.gate-title{font-size:16px;font-weight:bold;margin-bottom:4px}
+.gate-sub{font-size:13px;color:#6b82b8;margin-bottom:16px}
+.prebadge{background:#dbeafe;border:1px solid #93c5fd;border-radius:10px;
+  padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:14px}
+</style>
+</head>
+<body>
+
+<div class="screen active" id="sLoad">
+  <div class="load-logo">▲</div>
+  <div class="load-name">WAYGO</div>
+  <div class="load-sub" id="loadSub">Din taxi, direkt</div>
+  <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+</div>
+
+<div class="screen" id="sWelcome">
+  <div class="wlogo">▲</div>
+  <div class="wname">WAYGO</div>
+  <div class="wsub" id="wSub">Sveriges snabbaste taxi</div>
+  <button class="wbtn wbtn-now" onclick="startBook('now')">
+    <div class="wbtn-icon">🚖</div>
+    <div><div class="wbtn-title" id="wNow">Jag behöver en bil nu</div><div class="wbtn-sub" id="wNowS">Förare skickas direkt</div></div>
+    <div style="margin-left:auto;font-size:20px;color:#94a3b8">›</div>
+  </button>
+  <button class="wbtn wbtn-pre" onclick="startBook('pre')">
+    <div class="wbtn-icon">📅</div>
+    <div><div class="wbtn-title" id="wPre">Jag vill förboka</div><div class="wbtn-sub" id="wPreS">Välj datum och tid</div></div>
+    <div style="margin-left:auto;font-size:20px;color:#6b82b8">›</div>
+  </button>
+  <div class="wlangs">
+    <button class="lbtn on" id="lSV" onclick="setLang('sv')">🇸🇪 Svenska</button>
+    <button class="lbtn" id="lEN" onclick="setLang('en')">🇬🇧 English</button>
+  </div>
+</div>
+
+<div class="screen" id="sApp">
+  <div class="topbar">
+    <div class="tlogo" onclick="showScreen('sWelcome')">▲ WAYGO</div>
+    <div class="tright">
+      <button class="tlang" id="langBtn" onclick="toggleLang()">🇬🇧</button>
+      <button class="tauth" id="topBtn" onclick="topAction()">Logga in</button>
+    </div>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding-bottom:80px" id="tabContent"></div>
+  <div class="bnav">
+    <button class="bni on" id="bni0" onclick="showTab(0)"><span class="bni-icon">🚖</span><span id="nt0">Boka</span></button>
+    <button class="bni" id="bni1" onclick="showTab(1)"><span class="bni-icon">📋</span><span id="nt1">Resor</span></button>
+    <button class="bni" id="bni2" onclick="showTab(2)"><span class="bni-icon">👤</span><span id="nt2">Profil</span></button>
+    <button class="bni" id="bni3" onclick="showTab(3)"><span class="bni-icon">💳</span><span id="nt3">Betalning</span></button>
+  </div>
+</div>
+
+<div class="moverlay" id="authModal">
+  <div class="mbox">
+    <div id="pendingSum" style="display:none"><div class="ib ib-b" id="pendingInfo"></div></div>
+    <div class="atoggle">
+      <button class="atbtn on" id="atL" onclick="switchAuth('login')">Logga in</button>
+      <button class="atbtn" id="atR" onclick="switchAuth('reg')">Ny kund</button>
+    </div>
+    <div id="loginForm">
+      <div class="mtitle">Välkommen tillbaka</div>
+      <label class="flabel">E-postadress</label>
+      <input class="finput" id="lEmail" type="email" placeholder="din@email.se"/>
+      <label class="flabel">Lösenord</label>
+      <input class="finput" id="lPwd" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+      <div class="ib ib-r" id="lErr" style="display:none"></div>
+      <button class="btn btn-primary" id="lBtn" onclick="doLogin()">Logga in →</button>
+      <div style="text-align:center;margin-top:10px;font-size:12px;color:#94a3b8">BankID &amp; SMS kommer snart</div>
+    </div>
+    <div id="regForm" style="display:none">
+      <div class="mtitle">Skapa konto</div>
+      <div class="ttoggle">
+        <button class="atbtn on" id="tPri" onclick="switchType('private')">👤 Privat</button>
+        <button class="atbtn" id="tBiz" onclick="switchType('business')">🏢 Företag</button>
+      </div>
+      <label class="flabel">Fullständigt namn *</label>
+      <input class="finput" id="rName" type="text" placeholder="För- och efternamn"/>
+      <label class="flabel">Telefon *</label>
+      <input class="finput" id="rPhone" type="tel" placeholder="070-000 00 00"/>
+      <label class="flabel">E-post *</label>
+      <input class="finput" id="rEmail" type="email" placeholder="din@email.se"/>
+      <label class="flabel">Lösenord * (minst 6 tecken)</label>
+      <input class="finput" id="rPwd" type="password" placeholder="••••••••"/>
+      <div id="bizF" style="display:none">
+        <label class="flabel">Organisationsnummer</label>
+        <input class="finput" id="rOrg" type="text" placeholder="556xxx-xxxx"/>
+        <label class="flabel">Faktureringsadress</label>
+        <input class="finput" id="rBill" type="text" placeholder="Gatuadress, stad"/>
+      </div>
+      <label class="flabel">Betalningsmetod</label>
+      <select class="finput" id="rPay">
+        <option value="swish">📱 Swish</option>
+        <option value="card">💳 Kort</option>
+      </select>
+      <div class="ib ib-r" id="rErr" style="display:none"></div>
+      <button class="btn btn-primary" id="rBtn" onclick="doRegister()">Skapa konto →</button>
+    </div>
+    <button class="btn btn-gray" style="margin-top:10px" onclick="closeMod('authModal')">Avbryt</button>
+  </div>
+</div>
+
+<div class="moverlay" id="suppModal" onclick="closeMIfOut(event,'suppModal')">
+  <div class="mbox">
+    <div class="mtitle">📞 Kundtjänst · Waygo</div>
+    <div class="minfo" id="suppInfo"></div>
+    <a href="tel:+46101234567" style="text-decoration:none;display:block;margin-bottom:12px">
+      <button class="btn btn-success">📞 Ring kundtjänst direkt</button>
+    </a>
+    <div class="chatbox" id="suppChat"></div>
+    <div class="cinrow">
+      <input class="cin" id="suppIn" placeholder="Beskriv ditt problem..." onkeydown="if(event.key==='Enter')sendSupp()"/>
+      <button class="csend" onclick="sendSupp()">➤</button>
+    </div>
+    <button class="btn btn-gray" style="margin-top:10px" onclick="closeMod('suppModal')">Stäng</button>
+  </div>
+</div>
+
+<div class="moverlay" id="cancelModal" onclick="closeMIfOut(event,'cancelModal')">
+  <div class="mbox">
+    <div class="mtitle">Bekräfta avbokning</div>
+    <div class="ib ib-r" id="cancelWarn"></div>
+    <div class="minfo" id="cancelInfo"></div>
+    <div class="mbtns">
+      <button class="mbtn" style="background:#f1f5f9;color:#64748b" onclick="closeMod('cancelModal')">Avbryt</button>
+      <button class="mbtn" style="background:#dc2626;color:white" onclick="doCancel()">Avboka</button>
+    </div>
+  </div>
+</div>
+
+<div class="moverlay" id="rateModal" onclick="closeMIfOut(event,'rateModal')">
+  <div class="mbox">
+    <div class="mtitle">⭐ Betygsätt din resa</div>
+    <div class="minfo" id="rateInfo"></div>
+    <div class="stars">
+      <span class="star" onclick="setStar(1)">★</span>
+      <span class="star" onclick="setStar(2)">★</span>
+      <span class="star" onclick="setStar(3)">★</span>
+      <span class="star" onclick="setStar(4)">★</span>
+      <span class="star" onclick="setStar(5)">★</span>
+    </div>
+    <button class="btn btn-primary" onclick="submitRate()">Skicka betyg</button>
+    <button class="btn btn-gray" style="margin-top:8px" onclick="closeMod('rateModal')">Hoppa över</button>
+  </div>
+</div>
+
+<div class="moverlay" id="editModal" onclick="closeMIfOut(event,'editModal')">
+  <div class="mbox">
+    <div class="mtitle" id="editTitle">Redigera</div>
+    <input class="finput" id="editInput" type="text"/>
+    <div class="mbtns">
+      <button class="mbtn" style="background:#f1f5f9;color:#64748b" onclick="closeMod('editModal')">Avbryt</button>
+      <button class="mbtn" style="background:#0d1b3e;color:#fbbf24" onclick="saveEdit()">Spara</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://16.16.153.106.sslip.io';
+let customer = null;
+let token = null;
+let myBookings = [];
+let selPay = 'swish';
+let bookMode = 'now';
+let preDate = '';
+let preTime = '';
+let curTab = 0;
+let cancelId = null;
+let cancelRef = null;
+let rateId = null;
+let curRating = 0;
+let suppId = null;
+let suppContacted = {};
+let editField = null;
+let driverAnims = {};
+let custType = 'private';
+let pendingBook = null;
+let lang = localStorage.getItem('wlang') || 'sv';
+let histTab = 0;
+
+const TR = {
+  sv:{loadsub:'Din taxi, direkt',wsub:'Sveriges snabbaste taxi',
+    wnow:'Jag behöver en bil nu',wnows:'Förare skickas direkt',
+    wpre:'Jag vill förboka',wpres:'Välj datum och tid',
+    book:'Boka',rides:'Resor',profile:'Profil',pay:'Betalning',
+    login:'Logga in',signup:'Ny kund',logout:'Logga ut',
+    btitle:'Boka din resa',bsub:'Fyll i resan — logga in vid bokning',
+    pickup:'Upphämtning',dest:'Destination',paymethod:'Betalningsmetod',
+    estcost:'Uppskattad kostnad',incvat:'Inkl. 25% moms',
+    bookbtn:'Beställ Taxi →',contbtn:'Fortsätt till bokning →',
+    inv_priv:'⚠️ Faktura är endast för företagskunder.',
+    inv_biz:'ℹ️ Faktura skickas via e-post. 30 dagar netto.',
+    prechange:'Ändra',predate:'Datum',pretime:'Tid',
+    fillfields:'⚠️ Fyll i upphämtning och destination',
+    filldatetime:'⚠️ Välj datum och tid',
+    booked:'✓ Resa bokad!',bookfail:'⚠️ Kunde inte boka.',
+    noactive:'Inga aktiva resor',nohistory:'Ingen historik ännu',
+    active:'Aktiva',history:'Historik',
+    assigned:'Tilldelad',finding:'Väntar på förare',
+    cancelled:'Avbokad',completed:'Avslutad',
+    looking:'Söker förare...',late:'Föraren är',latemin:'min försenad',
+    support:'💬 Support',consupport:'📞 Kontakta support för att avboka',
+    cancelride:'Avboka',cancelreq:'Begär avbokning',
+    rate:'⭐ Betygsätt',receipt:'📄 Kvitto',
+    gate_rides:'Logga in för att se din reshistorik',
+    gate_profile:'Logga in för att hantera ditt konto',
+    gate_pay:'Logga in för att se dina betalningar',
+    login_cta:'Logga in / Skapa konto',
+    home:'🏠 Hem',work:'🏢 Jobb',other:'📍 Annan',
+    fhome:'🏠 Från hem',fwork:'🏢 Från jobb',
+    thome:'🏠 Till hem',twork:'💼 Till jobb',
+    personal:'Personuppgifter',name:'Namn',phone:'Telefon',email:'E-post',
+    org:'Org.nummer',billing:'Faktureringsadress',
+    paysettings:'Betalningsinställningar',prefpay:'Föredragen betalning',
+    account:'Konto',changepwd:'🔒 Ändra lösenord',
+    totalpaid:'Totalt betalt',paid:'Betalda',pending:'Väntar',vatof:'varav moms',
+    cancel_nofee:'✓ Ingen avgift vid avbokning innan förare tilldelats.',
+    cancel_cen:'⚠️ Avbokningsförfrågan skickas till central.',
+    saved:'✓ Sparat!',savefail:'⚠️ Kunde inte spara',
+    welcome:'✓ Välkommen,',created:'✓ Konto skapat! Välkommen,',
+    loggedout:'Du har loggats ut',completing:'⏳ Slutför bokning...',
+    compfail:'⚠️ Kunde inte slutföra.',drvassigned:'🚖 Förare tilldelad:',
+    since:'Waygo Sverige · Kund sedan',pwdcoming:'Lösenordsändring kommer snart',
+    fill:'⚠️ Fyll i alla fält',short:'⚠️ Lösenord minst 6 tecken',
+    servererr:'⚠️ Kunde inte ansluta',loggingin:'Loggar in...',creating:'Skapar konto...',
+    loginbtn:'Logga in →',regbtn:'Skapa konto →',
+    pendtitle:'🚖 Din resa är klar att bokas!',
+    pendcomplete:'Logga in för att slutföra bokningen.',
+    prebadge:'📅 Förbokning',prebook:'Förbokning',
+    swish:'📱 Swish',card:'💳 Kort',invoice:'📄 Faktura',
+    ratethanks:'⭐ Tack för ditt betyg!',ratechoose:'⚠️ Välj ett betyg',
+    supp_hi:'Hej! Hur kan vi hjälpa dig med bokning',
+    supp_reply:'Tack! Vi återkommer inom 2 minuter.',
+    cancelfail:'⚠️ Kunde inte avboka'},
+  en:{loadsub:'Your taxi, directly',wsub:"Sweden's fastest taxi",
+    wnow:'I need a car right away',wnows:'Driver dispatched immediately',
+    wpre:'I want to pre-book',wpres:'Choose date and time',
+    book:'Book',rides:'Rides',profile:'Profile',pay:'Payment',
+    login:'Log in',signup:'Sign up',logout:'Log out',
+    btitle:'Book your ride',bsub:'Fill in your trip — log in to complete',
+    pickup:'Pickup',dest:'Destination',paymethod:'Payment method',
+    estcost:'Estimated cost',incvat:'Incl. 25% VAT',
+    bookbtn:'Order Taxi →',contbtn:'Continue to booking →',
+    inv_priv:'⚠️ Invoice is only for business customers.',
+    inv_biz:'ℹ️ Invoice sent by email. Net 30 days.',
+    prechange:'Change',predate:'Date',pretime:'Time',
+    fillfields:'⚠️ Please fill in pickup and destination',
+    filldatetime:'⚠️ Please select date and time',
+    booked:'✓ Ride booked!',bookfail:'⚠️ Could not book.',
+    noactive:'No active rides',nohistory:'No history yet',
+    active:'Active',history:'History',
+    assigned:'Assigned',finding:'Finding driver',
+    cancelled:'Cancelled',completed:'Completed',
+    looking:'Finding driver...',late:'Driver is',latemin:'min late',
+    support:'💬 Support',consupport:'📞 Contact support to cancel',
+    cancelride:'Cancel',cancelreq:'Request cancellation',
+    rate:'⭐ Rate',receipt:'📄 Receipt',
+    gate_rides:'Log in to see your ride history',
+    gate_profile:'Log in to manage your account',
+    gate_pay:'Log in to see your payments',
+    login_cta:'Log in / Create account',
+    home:'🏠 Home',work:'🏢 Work',other:'📍 Other',
+    fhome:'🏠 From home',fwork:'🏢 From work',
+    thome:'🏠 To home',twork:'💼 To work',
+    personal:'Personal info',name:'Name',phone:'Phone',email:'Email',
+    org:'Org. number',billing:'Billing address',
+    paysettings:'Payment settings',prefpay:'Preferred payment',
+    account:'Account',changepwd:'🔒 Change password',
+    totalpaid:'Total paid',paid:'Paid',pending:'Pending',vatof:'incl. VAT',
+    cancel_nofee:'✓ No charge for cancellation before driver is assigned.',
+    cancel_cen:'⚠️ Cancellation request sent to dispatch.',
+    saved:'✓ Saved!',savefail:'⚠️ Could not save',
+    welcome:'✓ Welcome,',created:'✓ Account created! Welcome,',
+    loggedout:'You have been logged out',completing:'⏳ Completing booking...',
+    compfail:'⚠️ Could not complete.',drvassigned:'🚖 Driver assigned:',
+    since:'Waygo Sweden · Customer since',pwdcoming:'Password change coming soon',
+    fill:'⚠️ Please fill in all fields',short:'⚠️ Password min 6 characters',
+    servererr:'⚠️ Could not connect',loggingin:'Logging in...',creating:'Creating...',
+    loginbtn:'Log in →',regbtn:'Create account →',
+    pendtitle:'🚖 Your ride is ready to book!',
+    pendcomplete:'Log in to complete your booking.',
+    prebadge:'📅 Pre-booking',prebook:'Pre-booking',
+    swish:'📱 Swish',card:'💳 Card',invoice:'📄 Invoice',
+    ratethanks:'⭐ Thank you for your rating!',ratechoose:'⚠️ Please choose a rating',
+    supp_hi:'Hi! How can we help you with booking',
+    supp_reply:'Thank you! We will get back to you within 2 minutes.',
+    cancelfail:'⚠️ Could not cancel'}
+};
+
+function t(k){try{return(TR[lang]&&TR[lang][k])?TR[lang][k]:(TR.sv[k]||k);}catch(e){return k;}}
+
+function setLang(l){
+  lang=l;localStorage.setItem('wlang',l);
+  try{
+    document.getElementById('lSV').classList.toggle('on',l==='sv');
+    document.getElementById('lEN').classList.toggle('on',l==='en');
+    document.getElementById('langBtn').textContent=l==='sv'?'🇬🇧':'🇸🇪';
+    document.getElementById('loadSub').textContent=t('loadsub');
+    document.getElementById('wSub').textContent=t('wsub');
+    document.getElementById('wNow').textContent=t('wnow');
+    document.getElementById('wNowS').textContent=t('wnows');
+    document.getElementById('wPre').textContent=t('wpre');
+    document.getElementById('wPreS').textContent=t('wpres');
+  }catch(e){}
+}
+
+function toggleLang(){setLang(lang==='sv'?'en':'sv');updateTopbar();showTab(curTab);}
+
+// ── SAFE INIT — never hangs ──
+window.addEventListener('load',()=>{
+  setLang(lang);
+  // Show loading for 2 seconds then decide
+  setTimeout(()=>{
+    try{
+      const sc=localStorage.getItem('wsupp');
+      if(sc){try{suppContacted=JSON.parse(sc);}catch(e){}}
+      const sv=localStorage.getItem('waygo_customer');
+      const st=localStorage.getItem('waygo_token');
+      if(sv&&st){
+        try{
+          customer=JSON.parse(sv);
+          token=st;
+          selPay=customer.preferred_payment||'swish';
+          if(!isBiz()&&selPay==='invoice')selPay='swish';
+          updateTopbar();
+          // Show app immediately — load bookings in background
+          showScreen('sApp');
+          showTab(0);
+          trySocket();
+          // Load bookings after app is shown — non blocking
+          setTimeout(()=>loadBookings(),500);
+        }catch(e){
+          console.log('Session restore error:',e);
+          customer=null;token=null;
+          localStorage.removeItem('waygo_customer');
+          localStorage.removeItem('waygo_token');
+          showScreen('sWelcome');
+        }
+      }else{
+        showScreen('sWelcome');
+      }
+    }catch(e){
+      console.log('Init error:',e);
+      showScreen('sWelcome');
+    }
+  },2000);
+});
+
+function showScreen(id){
+  try{
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    const el=document.getElementById(id);
+    if(el)el.classList.add('active');
+  }catch(e){}
+}
+
+function showToast(msg){
+  try{
+    const el=document.getElementById('toast');
+    el.textContent=msg;el.classList.add('show');
+    setTimeout(()=>el.classList.remove('show'),3500);
+  }catch(e){}
+}
+
+function closeMod(id){try{document.getElementById(id).classList.remove('open');}catch(e){}}
+function closeMIfOut(e,id){if(e.target===document.getElementById(id))closeMod(id);}
+
+function startBook(mode){
+  bookMode=mode;
+  if(mode==='pre'){
+    const d=new Date();d.setDate(d.getDate()+1);
+    preDate=d.toISOString().split('T')[0];preTime='09:00';
+  }
+  showScreen('sApp');showTab(0);
+}
+
+function updateTopbar(){
+  try{
+    const btn=document.getElementById('topBtn');
+    document.getElementById('langBtn').textContent=lang==='sv'?'🇬🇧':'🇸🇪';
+    if(customer){
+      btn.textContent=customer.name.split(' ')[0];
+      btn.onclick=()=>showTab(2);
+    }else{
+      btn.textContent=t('login');
+      btn.onclick=topAction;
+    }
+    ['nt0','nt1','nt2','nt3'].forEach((id,i)=>{
+      const el=document.getElementById(id);
+      if(el)el.textContent=t(['book','rides','profile','pay'][i]);
+    });
+  }catch(e){}
+}
+
+function topAction(){if(customer){showTab(2);return;}openAuth(null);}
+function isBiz(){return customer&&customer.customer_type==='business';}
+
+function payGrid(){
+  if(!isBiz()&&selPay==='invoice')selPay='swish';
+  const opts=[{id:'swish',l:t('swish')},{id:'card',l:t('card')}];
+  if(isBiz())opts.push({id:'invoice',l:t('invoice')});
+  let h='<div class="pgrid '+(opts.length===3?'pg3':'pg2')+'">';
+  opts.forEach(o=>{h+='<button class="pbtn '+(selPay===o.id?'on':'')+'" onclick="setPay(\''+o.id+'\')">'+o.l+'</button>';});
+  h+='</div>';
+  if(selPay==='invoice'&&isBiz())h+='<div class="ib ib-y">'+t('inv_biz')+'</div>';
+  return h;
+}
+
+function setPay(m){
+  if(m==='invoice'&&!isBiz()){showToast(t('inv_priv'));return;}
+  selPay=m;showTab(0);
+}
+
+function showTab(i){
+  try{
+    curTab=i;
+    document.querySelectorAll('.bni').forEach((b,j)=>b.classList.toggle('on',i===j));
+    const c=document.getElementById('tabContent');
+    if(!c)return;
+    if(i===0)c.innerHTML=tabBook();
+    else if(i===1)c.innerHTML=tabRides();
+    else if(i===2)c.innerHTML=tabProfile();
+    else if(i===3)c.innerHTML=tabPay();
+    updateTopbar();
+    c.scrollTop=0;
+  }catch(e){console.log('showTab error:',e);}
+}
+
+function tabBook(){
+  const ha=customer?(customer.home_address||''):'';
+  const wa=customer?(customer.work_address||''):'';
+  const isPre=bookMode==='pre';
+  const today=new Date().toISOString().split('T')[0];
+  const maxD=new Date();maxD.setDate(maxD.getDate()+30);
+  const maxDS=maxD.toISOString().split('T')[0];
+  return '<div style="background:linear-gradient(135deg,#0d1b3e,#1a3066);padding:20px 20px 24px;color:white">'+
+    '<div style="font-size:20px;font-weight:bold;margin-bottom:4px">'+t('btitle')+'</div>'+
+    '<div style="color:#6b82b8;font-size:13px">'+t('bsub')+'</div></div>'+
+    '<div class="page"><div class="card">'+
+    (isPre?'<div class="prebadge"><div style="font-size:20px">📅</div>'+
+    '<div style="font-size:13px;color:#1a56db;font-weight:600">'+t('prebadge')+'</div>'+
+    '<div style="font-size:11px;color:#1a56db;text-decoration:underline;cursor:pointer;margin-left:auto" onclick="bookMode=\'now\';showTab(0)">'+t('prechange')+' →</div></div>'+
+    '<div class="dtrow"><div><label class="flabel">'+t('predate')+'</label>'+
+    '<input class="finput" type="date" id="pDate" value="'+preDate+'" min="'+today+'" max="'+maxDS+'" onchange="preDate=this.value" style="margin-bottom:0"/></div>'+
+    '<div><label class="flabel">'+t('pretime')+'</label>'+
+    '<input class="finput" type="time" id="pTime" value="'+preTime+'" onchange="preTime=this.value" style="margin-bottom:0"/></div></div>':'')+ 
+    '<label class="flabel">📍 '+t('pickup')+'</label>'+
+    '<input class="finput" id="bFrom" type="text" placeholder="'+t('pickup')+'..." value="'+ha+'"/>'+
+    '<label class="flabel">🏁 '+t('dest')+'</label>'+
+    '<input class="finput" id="bTo" type="text" placeholder="'+t('dest')+'?" onblur="calcFare()"/>'+
+    (customer&&(ha||wa)?
+    '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'+
+    (ha?'<button class="btn btn-sm btn-gray" onclick="sAddr(\'bFrom\',\''+ha+'\')">'+t('fhome')+'</button>':'')+
+    (wa?'<button class="btn btn-sm btn-gray" onclick="sAddr(\'bFrom\',\''+wa+'\')">'+t('fwork')+'</button>':'')+
+    (ha?'<button class="btn btn-sm btn-gray" onclick="sAddr(\'bTo\',\''+ha+'\')">'+t('thome')+'</button>':'')+
+    (wa?'<button class="btn btn-sm btn-gray" onclick="sAddr(\'bTo\',\''+wa+'\')">'+t('twork')+'</button>':'')+
+    '</div>':'')+
+    '<label class="flabel">💳 '+t('paymethod')+'</label>'+
+    payGrid()+
+    '<div class="farebox"><div><div style="font-size:13px;color:#64748b">'+t('estcost')+'</div>'+
+    '<div style="font-size:11px;color:#94a3b8;margin-top:2px">'+t('incvat')+'</div></div>'+
+    '<div class="fareamt" id="fareAmt">150 kr</div></div>'+
+    (!customer?'<div class="ib ib-b" style="margin-bottom:14px">ℹ️ '+(lang==='sv'?'Logga in för att slutföra bokningen.':'Log in to complete your booking.')+'</div>':'')+
+    '<button class="btn btn-primary" id="bookBtn" onclick="tryBook()">'+(customer?t('bookbtn'):t('contbtn'))+'</button>'+
+    '</div>'+
+    '<div style="text-align:center;padding:16px;font-size:12px;color:#94a3b8">'+
+    '<a href="privacy.html" style="color:#1a56db;margin-right:16px">Integritetspolicy</a>'+
+    '<a href="terms.html" style="color:#1a56db">Användarvillkor</a></div>'+
+    '<div class="bspace"></div></div>';
+}
+
+function sAddr(id,v){const e=document.getElementById(id);if(e)e.value=v;}
+
+function calcFare(){
+  const f=document.getElementById('bFrom')?document.getElementById('bFrom').value:'';
+  const t2=document.getElementById('bTo')?document.getElementById('bTo').value:'';
+  if(f&&t2){const e=document.getElementById('fareAmt');if(e)e.textContent=(Math.floor(Math.random()*300)+100)+' kr';}
+}
+
+function tryBook(){
+  const from=(document.getElementById('bFrom')?document.getElementById('bFrom').value:'').trim();
+  const to=(document.getElementById('bTo')?document.getElementById('bTo').value:'').trim();
+  if(!from||!to){showToast(t('fillfields'));return;}
+  if(bookMode==='pre'&&(!preDate||!preTime)){showToast(t('filldatetime'));return;}
+  const fareEl=document.getElementById('fareAmt');
+  const fare=fareEl?(parseInt(fareEl.textContent)||150):150;
+  if(!customer){
+    openAuth({from,to,pay:selPay,fare,
+      pl:selPay==='swish'?t('swish'):selPay==='card'?t('card'):t('invoice'),
+      mode:bookMode,date:preDate,time:preTime});
+    return;
+  }
+  if(selPay==='invoice'&&!isBiz()){showToast(t('inv_priv'));selPay='swish';showTab(0);return;}
+  doBook(from,to,fare);
+}
+
+async function doBook(from,to,fare){
+  const btn=document.getElementById('bookBtn');
+  if(btn){btn.textContent='...';btn.disabled=true;}
+  try{
+    const body={customer_name:customer.name,customer_phone:customer.phone,
+      from_address:from,to_address:to,payment_method:selPay,fare_sek:fare,
+      customer_id:customer.id};
+    if(bookMode==='pre'&&preDate&&preTime){
+      body.scheduled_at=preDate+'T'+preTime+':00';body.booking_type='pre';
+    }
+    const res=await fetch(API+'/bookings',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const data=await res.json();
+    if(data.booking){
+      myBookings.unshift(data.booking);saveBooks();
+      bookMode='now';
+      showToast(t('booked')+' '+data.booking.booking_ref);
+      histTab=0;showTab(1);
+    }
+  }catch(e){showToast(t('bookfail'));}
+  if(btn){btn.textContent=t('bookbtn');btn.disabled=false;}
+}
+
+function openAuth(pending){
+  pendingBook=pending;
+  const sum=document.getElementById('pendingSum');
+  const inf=document.getElementById('pendingInfo');
+  if(pending&&sum&&inf){
+    sum.style.display='';
+    const ds=pending.mode==='pre'&&pending.date?'<br>📅 '+pending.date+' kl. '+pending.time:'';
+    inf.innerHTML='<strong>'+t('pendtitle')+'</strong><br>📍 '+pending.from+' → 🏁 '+pending.to+'<br>💳 '+pending.pl+' · '+pending.fare+' kr'+ds+'<br><strong>'+t('pendcomplete')+'</strong>';
+  }else if(sum)sum.style.display='none';
+  const atL=document.getElementById('atL');const atR=document.getElementById('atR');
+  const lBtn=document.getElementById('lBtn');const rBtn=document.getElementById('rBtn');
+  if(atL)atL.textContent=t('login');if(atR)atR.textContent=t('signup');
+  if(lBtn)lBtn.textContent=t('loginbtn');if(rBtn)rBtn.textContent=t('regbtn');
+  switchAuth('login');
+  document.getElementById('authModal').classList.add('open');
+}
+
+function switchAuth(m){
+  const lf=document.getElementById('loginForm');const rf=document.getElementById('regForm');
+  const atL=document.getElementById('atL');const atR=document.getElementById('atR');
+  if(lf)lf.style.display=m==='login'?'':'none';
+  if(rf)rf.style.display=m==='reg'?'':'none';
+  if(atL)atL.classList.toggle('on',m==='login');
+  if(atR)atR.classList.toggle('on',m==='reg');
+}
+
+function switchType(tp){
+  custType=tp;
+  const tPri=document.getElementById('tPri');const tBiz=document.getElementById('tBiz');
+  const bizF=document.getElementById('bizF');const rPay=document.getElementById('rPay');
+  if(tPri)tPri.classList.toggle('on',tp==='private');
+  if(tBiz)tBiz.classList.toggle('on',tp==='business');
+  if(bizF)bizF.style.display=tp==='business'?'':'none';
+  if(rPay)rPay.innerHTML='<option value="swish">'+t('swish')+'</option>'+
+    '<option value="card">'+t('card')+'</option>'+
+    (tp==='business'?'<option value="invoice">'+t('invoice')+'</option>':'');
+}
+
+async function doLogin(){
+  const lEmail=document.getElementById('lEmail');
+  const lPwd=document.getElementById('lPwd');
+  const lErr=document.getElementById('lErr');
+  const lBtn=document.getElementById('lBtn');
+  if(!lEmail||!lPwd||!lErr||!lBtn)return;
+  const email=lEmail.value.trim();const pwd=lPwd.value.trim();
+  lErr.style.display='none';
+  if(!email||!pwd){lErr.textContent=t('fill');lErr.style.display='';return;}
+  lBtn.textContent=t('loggingin');lBtn.disabled=true;
+  try{
+    const res=await fetch(API+'/customers/login',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pwd})});
+    const data=await res.json();
+    if(data.token){
+      customer=data.customer;token=data.token;
+      localStorage.setItem('waygo_customer',JSON.stringify(customer));
+      localStorage.setItem('waygo_token',token);
+      closeMod('authModal');
+      selPay=customer.preferred_payment||'swish';
+      if(!isBiz()&&selPay==='invoice')selPay='swish';
+      updateTopbar();trySocket();
+      showToast(t('welcome')+' '+customer.name.split(' ')[0]+'!');
+      // Load bookings after login
+      await loadBookings();
+      if(pendingBook)await completePending();
+      else showTab(0);
+    }else{lErr.textContent='⚠️ '+(data.error||t('servererr'));lErr.style.display='';}
+  }catch(e){lErr.textContent=t('servererr');lErr.style.display='';}
+  lBtn.textContent=t('loginbtn');lBtn.disabled=false;
+}
+
+async function doRegister(){
+  const rName=document.getElementById('rName');const rPhone=document.getElementById('rPhone');
+  const rEmail=document.getElementById('rEmail');const rPwd=document.getElementById('rPwd');
+  const rErr=document.getElementById('rErr');const rBtn=document.getElementById('rBtn');
+  if(!rName||!rPhone||!rEmail||!rPwd||!rErr||!rBtn)return;
+  const name=rName.value.trim();const phone=rPhone.value.trim();
+  const email=rEmail.value.trim();const pwd=rPwd.value.trim();
+  rErr.style.display='none';
+  if(!name||!phone||!email||!pwd){rErr.textContent=t('fill');rErr.style.display='';return;}
+  if(pwd.length<6){rErr.textContent=t('short');rErr.style.display='';return;}
+  rBtn.textContent=t('creating');rBtn.disabled=true;
+  try{
+    const rPayEl=document.getElementById('rPay');
+    const pv=rPayEl?rPayEl.value:'swish';
+    const fp=(pv==='invoice'&&custType!=='business')?'swish':pv;
+    const rOrgEl=document.getElementById('rOrg');const rBillEl=document.getElementById('rBill');
+    const res=await fetch(API+'/customers/register',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,phone,email,password:pwd,customer_type:custType,
+        preferred_payment:fp,org_number:rOrgEl?rOrgEl.value||null:null,
+        billing_address:rBillEl?rBillEl.value||null:null})});
+    const data=await res.json();
+    if(data.token){
+      customer=data.customer;token=data.token;
+      localStorage.setItem('waygo_customer',JSON.stringify(customer));
+      localStorage.setItem('waygo_token',token);
+      closeMod('authModal');selPay=customer.preferred_payment||'swish';
+      updateTopbar();trySocket();
+      showToast(t('created')+' '+customer.name.split(' ')[0]+'!');
+      myBookings=[];saveBooks();
+      if(pendingBook)await completePending();
+      else showTab(0);
+    }else{rErr.textContent='⚠️ '+(data.error||t('servererr'));rErr.style.display='';}
+  }catch(e){rErr.textContent=t('servererr');rErr.style.display='';}
+  rBtn.textContent=t('regbtn');rBtn.disabled=false;
+}
+
+async function completePending(){
+  if(!pendingBook||!customer)return;
+  let pm=pendingBook.pay;
+  if(pm==='invoice'&&!isBiz()){pm='swish';showToast(t('inv_priv'));}
+  showToast(t('completing'));
+  try{
+    const body={customer_name:customer.name,customer_phone:customer.phone,
+      from_address:pendingBook.from,to_address:pendingBook.to,
+      payment_method:pm,fare_sek:pendingBook.fare,customer_id:customer.id};
+    if(pendingBook.mode==='pre'&&pendingBook.date){
+      body.scheduled_at=pendingBook.date+'T'+pendingBook.time+':00';body.booking_type='pre';
+    }
+    const res=await fetch(API+'/bookings',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const data=await res.json();
+    if(data.booking){
+      myBookings.unshift(data.booking);saveBooks();
+      pendingBook=null;bookMode='now';
+      showToast(t('booked')+' '+data.booking.booking_ref);
+      histTab=0;showTab(1);
+    }
+  }catch(e){showToast(t('compfail'));showTab(0);}
+}
+
+function logout(){
+  localStorage.removeItem('waygo_customer');
+  localStorage.removeItem('waygo_token');
+  localStorage.removeItem('waygo_bookings');
+  customer=null;token=null;myBookings=[];
+  updateTopbar();showToast(t('loggedout'));
+  showScreen('sWelcome');
+}
+
+function tabRides(){
+  if(!customer){
+    return '<div class="page"><div class="gate">'+
+      '<div class="gate-icon">🔐</div>'+
+      '<div class="gate-title">'+t('login')+'</div>'+
+      '<div class="gate-sub">'+t('gate_rides')+'</div>'+
+      '<button class="btn btn-primary" onclick="openAuth(null)">'+t('login_cta')+'</button>'+
+      '</div></div>';
+  }
+  const active=myBookings.filter(function(b){return b.status==='pending'||b.status==='assigned';});
+  const past=myBookings.filter(function(b){return b.status==='cancelled'||b.status==='completed';});
+  const tab0Style=histTab===0
+    ?'flex:1;padding:14px 8px;font-size:14px;font-weight:700;color:#0d1b3e;border:none;background:white;border-bottom:3px solid #0d1b3e;margin-bottom:-2px;cursor:pointer'
+    :'flex:1;padding:14px 8px;font-size:14px;font-weight:500;color:#64748b;border:none;background:white;border-bottom:3px solid transparent;margin-bottom:-2px;cursor:pointer';
+  const tab1Style=histTab===1
+    ?'flex:1;padding:14px 8px;font-size:14px;font-weight:700;color:#0d1b3e;border:none;background:white;border-bottom:3px solid #0d1b3e;margin-bottom:-2px;cursor:pointer'
+    :'flex:1;padding:14px 8px;font-size:14px;font-weight:500;color:#64748b;border:none;background:white;border-bottom:3px solid transparent;margin-bottom:-2px;cursor:pointer';
+  const cards=histTab===0?renderActive(active):renderPast(past);
+  return '<div style="position:sticky;top:0;z-index:100;background:white;border-bottom:2px solid #eef1f8;display:flex">'+
+    '<button id="htab0" style="'+tab0Style+'" onclick="switchH(0)">'+t('active')+' ('+active.length+')</button>'+
+    '<button id="htab1" style="'+tab1Style+'" onclick="switchH(1)">'+t('history')+' ('+past.length+')</button>'+
+    '</div>'+
+    '<div class="page" id="hContent">'+cards+'</div>'+
+    '<div class="bspace"></div>';
+}
+
+function switchH(i){
+  histTab=i;
+  try{
+    const active=myBookings.filter(function(b){return b.status==='pending'||b.status==='assigned';});
+    const past=myBookings.filter(function(b){return b.status==='cancelled'||b.status==='completed';});
+    const t0=document.getElementById('htab0');
+    const t1=document.getElementById('htab1');
+    const content=document.getElementById('hContent');
+    if(!t0||!t1||!content)return;
+    const onStyle='flex:1;padding:14px 8px;font-size:14px;font-weight:700;color:#0d1b3e;border:none;background:white;border-bottom:3px solid #0d1b3e;margin-bottom:-2px;cursor:pointer';
+    const offStyle='flex:1;padding:14px 8px;font-size:14px;font-weight:500;color:#64748b;border:none;background:white;border-bottom:3px solid transparent;margin-bottom:-2px;cursor:pointer';
+    if(i===0){t0.style.cssText=onStyle;t1.style.cssText=offStyle;content.innerHTML=renderActive(active);}
+    else{t1.style.cssText=onStyle;t0.style.cssText=offStyle;content.innerHTML=renderPast(past);}
+  }catch(e){console.log('switchH error:',e);}
+}
+
+function getBadge(status){
+  if(status==='assigned')return '<span class="badge bg">'+t('assigned')+'</span>';
+  if(status==='pending')return '<span class="badge by">'+t('finding')+'</span>';
+  if(status==='cancelled')return '<span class="badge br">'+t('cancelled')+'</span>';
+  if(status==='completed')return '<span class="badge bgr">'+t('completed')+'</span>';
+  return '<span class="badge bgr">'+status+'</span>';
+}
+
+function minsAgo(ts){if(!ts)return 0;return Math.floor((Date.now()-new Date(ts).getTime())/60000);}
+
+function renderActive(books){
+  if(!books||books.length===0)return '<div style="text-align:center;padding:40px;color:#94a3b8;font-size:14px">'+t('noactive')+'</div>';
+  return books.map(function(b){
+    var mins=minsAgo(b.assigned_at);
+    var isLate=b.status==='assigned'&&mins>=10;
+    var hasSup=suppContacted[b.id];
+    var isPre=b.booking_type==='pre';
+    var map='';
+    if(b.status==='assigned'&&b.driver_name){
+      map='<div class="mmap"><div class="mmapbg"></div>'+
+        '<div class="mroad-h" style="top:35%"></div><div class="mroad-h" style="top:65%"></div>'+
+        '<div class="mroad-v" style="left:30%"></div><div class="mroad-v" style="left:65%"></div>'+
+        '<div class="dmark" id="dm-'+b.id+'" style="left:30%;top:30%">🚖</div>'+
+        '<div class="cmark" style="left:70%;top:65%">👤</div>'+
+        '<div class="meta">~'+Math.max(1,12-mins)+' min</div>'+
+        '<div class="mlive">🔴 Live</div></div>';
+      setTimeout(function(){animDrv(b.id);},100);
+    }
+    var cancelBtn='';
+    if(b.status==='pending'){
+      cancelBtn='<button class="btn btn-sm btn-danger" onclick="openCancel('+b.id+',\''+b.booking_ref+'\',\'pending\')">'+t('cancelride')+'</button>';
+    }else if(hasSup){
+      cancelBtn='<button class="btn btn-sm btn-danger" onclick="openCancel('+b.id+',\''+b.booking_ref+'\',\'assigned\')">'+t('cancelreq')+'</button>';
+    }else if(b.status==='assigned'){
+      cancelBtn='<button class="btn btn-sm btn-teal" onclick="openSupp('+b.id+',\''+b.booking_ref+'\')">'+t('consupport')+'</button>';
+    }
+    return '<div class="bcard '+(isLate?'late':'')+'">'+
+      '<div class="bcardtop"><span class="bref">'+b.booking_ref+'</span>'+
+      '<div style="display:flex;gap:4px;align-items:center">'+
+      (isPre?'<span class="badge bp">'+t('prebook')+'</span>':'')+
+      getBadge(b.status)+'</div></div>'+
+      (isPre&&b.scheduled_at?'<div style="font-size:11px;color:#7c3aed;font-weight:700;margin-bottom:4px">📅 '+new Date(b.scheduled_at).toLocaleString(lang==='sv'?'sv-SE':'en-GB',{dateStyle:'medium',timeStyle:'short'})+'</div>':'')+
+      '<div class="broute">📍 '+b.from_address+' → 🏁 '+b.to_address+'</div>'+
+      '<div class="bdetail">'+(b.driver_name?'🚖 '+b.driver_name+' · ':t('looking')+' · ')+b.fare_sek+' kr · '+b.payment_method+'</div>'+
+      (isLate?'<div class="ib ib-r">⏱ '+t('late')+' '+mins+' '+t('latemin')+'</div>':'')+
+      map+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">'+
+      (b.status==='assigned'?'<button class="btn btn-sm btn-primary" onclick="openSupp('+b.id+',\''+b.booking_ref+'\')">'+t('support')+'</button>':'')+
+      cancelBtn+'</div></div>';
+  }).join('');
+}
+
+function renderPast(books){
+  if(!books||books.length===0)return '<div style="text-align:center;padding:40px;color:#94a3b8;font-size:14px">'+t('nohistory')+'</div>';
+  return books.map(function(b){
+    var vat=Math.round(b.fare_sek*0.25/1.25);
+    var payStatus=b.status==='cancelled'?'':b.payment_status==='paid'?'✅ '+t('paid'):b.payment_status==='refunded'?'↩ Återbetald':'⏳ '+t('pending');
     return '<div class="bcard">'+
       '<div class="bcardtop"><span class="bref">'+b.booking_ref+'</span>'+getBadge(b.status)+'</div>'+
       '<div class="broute">📍 '+b.from_address+' → 🏁 '+b.to_address+'</div>'+
