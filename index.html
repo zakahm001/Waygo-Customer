@@ -609,8 +609,8 @@ function showTab(i){
 }
 
 function tabBook(){
-  const ha=customer?(customer.home_address||')':'');
-  const wa=customer?(customer.work_address||')':'');
+  const ha=customer?(customer.home_address||''):'';
+  const wa=customer?(customer.work_address||''):'';
   const isPre=bookMode==='pre';
   const today=new Date().toISOString().split('T')[0];
   const maxD=new Date();maxD.setDate(maxD.getDate()+30);
