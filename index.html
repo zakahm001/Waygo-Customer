@@ -9,7 +9,6 @@
     body{font-family:Arial,sans-serif;background:#eef1f8;color:#0d1b3e;min-height:100vh}
     .screen{display:none;min-height:100vh;flex-direction:column}
     .screen.active{display:flex}
-
     #sLoad{background:#0d1b3e;align-items:center;justify-content:center;gap:12px}
     .load-logo{font-size:64px;color:#fbbf24;animation:bounce 1s infinite}
     .load-name{color:#fbbf24;font-size:28px;font-weight:bold;letter-spacing:4px}
@@ -19,16 +18,29 @@
     .dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
     @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
     @keyframes dp{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
-
+    #sWelcome{background:#0d1b3e;align-items:center;justify-content:center;padding:30px 24px}
+    .w-logo{font-size:56px;color:#fbbf24;text-align:center}
+    .w-name{color:#fbbf24;font-size:30px;font-weight:bold;letter-spacing:4px;text-align:center;margin-bottom:6px}
+    .w-sub{color:#4a6090;font-size:14px;text-align:center;margin-bottom:40px}
+    .w-btn{width:100%;max-width:400px;padding:22px 20px;border-radius:14px;
+      font-weight:700;border:none;cursor:pointer;margin-bottom:16px;
+      text-align:left;display:flex;align-items:center;gap:16px}
+    .w-btn-now{background:white;color:#0d1b3e}
+    .w-btn-pre{background:#1a2f5e;color:white;border:2px solid #2a4080}
+    .w-btn-icon{font-size:28px;flex-shrink:0}
+    .w-btn-title{font-size:17px;font-weight:800}
+    .w-btn-sub{font-size:12px;opacity:.7;margin-top:2px}
+    .w-langs{display:flex;gap:10px;margin-top:20px}
+    .lang-btn{background:#1a2f5e;border:1px solid #2a4080;color:#94a3b8;
+      padding:8px 16px;border-radius:20px;font-size:13px;cursor:pointer;font-weight:600}
+    .lang-btn.active{background:#fbbf24;color:#0d1b3e;border-color:#fbbf24}
     .topbar{background:#0d1b3e;padding:14px 20px;display:flex;align-items:center;
-      justify-content:space-between;position:sticky;top:0;z-index:100;
-      border-bottom:1px solid #1a2f5e}
+      justify-content:space-between;position:sticky;top:0;z-index:100;border-bottom:1px solid #1a2f5e}
     .tlogo{color:#fbbf24;font-size:18px;font-weight:bold;cursor:pointer}
-    .topbar-right{display:flex;align-items:center;gap:8px}
+    .tright{display:flex;align-items:center;gap:8px}
     .tauth{color:#fbbf24;font-size:12px;cursor:pointer;background:#1a2f5e;
       padding:6px 12px;border-radius:8px;border:none;font-weight:700}
     .tlang{color:#4a6090;font-size:18px;cursor:pointer;background:none;border:none;padding:4px}
-
     .bnav{position:fixed;bottom:0;left:0;right:0;background:#0d1b3e;
       display:flex;justify-content:space-around;padding:10px 0;
       border-top:1px solid #1a2f5e;z-index:100}
@@ -37,14 +49,11 @@
     .bni.active{color:#fbbf24}
     .bni-icon{font-size:20px}
     .bspace{height:80px}
-
     .page{padding:20px;flex:1;overflow-y:auto}
-
     .card{background:white;border-radius:14px;padding:18px;margin-bottom:14px;
       border:1px solid #d0d7ea;box-shadow:0 1px 4px rgba(0,0,0,.06)}
     .stitle{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;
       letter-spacing:1.5px;margin-bottom:10px}
-
     .flabel{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;
       letter-spacing:1px;margin-bottom:5px;display:block}
     .finput{width:100%;padding:12px 14px;border-radius:10px;border:1px solid #d0d7ea;
@@ -53,16 +62,9 @@
     .finput:focus{border-color:#0d1b3e}
     .finput::placeholder{color:#94a3b8}
     select.finput{appearance:none}
-
     .dt-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-
-    .prebook-badge{background:#dbeafe;border:1px solid #93c5fd;border-radius:10px;
+    .pre-badge{background:#dbeafe;border:1px solid #93c5fd;border-radius:10px;
       padding:10px 14px;display:flex;align-items:center;gap:10px;margin-bottom:14px}
-    .prebook-badge-icon{font-size:20px}
-    .prebook-badge-text{font-size:13px;color:#1a56db;font-weight:600}
-    .prebook-badge-change{font-size:11px;color:#1a56db;text-decoration:underline;
-      cursor:pointer;margin-left:auto;white-space:nowrap}
-
     .btn{padding:14px;border-radius:10px;font-size:15px;font-weight:700;
       border:none;cursor:pointer;width:100%;text-align:center;transition:opacity .2s}
     .btn:disabled{opacity:.6;cursor:default}
@@ -72,7 +74,6 @@
     .btn-teal{background:#0d9488;color:white}
     .btn-gray{background:#f1f5f9;color:#64748b}
     .btn-sm{padding:8px 14px;font-size:12px;width:auto;border-radius:8px}
-
     .badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
     .b-green{background:#dcfce7;color:#15803d;border:1px solid #86efac}
     .b-yellow{background:#fef3c7;color:#d97706;border:1px solid #fde68a}
@@ -80,11 +81,9 @@
     .b-gray{background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0}
     .b-blue{background:#dbeafe;color:#1a56db;border:1px solid #93c5fd}
     .b-purple{background:#ede9fe;color:#7c3aed;border:1px solid #ddd6fe}
-
     .avatar{width:56px;height:56px;border-radius:50%;background:#0d1b3e;
       color:#fbbf24;display:flex;align-items:center;justify-content:center;
       font-size:22px;font-weight:bold;flex-shrink:0}
-
     .pgrid{display:grid;gap:8px;margin-bottom:14px}
     .pgrid-2{grid-template-columns:1fr 1fr}
     .pgrid-3{grid-template-columns:1fr 1fr 1fr}
@@ -92,12 +91,10 @@
       background:white;color:#64748b;font-size:12px;font-weight:700;
       cursor:pointer;text-align:center;transition:all .15s}
     .pbtn.active{border-color:#0d1b3e;background:#0d1b3e;color:#fbbf24}
-
     .farebox{background:#f0f3f9;border-radius:10px;padding:14px;
       display:flex;justify-content:space-between;align-items:center;
       border:1px solid #d0d7ea;margin-bottom:14px}
     .fare-amt{font-size:24px;font-weight:bold;color:#0d1b3e}
-
     .mmap{background:#d4e8d4;border-radius:10px;height:130px;position:relative;
       overflow:hidden;margin-bottom:10px;border:1px solid #b8d4b8}
     .mmap-bg{position:absolute;inset:0;
@@ -113,15 +110,13 @@
     .cmarker{position:absolute;width:22px;height:22px;border-radius:50%;
       background:#1a56db;border:3px solid white;display:flex;align-items:center;
       justify-content:center;font-size:10px;transform:translate(-50%,-50%)}
-    .meta{position:absolute;top:6px;right:6px;background:#0d1b3e;color:#fbbf24;
+    .map-eta{position:absolute;top:6px;right:6px;background:#0d1b3e;color:#fbbf24;
       border-radius:6px;padding:3px 8px;font-size:10px;font-weight:bold}
-    .mlive{position:absolute;bottom:6px;left:6px;background:rgba(255,255,255,.9);
+    .map-live{position:absolute;bottom:6px;left:6px;background:rgba(255,255,255,.9);
       border-radius:6px;padding:2px 7px;font-size:10px;color:#0d1b3e;font-weight:bold}
-
     .stars{display:flex;gap:6px;justify-content:center;margin:8px 0}
     .star{font-size:28px;cursor:pointer;color:#d0d7ea;transition:color .15s}
     .star.active{color:#fbbf24}
-
     .moverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);
       z-index:200;align-items:flex-end;justify-content:center}
     .moverlay.open{display:flex}
@@ -133,13 +128,11 @@
     .minfo strong{color:#0d1b3e}
     .mbtns{display:flex;gap:10px}
     .mbtn{flex:1;padding:14px;border-radius:10px;font-size:14px;font-weight:bold;border:none;cursor:pointer}
-
     .auth-toggle{display:flex;background:#f0f3f9;border-radius:10px;padding:4px;margin-bottom:18px}
     .at-btn{flex:1;padding:10px;border:none;background:none;border-radius:8px;
       font-size:14px;font-weight:600;color:#64748b;cursor:pointer}
     .at-btn.active{background:white;color:#0d1b3e;box-shadow:0 1px 4px rgba(0,0,0,.1)}
     .type-toggle{display:flex;background:#f0f3f9;border-radius:10px;padding:4px;margin-bottom:14px}
-
     .chatbox{height:180px;overflow-y:auto;padding:8px 0;
       display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
     .cmsg{display:flex;gap:8px;align-items:flex-end}
@@ -155,19 +148,16 @@
       background:#f8fafc;font-size:13px;color:#0d1b3e;outline:none}
     .csend{width:38px;height:38px;border-radius:50%;background:#0d1b3e;
       border:none;color:#fbbf24;font-size:15px;cursor:pointer;flex-shrink:0}
-
     .toast{position:fixed;bottom:90px;left:20px;right:20px;background:#0d1b3e;
       color:#fbbf24;padding:14px 20px;border-radius:12px;font-size:14px;
       font-weight:bold;text-align:center;z-index:500;display:none;
       box-shadow:0 4px 20px rgba(0,0,0,.3)}
     .toast.show{display:block}
-
     .infobox{border-radius:8px;padding:10px 12px;font-size:12px;margin-bottom:10px}
     .ib-yellow{background:#fef3c7;border:1px solid #fde68a;color:#d97706}
     .ib-blue{background:#dbeafe;border:1px solid #93c5fd;color:#1a56db}
     .ib-red{background:#fee2e2;border:1px solid #fecaca;color:#dc2626}
     .ib-green{background:#dcfce7;border:1px solid #86efac;color:#15803d}
-
     .profile-header{background:linear-gradient(135deg,#0d1b3e,#1a3066);
       padding:24px 20px;display:flex;align-items:center;gap:16px;color:white}
     .list-item{display:flex;justify-content:space-between;align-items:center;
@@ -176,43 +166,25 @@
     .li-label{font-size:14px;color:#0d1b3e}
     .li-value{font-size:13px;color:#64748b;max-width:55%;text-align:right}
     .li-arrow{color:#94a3b8;font-size:16px;margin-left:6px}
-
-    .hist-card{background:white;border-radius:12px;padding:14px;
-      margin-bottom:10px;border:1px solid #d0d7ea}
-    .hist-card.urgent{border-color:#f97316;box-shadow:0 0 0 3px #fed7aa}
-    .hist-top{display:flex;justify-content:space-between;margin-bottom:6px;align-items:center}
-    .hist-ref{font-size:12px;font-weight:700;color:#1a56db}
-    .hist-route{font-size:13px;font-weight:600;color:#0d1b3e;margin-bottom:4px}
-    .hist-detail{font-size:11px;color:#64748b;margin-bottom:8px}
-    .hist-footer{display:flex;justify-content:space-between;align-items:center}
-    .hist-fare{font-size:14px;font-weight:bold;color:#0d1b3e}
-    .hist-vat{font-size:10px;color:#94a3b8;margin-top:1px}
-
+    .hcard{background:white;border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid #d0d7ea}
+    .hcard.urgent{border-color:#f97316;box-shadow:0 0 0 3px #fed7aa}
+    .htop{display:flex;justify-content:space-between;margin-bottom:6px;align-items:center}
+    .href{font-size:12px;font-weight:700;color:#1a56db}
+    .hroute{font-size:13px;font-weight:600;color:#0d1b3e;margin-bottom:4px}
+    .hdetail{font-size:11px;color:#64748b;margin-bottom:8px}
+    .hfooter{display:flex;justify-content:space-between;align-items:center}
+    .hfare{font-size:14px;font-weight:bold;color:#0d1b3e}
+    .hvat{font-size:10px;color:#94a3b8;margin-top:1px}
     .tabbar{display:flex;background:white;border-bottom:1px solid #d0d7ea;padding:0 16px}
     .tab{flex:1;padding:13px 8px;text-align:center;font-size:13px;font-weight:500;
       color:#64748b;cursor:pointer;border-bottom:2.5px solid transparent;
-      user-select:none;-webkit-tap-highlight-color:transparent}
+      -webkit-tap-highlight-color:transparent;user-select:none}
     .tab.active{color:#0d1b3e;font-weight:700;border-bottom-color:#0d1b3e}
-
     .login-gate{background:linear-gradient(135deg,#0d1b3e,#1a3066);
       border-radius:12px;padding:24px;text-align:center;margin-bottom:14px;color:white}
     .gate-icon{font-size:36px;margin-bottom:8px}
     .gate-title{font-size:16px;font-weight:bold;margin-bottom:4px}
     .gate-sub{font-size:13px;color:#6b82b8;margin-bottom:16px}
-
-    #sWelcome{background:#0d1b3e;align-items:center;justify-content:center;padding:30px 24px}
-    .welcome-btn{width:100%;max-width:400px;padding:22px 20px;border-radius:14px;
-      font-size:17px;font-weight:700;border:none;cursor:pointer;margin-bottom:16px;
-      text-align:left;display:flex;align-items:center;gap:16px}
-    .welcome-btn-now{background:white;color:#0d1b3e}
-    .welcome-btn-pre{background:#1a2f5e;color:white;border:2px solid #2a4080}
-    .welcome-btn-icon{font-size:28px;flex-shrink:0}
-    .wbt-title{font-size:17px;font-weight:800}
-    .wbt-sub{font-size:12px;opacity:.7;margin-top:2px}
-    .welcome-lang{display:flex;gap:10px;margin-top:24px}
-    .lang-btn{background:#1a2f5e;border:1px solid #2a4080;color:#94a3b8;
-      padding:8px 16px;border-radius:20px;font-size:13px;cursor:pointer;font-weight:600}
-    .lang-btn.active{background:#fbbf24;color:#0d1b3e;border-color:#fbbf24}
   </style>
 </head>
 <body>
@@ -222,94 +194,71 @@
   <div class="load-logo">▲</div>
   <div class="load-name">WAYGO</div>
   <div class="load-sub" id="loadSub">Din taxi, direkt</div>
-  <div class="dots">
-    <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-  </div>
+  <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
 </div>
 
 <!-- WELCOME -->
 <div class="screen" id="sWelcome">
-  <div style="text-align:center;margin-bottom:24px">
-    <div style="font-size:56px;color:#fbbf24">▲</div>
-    <div style="font-size:28px;font-weight:bold;color:#fbbf24;letter-spacing:3px">WAYGO</div>
-    <div style="color:#4a6090;font-size:13px;margin-top:4px" id="welcomeSub">Sveriges snabbaste taxi</div>
-  </div>
-  <button class="welcome-btn welcome-btn-now" onclick="startBooking('now')">
-    <div class="welcome-btn-icon">🚖</div>
-    <div>
-      <div class="wbt-title" id="wbNowTitle">Jag behöver en bil nu</div>
-      <div class="wbt-sub" id="wbNowSub">Förare skickas direkt</div>
-    </div>
+  <div class="w-logo">▲</div>
+  <div class="w-name">WAYGO</div>
+  <div class="w-sub" id="wSub">Sveriges snabbaste taxi</div>
+  <button class="w-btn w-btn-now" onclick="startBook('now')">
+    <div class="w-btn-icon">🚖</div>
+    <div><div class="w-btn-title" id="wNow">Jag behöver en bil nu</div><div class="w-btn-sub" id="wNowS">Förare skickas direkt</div></div>
     <div style="margin-left:auto;font-size:20px;color:#94a3b8">›</div>
   </button>
-  <button class="welcome-btn welcome-btn-pre" onclick="startBooking('pre')">
-    <div class="welcome-btn-icon">📅</div>
-    <div>
-      <div class="wbt-title" id="wbPreTitle">Jag vill förboka</div>
-      <div class="wbt-sub" id="wbPreSub">Välj datum och tid</div>
-    </div>
+  <button class="w-btn w-btn-pre" onclick="startBook('pre')">
+    <div class="w-btn-icon">📅</div>
+    <div><div class="w-btn-title" id="wPre">Jag vill förboka</div><div class="w-btn-sub" id="wPreS">Välj datum och tid</div></div>
     <div style="margin-left:auto;font-size:20px;color:#6b82b8">›</div>
   </button>
-  <div class="welcome-lang">
-    <button class="lang-btn active" id="langSV" onclick="setLang('sv')">🇸🇪 Svenska</button>
-    <button class="lang-btn" id="langEN" onclick="setLang('en')">🇬🇧 English</button>
+  <div class="w-langs">
+    <button class="lang-btn active" id="lSV" onclick="setLang('sv')">🇸🇪 Svenska</button>
+    <button class="lang-btn" id="lEN" onclick="setLang('en')">🇬🇧 English</button>
   </div>
 </div>
 
 <!-- MAIN APP -->
 <div class="screen" id="sApp">
   <div class="topbar">
-    <div class="tlogo" onclick="goWelcome()">▲ WAYGO</div>
-    <div class="topbar-right">
-      <button class="tlang" onclick="toggleLang()" id="langToggle">🇬🇧</button>
-      <button class="tauth" id="topAuthBtn" onclick="topAuthAction()">Logga in</button>
+    <div class="tlogo" onclick="showScreen('sWelcome')">▲ WAYGO</div>
+    <div class="tright">
+      <button class="tlang" id="langBtn" onclick="toggleLang()">🇬🇧</button>
+      <button class="tauth" id="topBtn" onclick="topAction()">Logga in</button>
     </div>
   </div>
   <div style="flex:1;overflow-y:auto" id="tabContent"></div>
   <div class="bnav">
-    <button class="bni active" id="bni0" onclick="showTab(0)">
-      <span class="bni-icon">🚖</span><span id="nav0">Boka</span>
-    </button>
-    <button class="bni" id="bni1" onclick="showTab(1)">
-      <span class="bni-icon">📋</span><span id="nav1">Resor</span>
-    </button>
-    <button class="bni" id="bni2" onclick="showTab(2)">
-      <span class="bni-icon">👤</span><span id="nav2">Profil</span>
-    </button>
-    <button class="bni" id="bni3" onclick="showTab(3)">
-      <span class="bni-icon">💳</span><span id="nav3">Betalning</span>
-    </button>
+    <button class="bni active" id="bni0" onclick="showTab(0)"><span class="bni-icon">🚖</span><span id="nt0">Boka</span></button>
+    <button class="bni" id="bni1" onclick="showTab(1)"><span class="bni-icon">📋</span><span id="nt1">Resor</span></button>
+    <button class="bni" id="bni2" onclick="showTab(2)"><span class="bni-icon">👤</span><span id="nt2">Profil</span></button>
+    <button class="bni" id="bni3" onclick="showTab(3)"><span class="bni-icon">💳</span><span id="nt3">Betalning</span></button>
   </div>
 </div>
 
 <!-- AUTH MODAL -->
 <div class="moverlay" id="authModal">
   <div class="mbox">
-    <div id="pendingBookingSummary" style="display:none">
-      <div class="infobox ib-blue" id="pendingInfo"></div>
-    </div>
+    <div id="pendingSummary" style="display:none"><div class="infobox ib-blue" id="pendingInfo"></div></div>
     <div class="auth-toggle">
-      <button class="at-btn active" id="atLogin" onclick="switchAuth('login')">Logga in</button>
-      <button class="at-btn" id="atReg" onclick="switchAuth('register')">Ny kund</button>
+      <button class="at-btn active" id="atL" onclick="switchAuth('login')">Logga in</button>
+      <button class="at-btn" id="atR" onclick="switchAuth('reg')">Ny kund</button>
     </div>
-    <div id="authLoginForm">
+    <div id="loginForm">
       <div class="mtitle" id="loginTitle">Välkommen tillbaka</div>
       <label class="flabel">E-postadress</label>
-      <input class="finput" id="loginEmail" type="email" placeholder="din@email.se"/>
+      <input class="finput" id="lEmail" type="email" placeholder="din@email.se"/>
       <label class="flabel">Lösenord</label>
-      <input class="finput" id="loginPassword" type="password" placeholder="••••••••"
-             onkeydown="if(event.key==='Enter')doLogin()"/>
-      <div class="infobox ib-red" id="loginErr" style="display:none"></div>
-      <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">Logga in →</button>
-      <div style="text-align:center;margin-top:12px;font-size:12px;color:#94a3b8">
-        BankID &amp; SMS-kod kommer snart
-      </div>
+      <input class="finput" id="lPwd" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+      <div class="infobox ib-red" id="lErr" style="display:none"></div>
+      <button class="btn btn-primary" id="lBtn" onclick="doLogin()">Logga in →</button>
+      <div style="text-align:center;margin-top:10px;font-size:12px;color:#94a3b8">BankID &amp; SMS kommer snart</div>
     </div>
-    <div id="authRegForm" style="display:none">
+    <div id="regForm" style="display:none">
       <div class="mtitle">Skapa konto</div>
       <div class="type-toggle">
-        <button class="at-btn active" id="tPrivate" onclick="switchType('private')">👤 Privat</button>
-        <button class="at-btn" id="tBusiness" onclick="switchType('business')">🏢 Företag</button>
+        <button class="at-btn active" id="tPri" onclick="switchType('private')">👤 Privat</button>
+        <button class="at-btn" id="tBiz" onclick="switchType('business')">🏢 Företag</button>
       </div>
       <label class="flabel">Fullständigt namn *</label>
       <input class="finput" id="rName" type="text" placeholder="För- och efternamn"/>
@@ -318,27 +267,24 @@
       <label class="flabel">E-post *</label>
       <input class="finput" id="rEmail" type="email" placeholder="din@email.se"/>
       <label class="flabel">Lösenord * (minst 6 tecken)</label>
-      <input class="finput" id="rPassword" type="password" placeholder="••••••••"/>
-      <div id="bizFields" style="display:none">
+      <input class="finput" id="rPwd" type="password" placeholder="••••••••"/>
+      <div id="bizF" style="display:none">
         <label class="flabel">Organisationsnummer</label>
-        <input class="finput" id="rOrgNr" type="text" placeholder="556xxx-xxxx"/>
+        <input class="finput" id="rOrg" type="text" placeholder="556xxx-xxxx"/>
         <label class="flabel">Faktureringsadress</label>
-        <input class="finput" id="rBilling" type="text" placeholder="Gatuadress, stad"/>
+        <input class="finput" id="rBill" type="text" placeholder="Gatuadress, stad"/>
       </div>
       <label class="flabel">Betalningsmetod</label>
-      <select class="finput" id="rPayment">
-        <option value="swish">📱 Swish</option>
-        <option value="card">💳 Kort</option>
-      </select>
-      <div class="infobox ib-red" id="regErr" style="display:none"></div>
-      <button class="btn btn-primary" id="regBtn" onclick="doRegister()">Skapa konto →</button>
+      <select class="finput" id="rPay"><option value="swish">📱 Swish</option><option value="card">💳 Kort</option></select>
+      <div class="infobox ib-red" id="rErr" style="display:none"></div>
+      <button class="btn btn-primary" id="rBtn" onclick="doRegister()">Skapa konto →</button>
     </div>
     <button class="btn btn-gray" style="margin-top:10px" onclick="closeMod('authModal')">Avbryt</button>
   </div>
 </div>
 
 <!-- SUPPORT MODAL -->
-<div class="moverlay" id="supportModal" onclick="closeMIfOut(event,'supportModal')">
+<div class="moverlay" id="suppModal" onclick="closeMIfOut(event,'suppModal')">
   <div class="mbox">
     <div class="mtitle">📞 Kundtjänst · Waygo</div>
     <div class="minfo" id="suppInfo"></div>
@@ -347,14 +293,11 @@
     </a>
     <div class="chatbox" id="suppChat"></div>
     <div class="cinput-row">
-      <input class="cinput" id="suppInput" placeholder="Beskriv ditt problem..."
-             onkeydown="if(event.key==='Enter')sendSupp()"/>
+      <input class="cinput" id="suppInput" placeholder="Beskriv ditt problem..." onkeydown="if(event.key==='Enter')sendSupp()"/>
       <button class="csend" onclick="sendSupp()">➤</button>
     </div>
-    <div class="infobox ib-yellow" style="margin-top:10px">
-      ⚠️ Kontakta kundtjänst innan du avbokar en tilldelad resa.
-    </div>
-    <button class="btn btn-gray" style="margin-top:10px" onclick="closeMod('supportModal')">Stäng</button>
+    <div class="infobox ib-yellow" style="margin-top:10px">⚠️ Kontakta kundtjänst innan du avbokar en tilldelad resa.</div>
+    <button class="btn btn-gray" style="margin-top:10px" onclick="closeMod('suppModal')">Stäng</button>
   </div>
 </div>
 
@@ -376,14 +319,14 @@
   <div class="mbox">
     <div class="mtitle">⭐ Betygsätt din resa</div>
     <div class="minfo" id="rateInfo"></div>
-    <div class="stars" id="starRow">
+    <div class="stars">
       <span class="star" onclick="setStar(1)">★</span>
       <span class="star" onclick="setStar(2)">★</span>
       <span class="star" onclick="setStar(3)">★</span>
       <span class="star" onclick="setStar(4)">★</span>
       <span class="star" onclick="setStar(5)">★</span>
     </div>
-    <button class="btn btn-primary" onclick="submitRating()">Skicka betyg</button>
+    <button class="btn btn-primary" onclick="submitRate()">Skicka betyg</button>
     <button class="btn btn-gray" style="margin-top:8px" onclick="closeMod('rateModal')">Hoppa över</button>
   </div>
 </div>
@@ -405,202 +348,171 @@
 
 <script>
 const API = 'https://16.16.153.106.sslip.io';
-
 let customer = null;
 let token = null;
 let myBookings = [];
 let selectedPay = 'swish';
-let bookingMode = 'now';
-let preBookDate = '';
-let preBookTime = '';
-let currentTab = 0;
-let cancelBookingId = null;
-let cancelBookingRef = null;
-let rateBookingId = null;
-let currentRating = 0;
-let suppBookingId = null;
-let contactedSupport = {};
+let bookMode = 'now';
+let preDate = '';
+let preTime = '';
+let curTab = 0;
+let cancelId = null;
+let cancelRef = null;
+let rateId = null;
+let curRating = 0;
+let suppId = null;
+let suppContacted = {};
 let editField = null;
-let driverAnimations = {};
-let customerType = 'private';
-let pendingBooking = null;
-let lang = localStorage.getItem('waygo_lang') || 'sv';
+let driverAnims = {};
+let custType = 'private';
+let pendingBook = null;
+let lang = localStorage.getItem('wlang') || 'sv';
 
 // ── TRANSLATIONS ──
-const T = {
+const TR = {
   sv: {
-    loading_sub:'Din taxi, direkt',
-    welcome_sub:'Sveriges snabbaste taxi',
-    now_title:'Jag behöver en bil nu',
-    now_sub:'Förare skickas direkt',
-    pre_title:'Jag vill förboka',
-    pre_sub:'Välj datum och tid',
-    book:'Boka', rides:'Resor', profile:'Profil', payment:'Betalning',
-    login:'Logga in', register:'Ny kund', logout:'Logga ut',
-    book_title:'Boka din resa',
-    book_sub:'Fyll i resan — logga in vid bokning',
-    pickup:'Upphämtning', destination:'Destination',
-    payment_method:'Betalningsmetod',
-    estimated_cost:'Uppskattad kostnad', incl_vat:'Inkl. 25% moms',
-    book_btn:'Beställ Taxi →', continue_btn:'Fortsätt till bokning →',
-    invoice_private:'⚠️ Faktura är endast för företagskunder. Välj Swish eller Kort.',
-    invoice_biz:'ℹ️ Faktura skickas via e-post. 30 dagar netto.',
-    pre_change:'Ändra',
-    pre_date:'Datum', pre_time:'Tid',
-    fill_fields:'⚠️ Fyll i upphämtning och destination',
-    fill_datetime:'⚠️ Välj datum och tid för förbokning',
-    booked:'✓ Resa bokad!',
-    booking_failed:'⚠️ Kunde inte boka. Försök igen.',
-    no_active:'Inga aktiva resor',
-    no_history:'Ingen historik ännu',
+    sub:'Din taxi, direkt', wsub:'Sveriges snabbaste taxi',
+    wnow:'Jag behöver en bil nu', wnows:'Förare skickas direkt',
+    wpre:'Jag vill förboka', wpres:'Välj datum och tid',
+    book:'Boka', rides:'Resor', profile:'Profil', pay:'Betalning',
+    login:'Logga in', signup:'Ny kund', logout:'Logga ut',
+    btitle:'Boka din resa', bsub:'Fyll i resan — logga in vid bokning',
+    pickup:'Upphämtning', dest:'Destination', paymethod:'Betalningsmetod',
+    estcost:'Uppskattad kostnad', vat:'Inkl. 25% moms',
+    bookbtn:'Beställ Taxi →', contbtn:'Fortsätt till bokning →',
+    inv_priv:'⚠️ Faktura är endast för företagskunder. Välj Swish eller Kort.',
+    inv_biz:'ℹ️ Faktura skickas via e-post. 30 dagar netto.',
+    prechange:'Ändra', predate:'Datum', pretime:'Tid',
+    fillfields:'⚠️ Fyll i upphämtning och destination',
+    filldatetime:'⚠️ Välj datum och tid',
+    booked:'✓ Resa bokad!', bookfail:'⚠️ Kunde inte boka.',
+    noactive:'Inga aktiva resor', nohistory:'Ingen historik ännu',
     active:'Aktiva', history:'Historik',
-    assigned:'Tilldelad', pending_driver:'Väntar på förare',
+    assigned:'Tilldelad', finding:'Väntar på förare',
     cancelled:'Avbokad', completed:'Avslutad',
-    looking_driver:'Söker förare...',
-    driver_late:'Föraren är', mins_late:'minuter försenad',
-    support:'💬 Support',
-    contact_support:'📞 Kontakta support för att avboka',
-    cancel_ride:'Avboka', cancel_request:'Begär avbokning',
+    looking:'Söker förare...', late:'Föraren är', latemin:'minuter försenad',
+    support:'💬 Support', consupport:'📞 Kontakta support för att avboka',
+    cancelride:'Avboka', cancelreq:'Begär avbokning',
     rate:'⭐ Betygsätt', receipt:'📄 Kvitto',
-    login_gate_rides:'Logga in för att se din reshistorik',
-    login_gate_profile:'Logga in för att hantera ditt konto',
-    login_gate_payment:'Logga in för att se dina betalningar',
+    gate_rides:'Logga in för att se din reshistorik',
+    gate_profile:'Logga in för att hantera ditt konto',
+    gate_pay:'Logga in för att se dina betalningar',
     login_cta:'Logga in / Skapa konto',
     home:'🏠 Hem', work:'🏢 Jobb', other:'📍 Annan',
-    from_home:'🏠 Från hem', from_work:'🏢 Från jobb',
-    to_home:'🏠 Till hem', to_work:'💼 Till jobb',
-    personal_info:'Personuppgifter',
-    name:'Namn', phone:'Telefon', email:'E-post',
-    org_nr:'Org.nummer', billing_addr:'Faktureringsadress',
-    payment_settings:'Betalningsinställningar',
-    pref_payment:'Föredragen betalning',
-    account:'Konto', change_pwd:'🔒 Ändra lösenord',
-    total_paid:'Totalt betalt', paid:'Betalda', pending_pay:'Väntar',
-    vat_note:'varav moms',
+    fhome:'🏠 Från hem', fwork:'🏢 Från jobb',
+    thome:'🏠 Till hem', twork:'💼 Till jobb',
+    personal:'Personuppgifter', name:'Namn', phone:'Telefon', email:'E-post',
+    org:'Org.nummer', billing:'Faktureringsadress',
+    paysettings:'Betalningsinställningar', prefpay:'Föredragen betalning',
+    account:'Konto', changepwd:'🔒 Ändra lösenord',
+    totalpaid:'Totalt betalt', paid:'Betalda', pending:'Väntar', vatof:'varav moms',
     cancel_confirm:'Bekräfta avbokning',
-    cancel_no_fee:'✓ Ingen avgift tillkommer vid avbokning innan förare tilldelats.',
-    cancel_central:'⚠️ Avbokningsförfrågan skickas till central för godkännande.',
-    cancel_direct:'Avboka direkt', cancel_req:'Begär avbokning',
-    save:'Spara', cancel:'Avbryt',
-    saved:'✓ Sparat!', save_failed:'⚠️ Kunde inte spara',
-    welcome_back:'Välkommen tillbaka',
-    fill_required:'⚠️ Fyll i alla obligatoriska fält',
-    pwd_short:'⚠️ Lösenordet måste vara minst 6 tecken',
-    server_error:'⚠️ Kunde inte ansluta till servern',
-    logging_in:'Loggar in...', creating:'Skapar konto...',
-    login_btn:'Logga in →', reg_btn:'Skapa konto →',
-    welcome_msg:'✓ Välkommen,',
-    account_created:'✓ Konto skapat! Välkommen,',
-    logged_out:'Du har loggats ut',
-    completing:'⏳ Slutför din bokning...',
-    complete_fail:'⚠️ Kunde inte slutföra bokning.',
-    driver_assigned:'🚖 Förare tilldelad:',
-    customer_since:'Waygo Sverige · Kund sedan',
-    pwd_coming:'Lösenordsändring kommer snart',
+    cancel_nofee:'✓ Ingen avgift vid avbokning innan förare tilldelats.',
+    cancel_cen:'⚠️ Avbokningsförfrågan skickas till central.',
+    save:'Spara', cancel:'Avbryt', saved:'✓ Sparat!', savefail:'⚠️ Kunde inte spara',
+    welcome:'✓ Välkommen,', created:'✓ Konto skapat! Välkommen,',
+    loggedout:'Du har loggats ut', completing:'⏳ Slutför bokning...',
+    compfail:'⚠️ Kunde inte slutföra.', driverassigned:'🚖 Förare tilldelad:',
+    since:'Waygo Sverige · Kund sedan', pwdcoming:'Lösenordsändring kommer snart',
+    fill:'⚠️ Fyll i alla fält', short:'⚠️ Lösenord minst 6 tecken',
+    servererr:'⚠️ Kunde inte ansluta', loggingin:'Loggar in...', creating:'Skapar konto...',
+    loginbtn:'Logga in →', regbtn:'Skapa konto →',
+    pendtitle:'🚖 Din resa är klar att bokas!',
+    pendcomplete:'Logga in för att slutföra bokningen.',
+    prebadge:'📅 Förbokning', prebook:'Förbokning',
     swish:'📱 Swish', card:'💳 Kort', invoice:'📄 Faktura',
-    prebook_label:'Förbokning',
-    pre_booked_badge:'📅 Förbokning',
-    pending_booking_title:'🚖 Din resa är klar att bokas!',
-    pending_complete:'Logga in för att slutföra bokningen.',
+    cancelyes:'Avboka', cancelno:'Avbryt',
+    ratesend:'Skicka betyg', rateskip:'Hoppa över',
+    ratethanks:'⭐ Tack för ditt betyg!', ratechoose:'⚠️ Välj ett betyg',
+    supp_greeting:'Hej! Hur kan vi hjälpa dig med bokning',
+    supp_reply:'Tack! Vi återkommer inom 2 minuter.',
+    cancelfail:'⚠️ Kunde inte avboka',
   },
   en: {
-    loading_sub:'Your taxi, directly',
-    welcome_sub:"Sweden's fastest taxi",
-    now_title:'I need a car right away',
-    now_sub:'Driver dispatched immediately',
-    pre_title:'I want to pre-book',
-    pre_sub:'Choose date and time',
-    book:'Book', rides:'Rides', profile:'Profile', payment:'Payment',
-    login:'Log in', register:'Sign up', logout:'Log out',
-    book_title:'Book your ride',
-    book_sub:'Fill in your trip — log in to complete',
-    pickup:'Pickup', destination:'Destination',
-    payment_method:'Payment method',
-    estimated_cost:'Estimated cost', incl_vat:'Incl. 25% VAT',
-    book_btn:'Order Taxi →', continue_btn:'Continue to booking →',
-    invoice_private:'⚠️ Invoice is only for business customers. Choose Swish or Card.',
-    invoice_biz:'ℹ️ Invoice sent by email. Net 30 days.',
-    pre_change:'Change',
-    pre_date:'Date', pre_time:'Time',
-    fill_fields:'⚠️ Please fill in pickup and destination',
-    fill_datetime:'⚠️ Please select date and time',
-    booked:'✓ Ride booked!',
-    booking_failed:'⚠️ Could not book. Please try again.',
-    no_active:'No active rides',
-    no_history:'No history yet',
+    sub:'Your taxi, directly', wsub:"Sweden's fastest taxi",
+    wnow:'I need a car right away', wnows:'Driver dispatched immediately',
+    wpre:'I want to pre-book', wpres:'Choose date and time',
+    book:'Book', rides:'Rides', profile:'Profile', pay:'Payment',
+    login:'Log in', signup:'Sign up', logout:'Log out',
+    btitle:'Book your ride', bsub:'Fill in your trip — log in to complete',
+    pickup:'Pickup', dest:'Destination', paymethod:'Payment method',
+    estcost:'Estimated cost', vat:'Incl. 25% VAT',
+    bookbtn:'Order Taxi →', contbtn:'Continue to booking →',
+    inv_priv:'⚠️ Invoice is only for business customers. Choose Swish or Card.',
+    inv_biz:'ℹ️ Invoice sent by email. Net 30 days.',
+    prechange:'Change', predate:'Date', pretime:'Time',
+    fillfields:'⚠️ Please fill in pickup and destination',
+    filldatetime:'⚠️ Please select date and time',
+    booked:'✓ Ride booked!', bookfail:'⚠️ Could not book.',
+    noactive:'No active rides', nohistory:'No history yet',
     active:'Active', history:'History',
-    assigned:'Assigned', pending_driver:'Finding driver',
+    assigned:'Assigned', finding:'Finding driver',
     cancelled:'Cancelled', completed:'Completed',
-    looking_driver:'Finding driver...',
-    driver_late:'Driver is', mins_late:'minutes late',
-    support:'💬 Support',
-    contact_support:'📞 Contact support to cancel',
-    cancel_ride:'Cancel', cancel_request:'Request cancellation',
+    looking:'Finding driver...', late:'Driver is', latemin:'minutes late',
+    support:'💬 Support', consupport:'📞 Contact support to cancel',
+    cancelride:'Cancel', cancelreq:'Request cancellation',
     rate:'⭐ Rate', receipt:'📄 Receipt',
-    login_gate_rides:'Log in to see your ride history',
-    login_gate_profile:'Log in to manage your account',
-    login_gate_payment:'Log in to see your payments',
+    gate_rides:'Log in to see your ride history',
+    gate_profile:'Log in to manage your account',
+    gate_pay:'Log in to see your payments',
     login_cta:'Log in / Create account',
     home:'🏠 Home', work:'🏢 Work', other:'📍 Other',
-    from_home:'🏠 From home', from_work:'🏢 From work',
-    to_home:'🏠 To home', to_work:'💼 To work',
-    personal_info:'Personal information',
-    name:'Name', phone:'Phone', email:'Email',
-    org_nr:'Org. number', billing_addr:'Billing address',
-    payment_settings:'Payment settings',
-    pref_payment:'Preferred payment',
-    account:'Account', change_pwd:'🔒 Change password',
-    total_paid:'Total paid', paid:'Paid', pending_pay:'Pending',
-    vat_note:'incl. VAT',
+    fhome:'🏠 From home', fwork:'🏢 From work',
+    thome:'🏠 To home', twork:'💼 To work',
+    personal:'Personal information', name:'Name', phone:'Phone', email:'Email',
+    org:'Org. number', billing:'Billing address',
+    paysettings:'Payment settings', prefpay:'Preferred payment',
+    account:'Account', changepwd:'🔒 Change password',
+    totalpaid:'Total paid', paid:'Paid', pending:'Pending', vatof:'incl. VAT',
     cancel_confirm:'Confirm cancellation',
-    cancel_no_fee:'✓ No charge for cancellation before driver is assigned.',
-    cancel_central:'⚠️ Cancellation request sent to dispatch.',
-    cancel_direct:'Cancel directly', cancel_req:'Request cancellation',
-    save:'Save', cancel:'Cancel',
-    saved:'✓ Saved!', save_failed:'⚠️ Could not save',
-    welcome_back:'Welcome back',
-    fill_required:'⚠️ Please fill in all required fields',
-    pwd_short:'⚠️ Password must be at least 6 characters',
-    server_error:'⚠️ Could not connect to server',
-    logging_in:'Logging in...', creating:'Creating account...',
-    login_btn:'Log in →', reg_btn:'Create account →',
-    welcome_msg:'✓ Welcome,',
-    account_created:'✓ Account created! Welcome,',
-    logged_out:'You have been logged out',
-    completing:'⏳ Completing your booking...',
-    complete_fail:'⚠️ Could not complete booking.',
-    driver_assigned:'🚖 Driver assigned:',
-    customer_since:'Waygo Sweden · Customer since',
-    pwd_coming:'Password change coming soon',
+    cancel_nofee:'✓ No charge for cancellation before driver is assigned.',
+    cancel_cen:'⚠️ Cancellation request sent to dispatch.',
+    save:'Save', cancel:'Cancel', saved:'✓ Saved!', savefail:'⚠️ Could not save',
+    welcome:'✓ Welcome,', created:'✓ Account created! Welcome,',
+    loggedout:'You have been logged out', completing:'⏳ Completing booking...',
+    compfail:'⚠️ Could not complete.', driverassigned:'🚖 Driver assigned:',
+    since:'Waygo Sweden · Customer since', pwdcoming:'Password change coming soon',
+    fill:'⚠️ Please fill in all fields', short:'⚠️ Password min. 6 characters',
+    servererr:'⚠️ Could not connect', loggingin:'Logging in...', creating:'Creating account...',
+    loginbtn:'Log in →', regbtn:'Create account →',
+    pendtitle:'🚖 Your ride is ready to book!',
+    pendcomplete:'Log in to complete your booking.',
+    prebadge:'📅 Pre-booking', prebook:'Pre-booking',
     swish:'📱 Swish', card:'💳 Card', invoice:'📄 Invoice',
-    prebook_label:'Pre-booking',
-    pre_booked_badge:'📅 Pre-booking',
-    pending_booking_title:'🚖 Your ride is ready to book!',
-    pending_complete:'Log in to complete your booking.',
+    cancelyes:'Cancel ride', cancelno:'No',
+    ratesend:'Submit rating', rateskip:'Skip',
+    ratethanks:'⭐ Thank you for your rating!', ratechoose:'⚠️ Please choose a rating',
+    supp_greeting:'Hi! How can we help you with booking',
+    supp_reply:'Thank you! We will get back to you within 2 minutes.',
+    cancelfail:'⚠️ Could not cancel',
   }
 };
 
-function t(k){ return (T[lang]&&T[lang][k]) || (T.sv[k]) || k; }
+function t(k) {
+  try { return TR[lang][k] || TR.sv[k] || k; } catch(e) { return k; }
+}
 
 // ── LANGUAGE ──
 function setLang(l) {
   lang = l;
-  localStorage.setItem('waygo_lang', l);
-  document.getElementById('langSV').classList.toggle('active', l==='sv');
-  document.getElementById('langEN').classList.toggle('active', l==='en');
-  document.getElementById('loadSub').textContent = t('loading_sub');
-  document.getElementById('welcomeSub').textContent = t('welcome_sub');
-  document.getElementById('wbNowTitle').textContent = t('now_title');
-  document.getElementById('wbNowSub').textContent = t('now_sub');
-  document.getElementById('wbPreTitle').textContent = t('pre_title');
-  document.getElementById('wbPreSub').textContent = t('pre_sub');
+  localStorage.setItem('wlang', l);
+  try {
+    document.getElementById('lSV').classList.toggle('active', l==='sv');
+    document.getElementById('lEN').classList.toggle('active', l==='en');
+    document.getElementById('loadSub').textContent = t('sub');
+    document.getElementById('wSub').textContent = t('wsub');
+    document.getElementById('wNow').textContent = t('wnow');
+    document.getElementById('wNowS').textContent = t('wnows');
+    document.getElementById('wPre').textContent = t('wpre');
+    document.getElementById('wPreS').textContent = t('wpres');
+    document.getElementById('langBtn').textContent = l==='sv'?'🇬🇧':'🇸🇪';
+  } catch(e){}
 }
 
 function toggleLang() {
   setLang(lang==='sv'?'en':'sv');
-  document.getElementById('langToggle').textContent = lang==='sv'?'🇬🇧':'🇸🇪';
-  if(currentTab!==undefined) showTab(currentTab);
   updateTopbar();
+  if (curTab!==undefined) showTab(curTab);
 }
 
 // ── INIT ──
@@ -608,27 +520,25 @@ window.addEventListener('load', () => {
   setLang(lang);
   setTimeout(() => {
     try {
+      const sc = localStorage.getItem('waygo_support');
+      if (sc) suppContacted = JSON.parse(sc);
       const saved = localStorage.getItem('waygo_customer');
-      const savedToken = localStorage.getItem('waygo_token');
-      const savedSupport = localStorage.getItem('waygo_support');
-      if (savedSupport) {
-        try { contactedSupport = JSON.parse(savedSupport); } catch(e){}
-      }
-      if (saved && savedToken) {
+      const savedTok = localStorage.getItem('waygo_token');
+      if (saved && savedTok) {
         customer = JSON.parse(saved);
-        token = savedToken;
+        token = savedTok;
         selectedPay = customer.preferred_payment || 'swish';
-        if (!isBusinessCustomer() && selectedPay==='invoice') selectedPay='swish';
+        if (!isBiz() && selectedPay==='invoice') selectedPay='swish';
         updateTopbar();
-        loadMyBookings();
-        tryConnectSocket();
+        loadBookings();
+        trySocket();
         showScreen('sApp');
         showTab(0);
       } else {
         showScreen('sWelcome');
       }
     } catch(e) {
-      console.log('Init error:', e);
+      console.log('init error:', e);
       showScreen('sWelcome');
     }
   }, 2000);
@@ -639,38 +549,34 @@ function showScreen(id) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     const el = document.getElementById(id);
     if (el) el.classList.add('active');
-  } catch(e) { console.log('showScreen error:', e); }
+  } catch(e){}
 }
 
 function showToast(msg) {
   try {
-    const toast = document.getElementById('toast');
-    toast.textContent = msg;
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3500);
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 3500);
   } catch(e){}
 }
 
 function closeMod(id) {
-  try {
-    document.getElementById(id).classList.remove('open');
-  } catch(e){}
+  try { document.getElementById(id).classList.remove('open'); } catch(e){}
 }
 
 function closeMIfOut(e, id) {
   if (e.target === document.getElementById(id)) closeMod(id);
 }
 
-function goWelcome() { showScreen('sWelcome'); }
-
 // ── WELCOME ──
-function startBooking(mode) {
-  bookingMode = mode;
+function startBook(mode) {
+  bookMode = mode;
   if (mode==='pre') {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate()+1);
-    preBookDate = tomorrow.toISOString().split('T')[0];
-    preBookTime = '09:00';
+    const t2 = new Date();
+    t2.setDate(t2.getDate()+1);
+    preDate = t2.toISOString().split('T')[0];
+    preTime = '09:00';
   }
   showScreen('sApp');
   showTab(0);
@@ -679,377 +585,290 @@ function startBooking(mode) {
 // ── TOPBAR ──
 function updateTopbar() {
   try {
-    const btn = document.getElementById('topAuthBtn');
-    document.getElementById('langToggle').textContent = lang==='sv'?'🇬🇧':'🇸🇪';
+    const btn = document.getElementById('topBtn');
+    document.getElementById('langBtn').textContent = lang==='sv'?'🇬🇧':'🇸🇪';
     if (customer) {
       btn.textContent = customer.name.split(' ')[0];
       btn.onclick = () => showTab(2);
     } else {
       btn.textContent = t('login');
-      btn.onclick = topAuthAction;
+      btn.onclick = topAction;
     }
-    const n = ['nav0','nav1','nav2','nav3'];
-    const keys = ['book','rides','profile','payment'];
-    n.forEach((id,i) => {
+    ['nt0','nt1','nt2','nt3'].forEach((id,i) => {
       const el = document.getElementById(id);
-      if (el) el.textContent = t(keys[i]);
+      if (el) el.textContent = t(['book','rides','profile','pay'][i]);
     });
   } catch(e){}
 }
 
-function topAuthAction() {
+function topAction() {
   if (customer) { showTab(2); return; }
-  openAuthModal(null);
+  openAuth(null);
 }
 
-// ── PAYMENT LOGIC ──
-function isBusinessCustomer() {
-  return customer && customer.customer_type === 'business';
-}
+// ── BUSINESS CHECK ──
+function isBiz() { return customer && customer.customer_type==='business'; }
 
-function getPaymentOptions() {
-  const opts = [
-    { id:'swish', label:t('swish') },
-    { id:'card', label:t('card') },
-  ];
-  if (isBusinessCustomer()) opts.push({ id:'invoice', label:t('invoice') });
-  return opts;
-}
-
-function renderPaymentGrid() {
-  const opts = getPaymentOptions();
-  const gridClass = opts.length===3 ? 'pgrid-3' : 'pgrid-2';
-  if (!isBusinessCustomer() && selectedPay==='invoice') selectedPay='swish';
-  let html = '<div class="pgrid ' + gridClass + '">';
+// ── PAYMENT GRID ──
+function payGrid() {
+  if (!isBiz() && selectedPay==='invoice') selectedPay='swish';
+  const opts = [{id:'swish',l:t('swish')},{id:'card',l:t('card')}];
+  if (isBiz()) opts.push({id:'invoice',l:t('invoice')});
+  let h = '<div class="pgrid ' + (opts.length===3?'pgrid-3':'pgrid-2') + '">';
   opts.forEach(o => {
-    html += '<button class="pbtn ' + (selectedPay===o.id?'active':'') +
-      '" onclick="selPay(\'' + o.id + '\')">' + o.label + '</button>';
+    h += '<button class="pbtn '+(selectedPay===o.id?'active':'')+'" onclick="setPay(\''+o.id+'\')">'+o.l+'</button>';
   });
-  html += '</div>';
-  if (selectedPay==='invoice' && isBusinessCustomer()) {
-    html += '<div class="infobox ib-yellow">' + t('invoice_biz') + '</div>';
-  }
-  return html;
+  h += '</div>';
+  if (selectedPay==='invoice' && isBiz()) h += '<div class="infobox ib-yellow">'+t('inv_biz')+'</div>';
+  return h;
 }
 
-function selPay(method) {
-  if (method==='invoice' && !isBusinessCustomer()) {
-    showToast(t('invoice_private')); return;
-  }
-  selectedPay = method;
+function setPay(m) {
+  if (m==='invoice' && !isBiz()) { showToast(t('inv_priv')); return; }
+  selectedPay = m;
   showTab(0);
 }
 
 // ── TABS ──
 function showTab(i) {
   try {
-    currentTab = i;
+    curTab = i;
     document.querySelectorAll('.bni').forEach((b,j) => b.classList.toggle('active', i===j));
-    const content = document.getElementById('tabContent');
-    if (!content) return;
-    if (i===0) content.innerHTML = renderBookTab();
-    else if (i===1) { content.innerHTML = renderHistoryTab(); loadMyBookings(); }
-    else if (i===2) content.innerHTML = renderProfileTab();
-    else if (i===3) content.innerHTML = renderPaymentTab();
+    const c = document.getElementById('tabContent');
+    if (!c) return;
+    if (i===0) c.innerHTML = tabBook();
+    else if (i===1) { c.innerHTML = tabRides(); loadBookings(); }
+    else if (i===2) c.innerHTML = tabProfile();
+    else if (i===3) c.innerHTML = tabPay();
     updateTopbar();
   } catch(e) { console.log('showTab error:', e); }
 }
 
 // ── BOOK TAB ──
-function renderBookTab() {
-  const homeAddr = customer?.home_address || '';
-  const workAddr = customer?.work_address || '';
-  const isPreBook = bookingMode==='pre';
+function tabBook() {
+  const ha = customer?.home_address||'';
+  const wa = customer?.work_address||'';
+  const isPre = bookMode==='pre';
   const today = new Date().toISOString().split('T')[0];
-  const maxDate = new Date();
-  maxDate.setDate(maxDate.getDate()+30);
-  const maxDateStr = maxDate.toISOString().split('T')[0];
-
+  const max = new Date(); max.setDate(max.getDate()+30);
+  const maxS = max.toISOString().split('T')[0];
   return `
     <div style="background:linear-gradient(135deg,#0d1b3e,#1a3066);padding:20px 20px 24px;color:white">
-      <div style="font-size:20px;font-weight:bold;margin-bottom:4px">${t('book_title')}</div>
-      <div style="color:#6b82b8;font-size:13px">${t('book_sub')}</div>
+      <div style="font-size:20px;font-weight:bold;margin-bottom:4px">${t('btitle')}</div>
+      <div style="color:#6b82b8;font-size:13px">${t('bsub')}</div>
     </div>
     <div class="page">
       <div class="card">
-        ${isPreBook ? `
-        <div class="prebook-badge">
-          <div class="prebook-badge-icon">📅</div>
-          <div class="prebook-badge-text">${t('pre_booked_badge')}</div>
-          <div class="prebook-badge-change" onclick="bookingMode='now';showTab(0)">${t('pre_change')} →</div>
+        ${isPre?`
+        <div class="pre-badge">
+          <div style="font-size:20px">📅</div>
+          <div style="font-size:13px;color:#1a56db;font-weight:600">${t('prebadge')}</div>
+          <div style="font-size:11px;color:#1a56db;text-decoration:underline;cursor:pointer;margin-left:auto" onclick="bookMode='now';showTab(0)">${t('prechange')} →</div>
         </div>
         <div class="dt-row">
           <div>
-            <label class="flabel">${t('pre_date')}</label>
-            <input class="finput" type="date" id="preDate"
-              value="${preBookDate}" min="${today}" max="${maxDateStr}"
-              onchange="preBookDate=this.value" style="margin-bottom:0"/>
+            <label class="flabel">${t('predate')}</label>
+            <input class="finput" type="date" id="pDate" value="${preDate}" min="${today}" max="${maxS}" onchange="preDate=this.value" style="margin-bottom:0"/>
           </div>
           <div>
-            <label class="flabel">${t('pre_time')}</label>
-            <input class="finput" type="time" id="preTime"
-              value="${preBookTime}"
-              onchange="preBookTime=this.value" style="margin-bottom:0"/>
+            <label class="flabel">${t('pretime')}</label>
+            <input class="finput" type="time" id="pTime" value="${preTime}" onchange="preTime=this.value" style="margin-bottom:0"/>
           </div>
-        </div>` : ''}
-
+        </div>`:''}
         <label class="flabel">📍 ${t('pickup')}</label>
-        <input class="finput" id="bFrom" type="text"
-               placeholder="${t('pickup')}..." value="${homeAddr}"/>
-
-        <label class="flabel">🏁 ${t('destination')}</label>
-        <input class="finput" id="bTo" type="text"
-               placeholder="${t('destination')}?" onblur="calcFare()"/>
-
-        ${customer && (homeAddr||workAddr) ? `
+        <input class="finput" id="bFrom" type="text" placeholder="${t('pickup')}..." value="${ha}"/>
+        <label class="flabel">🏁 ${t('dest')}</label>
+        <input class="finput" id="bTo" type="text" placeholder="${t('dest')}?" onblur="calcFare()"/>
+        ${customer&&(ha||wa)?`
         <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-          ${homeAddr ? '<button class="btn btn-sm btn-gray" onclick="setAddr(\'bFrom\',\''+homeAddr+'\')">'+t('from_home')+'</button>' : ''}
-          ${workAddr ? '<button class="btn btn-sm btn-gray" onclick="setAddr(\'bFrom\',\''+workAddr+'\')">'+t('from_work')+'</button>' : ''}
-          ${homeAddr ? '<button class="btn btn-sm btn-gray" onclick="setAddr(\'bTo\',\''+homeAddr+'\')">'+t('to_home')+'</button>' : ''}
-          ${workAddr ? '<button class="btn btn-sm btn-gray" onclick="setAddr(\'bTo\',\''+workAddr+'\')">'+t('to_work')+'</button>' : ''}
-        </div>` : ''}
-
-        <label class="flabel">💳 ${t('payment_method')}</label>
-        ${renderPaymentGrid()}
-
+          ${ha?'<button class="btn btn-sm btn-gray" onclick="sAddr(\'bFrom\',\''+ha+'\')">'+t('fhome')+'</button>':''}
+          ${wa?'<button class="btn btn-sm btn-gray" onclick="sAddr(\'bFrom\',\''+wa+'\')">'+t('fwork')+'</button>':''}
+          ${ha?'<button class="btn btn-sm btn-gray" onclick="sAddr(\'bTo\',\''+ha+'\')">'+t('thome')+'</button>':''}
+          ${wa?'<button class="btn btn-sm btn-gray" onclick="sAddr(\'bTo\',\''+wa+'\')">'+t('twork')+'</button>':''}
+        </div>`:''}
+        <label class="flabel">💳 ${t('paymethod')}</label>
+        ${payGrid()}
         <div class="farebox">
           <div>
-            <div style="font-size:13px;color:#64748b">${t('estimated_cost')}</div>
-            <div style="font-size:11px;color:#94a3b8;margin-top:2px">${t('incl_vat')}</div>
+            <div style="font-size:13px;color:#64748b">${t('estcost')}</div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:2px">${t('vat')}</div>
           </div>
           <div class="fare-amt" id="fareAmt">150 kr</div>
         </div>
-
-        ${!customer ? `
-        <div class="infobox ib-blue" style="margin-bottom:14px">
-          ℹ️ ${lang==='sv'?'Logga in för att slutföra bokningen.':'Log in to complete your booking.'}
-        </div>` : ''}
-
-        <button class="btn btn-primary" id="bookBtn" onclick="tryBook()">
-          ${customer ? t('book_btn') : t('continue_btn')}
-        </button>
+        ${!customer?'<div class="infobox ib-blue" style="margin-bottom:14px">ℹ️ '+(lang==='sv'?'Logga in för att slutföra bokningen.':'Log in to complete your booking.')+'</div>':''}
+        <button class="btn btn-primary" id="bookBtn" onclick="tryBook()">${customer?t('bookbtn'):t('contbtn')}</button>
       </div>
       <div class="bspace"></div>
     </div>`;
 }
 
-function setAddr(fieldId, addr) {
-  const el = document.getElementById(fieldId);
-  if (el) el.value = addr;
-}
+function sAddr(id, v) { const e=document.getElementById(id); if(e) e.value=v; }
 
 function calcFare() {
-  const to = document.getElementById('bTo')?.value;
-  const from = document.getElementById('bFrom')?.value;
-  if (from && to) {
-    const fare = Math.floor(Math.random()*300)+100;
-    const el = document.getElementById('fareAmt');
-    if (el) el.textContent = fare + ' kr';
-  }
+  const f=document.getElementById('bFrom')?.value;
+  const t2=document.getElementById('bTo')?.value;
+  if (f&&t2) { const e=document.getElementById('fareAmt'); if(e) e.textContent=Math.floor(Math.random()*300+100)+' kr'; }
 }
 
 function tryBook() {
-  const from = document.getElementById('bFrom')?.value.trim();
-  const to = document.getElementById('bTo')?.value.trim();
-  if (!from || !to) { showToast(t('fill_fields')); return; }
-  if (bookingMode==='pre' && (!preBookDate||!preBookTime)) {
-    showToast(t('fill_datetime')); return;
-  }
-  const fareText = document.getElementById('fareAmt')?.textContent || '150 kr';
-  const fare = parseInt(fareText) || 150;
+  const from=document.getElementById('bFrom')?.value.trim();
+  const to=document.getElementById('bTo')?.value.trim();
+  if (!from||!to) { showToast(t('fillfields')); return; }
+  if (bookMode==='pre'&&(!preDate||!preTime)) { showToast(t('filldatetime')); return; }
+  const fare=parseInt(document.getElementById('fareAmt')?.textContent)||150;
   if (!customer) {
-    openAuthModal({
-      from, to, pay: selectedPay, fare,
-      payLabel: selectedPay==='swish'?t('swish'):selectedPay==='card'?t('card'):t('invoice'),
-      mode: bookingMode, date: preBookDate, time: preBookTime
-    });
+    openAuth({from,to,pay:selectedPay,fare,
+      pl:selectedPay==='swish'?t('swish'):selectedPay==='card'?t('card'):t('invoice'),
+      mode:bookMode,date:preDate,time:preTime});
     return;
   }
-  if (selectedPay==='invoice' && !isBusinessCustomer()) {
-    showToast(t('invoice_private')); selectedPay='swish'; showTab(0); return;
-  }
-  doBook(from, to, fare);
+  if (selectedPay==='invoice'&&!isBiz()) { showToast(t('inv_priv')); selectedPay='swish'; showTab(0); return; }
+  doBook(from,to,fare);
 }
 
-async function doBook(from, to, fare) {
-  const btn = document.getElementById('bookBtn');
+async function doBook(from,to,fare) {
+  const btn=document.getElementById('bookBtn');
   if (btn) { btn.textContent='...'; btn.disabled=true; }
   try {
-    const body = {
-      customer_name: customer.name,
-      customer_phone: customer.phone,
-      from_address: from,
-      to_address: to,
-      payment_method: selectedPay,
-      fare_sek: fare
-    };
-    if (bookingMode==='pre' && preBookDate && preBookTime) {
-      body.scheduled_at = preBookDate + 'T' + preBookTime + ':00';
-      body.booking_type = 'pre';
+    const body={customer_name:customer.name,customer_phone:customer.phone,
+      from_address:from,to_address:to,payment_method:selectedPay,fare_sek:fare};
+    if (bookMode==='pre'&&preDate&&preTime) {
+      body.scheduled_at=preDate+'T'+preTime+':00';
+      body.booking_type='pre';
     }
-    const res = await fetch(API+'/bookings', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(body)
-    });
-    const data = await res.json();
+    const res=await fetch(API+'/bookings',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const data=await res.json();
     if (data.booking) {
       myBookings.unshift(data.booking);
-      saveBookings();
-      bookingMode='now';
+      saveBooks();
+      bookMode='now';
       showToast(t('booked')+' '+data.booking.booking_ref);
       showTab(1);
     }
-  } catch(err) { showToast(t('booking_failed')); }
-  if (btn) { btn.textContent=t('book_btn'); btn.disabled=false; }
+  } catch(e) { showToast(t('bookfail')); }
+  if (btn) { btn.textContent=t('bookbtn'); btn.disabled=false; }
 }
 
-// ── AUTH MODAL ──
-function openAuthModal(pendingData) {
-  pendingBooking = pendingData;
-  const summary = document.getElementById('pendingBookingSummary');
-  const info = document.getElementById('pendingInfo');
-  if (pendingData) {
-    summary.style.display='';
-    const dateStr = pendingData.mode==='pre'&&pendingData.date
-      ? '<br>📅 '+pendingData.date+' kl. '+pendingData.time : '';
-    info.innerHTML = '<strong>'+t('pending_booking_title')+'</strong><br>'+
-      '📍 '+pendingData.from+' → 🏁 '+pendingData.to+'<br>'+
-      '💳 '+pendingData.payLabel+' · '+pendingData.fare+' kr'+dateStr+'<br>'+
-      '<strong>'+t('pending_complete')+'</strong>';
-  } else { summary.style.display='none'; }
-  document.getElementById('atLogin').textContent = t('login');
-  document.getElementById('atReg').textContent = t('register');
-  document.getElementById('loginBtn').textContent = t('login_btn');
-  document.getElementById('regBtn').textContent = t('reg_btn');
+// ── AUTH ──
+function openAuth(pending) {
+  pendingBook = pending;
+  const sum=document.getElementById('pendingSummary');
+  const inf=document.getElementById('pendingInfo');
+  if (pending) {
+    sum.style.display='';
+    const ds=pending.mode==='pre'&&pending.date?'<br>📅 '+pending.date+' kl. '+pending.time:'';
+    inf.innerHTML='<strong>'+t('pendtitle')+'</strong><br>📍 '+pending.from+' → 🏁 '+pending.to+'<br>💳 '+pending.pl+' · '+pending.fare+' kr'+ds+'<br><strong>'+t('pendcomplete')+'</strong>';
+  } else { sum.style.display='none'; }
+  document.getElementById('atL').textContent=t('login');
+  document.getElementById('atR').textContent=t('signup');
+  document.getElementById('lBtn').textContent=t('loginbtn');
+  document.getElementById('rBtn').textContent=t('regbtn');
   switchAuth('login');
   document.getElementById('authModal').classList.add('open');
 }
 
-function switchAuth(mode) {
-  document.getElementById('authLoginForm').style.display = mode==='login'?'':'none';
-  document.getElementById('authRegForm').style.display = mode==='register'?'':'none';
-  document.getElementById('atLogin').classList.toggle('active', mode==='login');
-  document.getElementById('atReg').classList.toggle('active', mode==='register');
+function switchAuth(m) {
+  document.getElementById('loginForm').style.display=m==='login'?'':'none';
+  document.getElementById('regForm').style.display=m==='reg'?'':'none';
+  document.getElementById('atL').classList.toggle('active',m==='login');
+  document.getElementById('atR').classList.toggle('active',m==='reg');
 }
 
-function switchType(type) {
-  customerType = type;
-  document.getElementById('tPrivate').classList.toggle('active', type==='private');
-  document.getElementById('tBusiness').classList.toggle('active', type==='business');
-  document.getElementById('bizFields').style.display = type==='business'?'':'none';
-  const sel = document.getElementById('rPayment');
-  if (sel) {
-    sel.innerHTML = '<option value="swish">'+t('swish')+'</option>'+
-      '<option value="card">'+t('card')+'</option>'+
-      (type==='business'?'<option value="invoice">'+t('invoice')+'</option>':'');
-  }
+function switchType(tp) {
+  custType=tp;
+  document.getElementById('tPri').classList.toggle('active',tp==='private');
+  document.getElementById('tBiz').classList.toggle('active',tp==='business');
+  document.getElementById('bizF').style.display=tp==='business'?'':'none';
+  const sel=document.getElementById('rPay');
+  if (sel) sel.innerHTML='<option value="swish">'+t('swish')+'</option><option value="card">'+t('card')+'</option>'+(tp==='business'?'<option value="invoice">'+t('invoice')+'</option>':'');
 }
 
 async function doLogin() {
-  const email = document.getElementById('loginEmail').value.trim();
-  const password = document.getElementById('loginPassword').value.trim();
-  const errEl = document.getElementById('loginErr');
-  const btn = document.getElementById('loginBtn');
-  errEl.style.display='none';
-  if (!email||!password) { errEl.textContent='⚠️ '+t('fill_required'); errEl.style.display=''; return; }
-  btn.textContent=t('logging_in'); btn.disabled=true;
+  const email=document.getElementById('lEmail').value.trim();
+  const pwd=document.getElementById('lPwd').value.trim();
+  const err=document.getElementById('lErr');
+  const btn=document.getElementById('lBtn');
+  err.style.display='none';
+  if (!email||!pwd) { err.textContent=t('fill'); err.style.display=''; return; }
+  btn.textContent=t('loggingin'); btn.disabled=true;
   try {
-    const res = await fetch(API+'/customers/login', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({email, password})
-    });
-    const data = await res.json();
+    const res=await fetch(API+'/customers/login',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pwd})});
+    const data=await res.json();
     if (data.token) {
       customer=data.customer; token=data.token;
-      localStorage.setItem('waygo_customer', JSON.stringify(customer));
-      localStorage.setItem('waygo_token', token);
+      localStorage.setItem('waygo_customer',JSON.stringify(customer));
+      localStorage.setItem('waygo_token',token);
       closeMod('authModal');
-      updateTopbar();
-      selectedPay = customer.preferred_payment||'swish';
-      if (!isBusinessCustomer()&&selectedPay==='invoice') selectedPay='swish';
-      loadMyBookings(); tryConnectSocket();
-      showToast(t('welcome_msg')+' '+customer.name.split(' ')[0]+'!');
-      if (pendingBooking) await completePendingBooking();
+      selectedPay=customer.preferred_payment||'swish';
+      if (!isBiz()&&selectedPay==='invoice') selectedPay='swish';
+      updateTopbar(); loadBookings(); trySocket();
+      showToast(t('welcome')+' '+customer.name.split(' ')[0]+'!');
+      if (pendingBook) await completePending();
       else showTab(0);
-    } else {
-      errEl.textContent='⚠️'+(data.error||t('server_error'));
-      errEl.style.display='';
-    }
-  } catch(err) { errEl.textContent=t('server_error'); errEl.style.display=''; }
-  btn.textContent=t('login_btn'); btn.disabled=false;
+    } else { err.textContent='⚠️ '+(data.error||t('servererr')); err.style.display=''; }
+  } catch(e) { err.textContent=t('servererr'); err.style.display=''; }
+  btn.textContent=t('loginbtn'); btn.disabled=false;
 }
 
 async function doRegister() {
   const name=document.getElementById('rName').value.trim();
   const phone=document.getElementById('rPhone').value.trim();
   const email=document.getElementById('rEmail').value.trim();
-  const password=document.getElementById('rPassword').value.trim();
-  const errEl=document.getElementById('regErr');
-  const btn=document.getElementById('regBtn');
-  errEl.style.display='none';
-  if (!name||!phone||!email||!password) { errEl.textContent=t('fill_required'); errEl.style.display=''; return; }
-  if (password.length<6) { errEl.textContent=t('pwd_short'); errEl.style.display=''; return; }
+  const pwd=document.getElementById('rPwd').value.trim();
+  const err=document.getElementById('rErr');
+  const btn=document.getElementById('rBtn');
+  err.style.display='none';
+  if (!name||!phone||!email||!pwd) { err.textContent=t('fill'); err.style.display=''; return; }
+  if (pwd.length<6) { err.textContent=t('short'); err.style.display=''; return; }
   btn.textContent=t('creating'); btn.disabled=true;
   try {
-    const payVal=document.getElementById('rPayment').value;
-    const finalPay=(payVal==='invoice'&&customerType!=='business')?'swish':payVal;
-    const res=await fetch(API+'/customers/register', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        name, phone, email, password,
-        customer_type: customerType,
-        preferred_payment: finalPay,
-        org_number: document.getElementById('rOrgNr')?.value||null,
-        billing_address: document.getElementById('rBilling')?.value||null,
-      })
-    });
+    const pv=document.getElementById('rPay').value;
+    const fp=(pv==='invoice'&&custType!=='business')?'swish':pv;
+    const res=await fetch(API+'/customers/register',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,phone,email,password:pwd,customer_type:custType,
+        preferred_payment:fp,org_number:document.getElementById('rOrg')?.value||null,
+        billing_address:document.getElementById('rBill')?.value||null})});
     const data=await res.json();
     if (data.token) {
       customer=data.customer; token=data.token;
-      localStorage.setItem('waygo_customer', JSON.stringify(customer));
-      localStorage.setItem('waygo_token', token);
-      closeMod('authModal'); updateTopbar();
-      selectedPay=customer.preferred_payment||'swish';
-      tryConnectSocket();
-      showToast(t('account_created')+' '+customer.name.split(' ')[0]+'!');
-      if (pendingBooking) await completePendingBooking();
+      localStorage.setItem('waygo_customer',JSON.stringify(customer));
+      localStorage.setItem('waygo_token',token);
+      closeMod('authModal'); selectedPay=customer.preferred_payment||'swish';
+      updateTopbar(); trySocket();
+      showToast(t('created')+' '+customer.name.split(' ')[0]+'!');
+      if (pendingBook) await completePending();
       else showTab(0);
-    } else {
-      errEl.textContent='⚠️'+(data.error||t('server_error'));
-      errEl.style.display='';
-    }
-  } catch(err) { errEl.textContent=t('server_error'); errEl.style.display=''; }
-  btn.textContent=t('reg_btn'); btn.disabled=false;
+    } else { err.textContent='⚠️ '+(data.error||t('servererr')); err.style.display=''; }
+  } catch(e) { err.textContent=t('servererr'); err.style.display=''; }
+  btn.textContent=t('regbtn'); btn.disabled=false;
 }
 
-async function completePendingBooking() {
-  if (!pendingBooking||!customer) return;
-  let payMethod=pendingBooking.pay;
-  if (payMethod==='invoice'&&!isBusinessCustomer()) { payMethod='swish'; showToast(t('invoice_private')); }
+async function completePending() {
+  if (!pendingBook||!customer) return;
+  let pm=pendingBook.pay;
+  if (pm==='invoice'&&!isBiz()) { pm='swish'; showToast(t('inv_priv')); }
   showToast(t('completing'));
   try {
-    const body={
-      customer_name:customer.name, customer_phone:customer.phone,
-      from_address:pendingBooking.from, to_address:pendingBooking.to,
-      payment_method:payMethod, fare_sek:pendingBooking.fare
-    };
-    if (pendingBooking.mode==='pre'&&pendingBooking.date) {
-      body.scheduled_at=pendingBooking.date+'T'+pendingBooking.time+':00';
+    const body={customer_name:customer.name,customer_phone:customer.phone,
+      from_address:pendingBook.from,to_address:pendingBook.to,
+      payment_method:pm,fare_sek:pendingBook.fare};
+    if (pendingBook.mode==='pre'&&pendingBook.date) {
+      body.scheduled_at=pendingBook.date+'T'+pendingBook.time+':00';
       body.booking_type='pre';
     }
-    const res=await fetch(API+'/bookings', {
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(body)
-    });
+    const res=await fetch(API+'/bookings',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const data=await res.json();
     if (data.booking) {
-      myBookings.unshift(data.booking); saveBookings();
-      pendingBooking=null; bookingMode='now';
+      myBookings.unshift(data.booking); saveBooks();
+      pendingBook=null; bookMode='now';
       showToast(t('booked')+' '+data.booking.booking_ref);
       showTab(1);
     }
-  } catch(err) { showToast(t('complete_fail')); showTab(0); }
+  } catch(e) { showToast(t('compfail')); showTab(0); }
 }
 
 function logout() {
@@ -1058,70 +877,51 @@ function logout() {
   localStorage.removeItem('waygo_bookings');
   customer=null; token=null; myBookings=[];
   updateTopbar();
-  showToast(t('logged_out'));
+  showToast(t('loggedout'));
   showScreen('sWelcome');
 }
 
-// ── HISTORY TAB — FIXED ──
-function renderHistoryTab() {
-  if (!customer) return loginGate(t('login_gate_rides'));
-  const active = myBookings.filter(b => ['pending','assigned'].includes(b.status));
-  const past = myBookings.filter(b => ['cancelled','completed'].includes(b.status));
+// ── RIDES TAB — FIXED ──
+function tabRides() {
+  if (!customer) return gate(t('gate_rides'));
+  const active=myBookings.filter(b=>['pending','assigned'].includes(b.status));
+  const past=myBookings.filter(b=>['cancelled','completed'].includes(b.status));
   return `
-    <div class="tabbar" id="htabbar">
-      <div class="tab active" id="htab0"
-           onclick="switchHTab(0)">
-        ${t('active')} (${active.length})
-      </div>
-      <div class="tab" id="htab1"
-           onclick="switchHTab(1)">
-        ${t('history')} (${past.length})
-      </div>
+    <div class="tabbar">
+      <div class="tab active" id="htab0" onclick="switchH(0)">${t('active')} (${active.length})</div>
+      <div class="tab" id="htab1" onclick="switchH(1)">${t('history')} (${past.length})</div>
     </div>
-    <div id="histContent" class="page">
-      ${renderActiveBookings(active)}
-    </div>
+    <div id="hContent" class="page">${activeCards(active)}</div>
     <div class="bspace"></div>`;
 }
 
-function switchHTab(i) {
+function switchH(i) {
   try {
-    const tab0 = document.getElementById('htab0');
-    const tab1 = document.getElementById('htab1');
-    const content = document.getElementById('histContent');
-    if (!tab0 || !tab1 || !content) return;
-
-    if (i === 0) {
-      tab0.classList.add('active');
-      tab1.classList.remove('active');
-      const active = myBookings.filter(b =>
-        ['pending','assigned'].includes(b.status));
-      content.innerHTML = renderActiveBookings(active);
-    } else {
-      tab1.classList.add('active');
-      tab0.classList.remove('active');
-      const past = myBookings.filter(b =>
-        ['cancelled','completed'].includes(b.status));
-      content.innerHTML = renderPastBookings(past);
-    }
-  } catch(e) {
-    console.log('switchHTab error:', e);
-  }
+    const t0=document.getElementById('htab0');
+    const t1=document.getElementById('htab1');
+    const c=document.getElementById('hContent');
+    if (!t0||!t1||!c) return;
+    t0.classList.toggle('active', i===0);
+    t1.classList.toggle('active', i===1);
+    const active=myBookings.filter(b=>['pending','assigned'].includes(b.status));
+    const past=myBookings.filter(b=>['cancelled','completed'].includes(b.status));
+    c.innerHTML = i===0 ? activeCards(active) : pastCards(past);
+  } catch(e) { console.log('switchH error:', e); }
 }
 
-function loginGate(subtitle) {
+function gate(sub) {
   return `<div class="page"><div class="login-gate">
     <div class="gate-icon">🔐</div>
     <div class="gate-title">${t('login')}</div>
-    <div class="gate-sub">${subtitle}</div>
-    <button class="btn btn-primary" onclick="openAuthModal(null)">${t('login_cta')}</button>
+    <div class="gate-sub">${sub}</div>
+    <button class="btn btn-primary" onclick="openAuth(null)">${t('login_cta')}</button>
   </div></div>`;
 }
 
-function getBadge(status) {
-  const m = {
+function badge(status) {
+  const m={
     assigned:'<span class="badge b-green">'+t('assigned')+'</span>',
-    pending:'<span class="badge b-yellow">'+t('pending_driver')+'</span>',
+    pending:'<span class="badge b-yellow">'+t('finding')+'</span>',
     cancelled:'<span class="badge b-red">'+t('cancelled')+'</span>',
     completed:'<span class="badge b-gray">'+t('completed')+'</span>',
   };
@@ -1133,49 +933,47 @@ function minsAgo(ts) {
   return Math.floor((Date.now()-new Date(ts).getTime())/60000);
 }
 
-function renderActiveBookings(bookings) {
-  if (bookings.length===0) return '<div style="text-align:center;padding:40px;color:#94a3b8;font-size:13px">'+t('no_active')+'</div>';
-  return bookings.map(b => {
+function activeCards(books) {
+  if (!books.length) return '<div style="text-align:center;padding:40px;color:#94a3b8;font-size:13px">'+t('noactive')+'</div>';
+  return books.map(b => {
     const mins=minsAgo(b.assigned_at);
     const isLate=b.status==='assigned'&&mins>=10;
-    const hasSupp=contactedSupport[b.id];
+    const hasSup=suppContacted[b.id];
     const isPre=b.booking_type==='pre';
-    let mapHtml='';
+    let map='';
     if (b.status==='assigned'&&b.driver_name) {
-      mapHtml=`<div class="mmap">
+      map=`<div class="mmap">
         <div class="mmap-bg"></div>
-        <div class="mroad-h" style="top:35%"></div>
-        <div class="mroad-h" style="top:65%"></div>
-        <div class="mroad-v" style="left:30%"></div>
-        <div class="mroad-v" style="left:65%"></div>
+        <div class="mroad-h" style="top:35%"></div><div class="mroad-h" style="top:65%"></div>
+        <div class="mroad-v" style="left:30%"></div><div class="mroad-v" style="left:65%"></div>
         <div class="dmarker" id="dm-${b.id}" style="left:30%;top:30%">🚖</div>
         <div class="cmarker" style="left:70%;top:65%">👤</div>
-        <div class="meta">~${Math.max(1,12-mins)} min</div>
-        <div class="mlive">🔴 Live</div>
+        <div class="map-eta">~${Math.max(1,12-mins)} min</div>
+        <div class="map-live">🔴 Live</div>
       </div>`;
-      setTimeout(()=>animateDriver(b.id),100);
+      setTimeout(()=>animDrv(b.id),100);
     }
     let cancelBtn='';
     if (b.status==='pending') {
-      cancelBtn='<button class="btn btn-sm btn-danger" onclick="openCancel('+b.id+',\''+b.booking_ref+'\',\'pending\')">'+t('cancel_ride')+'</button>';
-    } else if (hasSupp) {
-      cancelBtn='<button class="btn btn-sm btn-danger" onclick="openCancel('+b.id+',\''+b.booking_ref+'\',\'assigned\')">'+t('cancel_request')+'</button>';
+      cancelBtn='<button class="btn btn-sm btn-danger" onclick="openCancel('+b.id+',\''+b.booking_ref+'\',\'pending\')">'+t('cancelride')+'</button>';
+    } else if (hasSup) {
+      cancelBtn='<button class="btn btn-sm btn-danger" onclick="openCancel('+b.id+',\''+b.booking_ref+'\',\'assigned\')">'+t('cancelreq')+'</button>';
     } else if (b.status==='assigned') {
-      cancelBtn='<button class="btn btn-sm btn-teal" onclick="openSupp('+b.id+',\''+b.booking_ref+'\')">'+t('contact_support')+'</button>';
+      cancelBtn='<button class="btn btn-sm btn-teal" onclick="openSupp('+b.id+',\''+b.booking_ref+'\')">'+t('consupport')+'</button>';
     }
-    return `<div class="hist-card ${isLate?'urgent':''}">
-      <div class="hist-top">
-        <span class="hist-ref">${b.booking_ref}</span>
-        <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
-          ${isPre?'<span class="badge b-purple">'+t('prebook_label')+'</span>':''}
-          ${getBadge(b.status)}
+    return `<div class="hcard ${isLate?'urgent':''}">
+      <div class="htop">
+        <span class="href">${b.booking_ref}</span>
+        <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+          ${isPre?'<span class="badge b-purple">'+t('prebook')+'</span>':''}
+          ${badge(b.status)}
         </div>
       </div>
       ${isPre&&b.scheduled_at?'<div style="font-size:11px;color:#7c3aed;font-weight:700;margin-bottom:4px">📅 '+new Date(b.scheduled_at).toLocaleString(lang==='sv'?'sv-SE':'en-GB',{dateStyle:'medium',timeStyle:'short'})+'</div>':''}
-      <div class="hist-route">📍 ${b.from_address} → 🏁 ${b.to_address}</div>
-      <div class="hist-detail">${b.driver_name?'🚖 '+b.driver_name+' · ':t('looking_driver')+' · '}${b.fare_sek} kr · ${b.payment_method}</div>
-      ${isLate?'<div class="infobox ib-red">⏱ '+t('driver_late')+' '+mins+' '+t('mins_late')+'</div>':''}
-      ${mapHtml}
+      <div class="hroute">📍 ${b.from_address} → 🏁 ${b.to_address}</div>
+      <div class="hdetail">${b.driver_name?'🚖 '+b.driver_name+' · ':t('looking')+' · '}${b.fare_sek} kr · ${b.payment_method}</div>
+      ${isLate?'<div class="infobox ib-red">⏱ '+t('late')+' '+mins+' '+t('latemin')+'</div>':''}
+      ${map}
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
         ${b.status==='assigned'?'<button class="btn btn-sm btn-primary" onclick="openSupp('+b.id+',\''+b.booking_ref+'\')">'+t('support')+'</button>':''}
         ${cancelBtn}
@@ -1184,23 +982,17 @@ function renderActiveBookings(bookings) {
   }).join('');
 }
 
-function renderPastBookings(bookings) {
-  if (bookings.length===0) return '<div style="text-align:center;padding:40px;color:#94a3b8;font-size:13px">'+t('no_history')+'</div>';
-  return bookings.map(b => {
+function pastCards(books) {
+  if (!books.length) return '<div style="text-align:center;padding:40px;color:#94a3b8;font-size:13px">'+t('nohistory')+'</div>';
+  return books.map(b => {
     const vat=Math.round(b.fare_sek*0.25/1.25);
-    const ps={pending:'⏳ '+t('pending_pay'),paid:'✅ '+t('paid'),refunded:'↩ Återbetald'};
-    return `<div class="hist-card">
-      <div class="hist-top">
-        <span class="hist-ref">${b.booking_ref}</span>
-        ${getBadge(b.status)}
-      </div>
-      <div class="hist-route">📍 ${b.from_address} → 🏁 ${b.to_address}</div>
-      <div class="hist-detail">${b.driver_name?'🚖 '+b.driver_name+' · ':''}${new Date(b.created_at).toLocaleDateString(lang==='sv'?'sv-SE':'en-GB')}</div>
-      <div class="hist-footer">
-        <div>
-          <div class="hist-fare">${b.fare_sek} kr</div>
-          <div class="hist-vat">${t('vat_note')} ${vat} kr · ${b.payment_method}</div>
-        </div>
+    const ps={pending:'⏳ '+t('pending'),paid:'✅ '+t('paid'),refunded:'↩ Återbetald'};
+    return `<div class="hcard">
+      <div class="htop"><span class="href">${b.booking_ref}</span>${badge(b.status)}</div>
+      <div class="hroute">📍 ${b.from_address} → 🏁 ${b.to_address}</div>
+      <div class="hdetail">${b.driver_name?'🚖 '+b.driver_name+' · ':''}${new Date(b.created_at).toLocaleDateString(lang==='sv'?'sv-SE':'en-GB')}</div>
+      <div class="hfooter">
+        <div><div class="hfare">${b.fare_sek} kr</div><div class="hvat">${t('vatof')} ${vat} kr · ${b.payment_method}</div></div>
         <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
           <span style="font-size:11px;color:#64748b">${ps[b.payment_status]||'—'}</span>
           ${b.status==='completed'&&b.driver_id?'<button class="btn btn-sm btn-primary" onclick="openRate('+b.id+',\''+b.booking_ref+'\',\''+(b.driver_name||'')+'\')">' +t('rate')+'</button>':''}
@@ -1212,21 +1004,21 @@ function renderPastBookings(bookings) {
 }
 
 // ── PROFILE TAB ──
-function renderProfileTab() {
-  if (!customer) return loginGate(t('login_gate_profile'));
-  const typeLabel=customer.customer_type==='business'?'🏢 '+(lang==='sv'?'Företagskund':'Business'):'👤 '+(lang==='sv'?'Privatperson':'Private');
+function tabProfile() {
+  if (!customer) return gate(t('gate_profile'));
+  const tl=customer.customer_type==='business'?'🏢 '+(lang==='sv'?'Företagskund':'Business'):'👤 '+(lang==='sv'?'Privatperson':'Private');
   return `
     <div class="profile-header">
       <div class="avatar">${customer.profile_initial||customer.name?.charAt(0)||'?'}</div>
       <div>
         <div style="font-size:18px;font-weight:bold">${customer.name}</div>
         <div style="color:#6b82b8;font-size:13px;margin-top:2px">${customer.email}</div>
-        <div style="margin-top:6px"><span class="badge b-blue">${typeLabel}</span></div>
+        <div style="margin-top:6px"><span class="badge b-blue">${tl}</span></div>
       </div>
     </div>
     <div class="page">
       <div class="card">
-        <div class="stitle">${t('personal_info')}</div>
+        <div class="stitle">${t('personal')}</div>
         <div class="list-item" onclick="openEdit('name','${t('name')}','${customer.name}')">
           <span class="li-label">${t('name')}</span>
           <div style="display:flex;align-items:center"><span class="li-value">${customer.name}</span><span class="li-arrow">›</span></div>
@@ -1237,8 +1029,8 @@ function renderProfileTab() {
         </div>
         <div class="list-item"><span class="li-label">${t('email')}</span><span class="li-value">${customer.email}</span></div>
         ${customer.customer_type==='business'?`
-        <div class="list-item" onclick="openEdit('org_number','Org.nummer','${customer.org_number||''}')">
-          <span class="li-label">${t('org_nr')}</span>
+        <div class="list-item" onclick="openEdit('org_number','${t('org')}','${customer.org_number||''}')">
+          <span class="li-label">${t('org')}</span>
           <div style="display:flex;align-items:center"><span class="li-value">${customer.org_number||'—'}</span><span class="li-arrow">›</span></div>
         </div>`:''}
       </div>
@@ -1258,16 +1050,16 @@ function renderProfileTab() {
         </div>
       </div>
       <div class="card">
-        <div class="stitle">${t('payment_settings')}</div>
-        <div class="list-item" onclick="openEdit('preferred_payment','${t('pref_payment')}','${customer.preferred_payment||'swish'}')">
-          <span class="li-label">${t('pref_payment')}</span>
+        <div class="stitle">${t('paysettings')}</div>
+        <div class="list-item" onclick="openEdit('preferred_payment','${t('prefpay')}','${customer.preferred_payment||'swish'}')">
+          <span class="li-label">${t('prefpay')}</span>
           <div style="display:flex;align-items:center"><span class="li-value">${customer.preferred_payment||'swish'}</span><span class="li-arrow">›</span></div>
         </div>
       </div>
       <div class="card">
         <div class="stitle">${t('account')}</div>
-        <div class="list-item" onclick="showToast('${t('pwd_coming')}')">
-          <span class="li-label">${t('change_pwd')}</span><span class="li-arrow">›</span>
+        <div class="list-item" onclick="showToast('${t('pwdcoming')}')">
+          <span class="li-label">${t('changepwd')}</span><span class="li-arrow">›</span>
         </div>
         <div class="list-item" onclick="logout()">
           <span class="li-label" style="color:#dc2626">${t('logout')}</span>
@@ -1275,24 +1067,24 @@ function renderProfileTab() {
         </div>
       </div>
       <div style="text-align:center;padding:16px;font-size:11px;color:#94a3b8">
-        ${t('customer_since')} ${new Date(customer.created_at).toLocaleDateString(lang==='sv'?'sv-SE':'en-GB')}
+        ${t('since')} ${new Date(customer.created_at).toLocaleDateString(lang==='sv'?'sv-SE':'en-GB')}
       </div>
       <div class="bspace"></div>
     </div>`;
 }
 
 // ── PAYMENT TAB ──
-function renderPaymentTab() {
-  if (!customer) return loginGate(t('login_gate_payment'));
+function tabPay() {
+  if (!customer) return gate(t('gate_pay'));
   const paid=myBookings.filter(b=>b.payment_status==='paid');
-  const pending=myBookings.filter(b=>b.payment_status==='pending'&&b.status!=='cancelled');
-  const totalPaid=paid.reduce((s,b)=>s+(b.fare_sek||0),0);
+  const pend=myBookings.filter(b=>b.payment_status==='pending'&&b.status!=='cancelled');
+  const total=paid.reduce((s,b)=>s+(b.fare_sek||0),0);
   const pm={swish:t('swish'),card:t('card'),invoice:t('invoice')};
   return `
     <div style="background:linear-gradient(135deg,#0d1b3e,#1a3066);padding:20px;color:white">
-      <div style="font-size:13px;color:#6b82b8;margin-bottom:4px">${t('total_paid')}</div>
-      <div style="font-size:32px;font-weight:bold;color:#fbbf24">${totalPaid} kr</div>
-      <div style="font-size:11px;color:#4a6090;margin-top:4px">${t('vat_note')} ${Math.round(totalPaid*0.25/1.25)} kr</div>
+      <div style="font-size:13px;color:#6b82b8;margin-bottom:4px">${t('totalpaid')}</div>
+      <div style="font-size:32px;font-weight:bold;color:#fbbf24">${total} kr</div>
+      <div style="font-size:11px;color:#4a6090;margin-top:4px">${t('vatof')} ${Math.round(total*0.25/1.25)} kr</div>
     </div>
     <div class="page">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
@@ -1301,19 +1093,19 @@ function renderPaymentTab() {
           <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px">${t('paid')}</div>
         </div>
         <div class="card" style="text-align:center;padding:14px">
-          <div style="font-size:22px;font-weight:bold;color:#d97706">${pending.length}</div>
-          <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px">${t('pending_pay')}</div>
+          <div style="font-size:22px;font-weight:bold;color:#d97706">${pend.length}</div>
+          <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px">${t('pending')}</div>
         </div>
       </div>
       <div class="stitle">✅ ${t('paid')}</div>
-      ${paid.length===0?'<div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px">'+t('no_history')+'</div>'
-        :paid.map(b=>{const vat=Math.round(b.fare_sek*0.25/1.25);return`
-        <div class="hist-card">
-          <div class="hist-top"><span class="hist-ref">${b.booking_ref}</span><span class="badge b-green">${t('paid')}</span></div>
-          <div class="hist-route">${b.from_address} → ${b.to_address}</div>
-          <div class="hist-detail">${new Date(b.created_at).toLocaleDateString(lang==='sv'?'sv-SE':'en-GB')}</div>
-          <div class="hist-footer">
-            <div><div class="hist-fare">${b.fare_sek} kr</div><div class="hist-vat">${t('vat_note')} ${vat} kr · ${pm[b.payment_method]||b.payment_method}</div></div>
+      ${paid.length===0?'<div style="text-align:center;padding:20px;color:#94a3b8;font-size:13px">'+t('nohistory')+'</div>'
+        :paid.map(b=>{const v=Math.round(b.fare_sek*0.25/1.25);return`
+        <div class="hcard">
+          <div class="htop"><span class="href">${b.booking_ref}</span><span class="badge b-green">${t('paid')}</span></div>
+          <div class="hroute">${b.from_address} → ${b.to_address}</div>
+          <div class="hdetail">${new Date(b.created_at).toLocaleDateString(lang==='sv'?'sv-SE':'en-GB')}</div>
+          <div class="hfooter">
+            <div><div class="hfare">${b.fare_sek} kr</div><div class="hvat">${t('vatof')} ${v} kr · ${pm[b.payment_method]||b.payment_method}</div></div>
             <button class="btn btn-sm btn-gray" onclick="showToast('📄 ${b.booking_ref} · ${b.fare_sek} kr')">${t('receipt')}</button>
           </div>
         </div>`;}).join('')}
@@ -1323,96 +1115,83 @@ function renderPaymentTab() {
 
 // ── SUPPORT ──
 function openSupp(id, ref) {
-  suppBookingId=id;
-  contactedSupport[id]=true;
-  localStorage.setItem('waygo_support', JSON.stringify(contactedSupport));
-  document.getElementById('suppInfo').innerHTML =
-    '<strong>'+(lang==='sv'?'Bokning':'Booking')+':</strong> '+ref+
-    '<br><strong>'+(lang==='sv'?'Vi hjälper dig direkt!':'We will help you right away!')+'</strong>';
-  document.getElementById('suppChat').innerHTML =
-    '<div class="cmsg other"><div class="cav sup">W</div>'+
-    '<div class="cbubble">'+(lang==='sv'?'Hej! Hur kan vi hjälpa dig med bokning ':'Hi! How can we help you with booking ')+ref+'?</div></div>';
-  document.getElementById('supportModal').classList.add('open');
-  if (currentTab===1) showTab(1);
+  suppId=id;
+  suppContacted[id]=true;
+  localStorage.setItem('waygo_support',JSON.stringify(suppContacted));
+  document.getElementById('suppInfo').innerHTML='<strong>'+(lang==='sv'?'Bokning':'Booking')+':</strong> '+ref+'<br><strong>'+(lang==='sv'?'Vi hjälper dig direkt!':'We will help you right away!')+'</strong>';
+  document.getElementById('suppChat').innerHTML='<div class="cmsg other"><div class="cav sup">W</div><div class="cbubble">'+t('supp_greeting')+' '+ref+'?</div></div>';
+  document.getElementById('suppInput').placeholder=lang==='sv'?'Beskriv ditt problem...':'Describe your issue...';
+  document.getElementById('suppModal').classList.add('open');
+  if (curTab===1) showTab(1);
 }
 
 function sendSupp() {
-  const input=document.getElementById('suppInput');
-  const text=input.value.trim();
-  if (!text) return;
-  const chat=document.getElementById('suppChat');
-  chat.innerHTML+='<div class="cmsg mine"><div class="cav">Du</div><div class="cbubble">'+text+'</div></div>';
-  input.value='';
-  chat.scrollTop=chat.scrollHeight;
+  const inp=document.getElementById('suppInput');
+  const txt=inp.value.trim();
+  if (!txt) return;
+  const ch=document.getElementById('suppChat');
+  ch.innerHTML+='<div class="cmsg mine"><div class="cav">Du</div><div class="cbubble">'+txt+'</div></div>';
+  inp.value=''; ch.scrollTop=ch.scrollHeight;
   setTimeout(()=>{
-    chat.innerHTML+='<div class="cmsg other"><div class="cav sup">W</div><div class="cbubble">'+(lang==='sv'?'Tack! Vi återkommer inom 2 minuter.':'Thank you! We will get back to you within 2 minutes.')+'</div></div>';
-    chat.scrollTop=chat.scrollHeight;
+    ch.innerHTML+='<div class="cmsg other"><div class="cav sup">W</div><div class="cbubble">'+t('supp_reply')+'</div></div>';
+    ch.scrollTop=ch.scrollHeight;
   },1500);
-  fetch(API+'/messages',{
-    method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({thread_key:'customer-central-'+suppBookingId,
-      sender_name:customer?.name||'Kund',sender_role:'customer',content:text})
+  fetch(API+'/messages',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({thread_key:'customer-central-'+suppId,
+      sender_name:customer?.name||'Kund',sender_role:'customer',content:txt})
   }).catch(()=>{});
 }
 
 // ── CANCEL ──
 function openCancel(id, ref, type) {
-  cancelBookingId=id; cancelBookingRef=ref;
-  document.getElementById('cancelWarn').textContent =
-    type==='pending'?t('cancel_no_fee'):t('cancel_central');
-  document.getElementById('cancelInfo').innerHTML =
-    '<strong>'+(lang==='sv'?'Bokning':'Booking')+':</strong> '+ref+'<br>'+
-    '<strong>'+(lang==='sv'?'Typ':'Type')+':</strong> '+(type==='pending'?t('cancel_direct'):t('cancel_req'));
+  cancelId=id; cancelRef=ref;
+  document.getElementById('cancelWarn').textContent=type==='pending'?t('cancel_nofee'):t('cancel_cen');
+  document.getElementById('cancelInfo').innerHTML='<strong>'+(lang==='sv'?'Bokning':'Booking')+':</strong> '+ref;
   document.getElementById('cancelModal').classList.add('open');
 }
 
 async function doCancel() {
   closeMod('cancelModal');
   try {
-    const res=await fetch(API+'/bookings/'+cancelBookingId+'/cancel',{method:'PATCH'});
+    const res=await fetch(API+'/bookings/'+cancelId+'/cancel',{method:'PATCH'});
     if (res.ok) {
-      myBookings=myBookings.map(b=>b.id===cancelBookingId?{...b,status:'cancelled',driver_id:null,driver_name:null}:b);
-      saveBookings();
-      showToast('✓ '+cancelBookingRef+' '+(lang==='sv'?'avbokad':'cancelled'));
+      myBookings=myBookings.map(b=>b.id===cancelId?{...b,status:'cancelled',driver_id:null,driver_name:null}:b);
+      saveBooks();
+      showToast('✓ '+cancelRef+' '+(lang==='sv'?'avbokad':'cancelled'));
       showTab(1);
     }
-  } catch(err) { showToast(lang==='sv'?'⚠️ Kunde inte avboka':'⚠️ Could not cancel'); }
+  } catch(e) { showToast(t('cancelfail')); }
 }
 
 // ── RATE ──
-function openRate(id, ref, driverName) {
-  rateBookingId=id; currentRating=0;
-  document.getElementById('rateInfo').innerHTML =
-    '<strong>'+(lang==='sv'?'Bokning':'Booking')+':</strong> '+ref+
-    '<br><strong>'+(lang==='sv'?'Förare':'Driver')+':</strong> '+driverName;
+function openRate(id, ref, drv) {
+  rateId=id; curRating=0;
+  document.getElementById('rateInfo').innerHTML='<strong>'+(lang==='sv'?'Bokning':'Booking')+':</strong> '+ref+'<br><strong>'+(lang==='sv'?'Förare':'Driver')+':</strong> '+drv;
   document.querySelectorAll('.star').forEach(s=>s.classList.remove('active'));
   document.getElementById('rateModal').classList.add('open');
 }
 
 function setStar(n) {
-  currentRating=n;
+  curRating=n;
   document.querySelectorAll('.star').forEach((s,i)=>s.classList.toggle('active',i<n));
 }
 
-async function submitRating() {
-  if (!currentRating) { showToast(lang==='sv'?'⚠️ Välj ett betyg':'⚠️ Please choose a rating'); return; }
+async function submitRate() {
+  if (!curRating) { showToast(t('ratechoose')); return; }
   closeMod('rateModal');
   try {
-    await fetch(API+'/bookings/'+rateBookingId+'/rate',{
-      method:'POST',
+    await fetch(API+'/bookings/'+rateId+'/rate',{method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body:JSON.stringify({rating:currentRating})
-    });
-    showToast(lang==='sv'?'⭐ Tack för ditt betyg!':'⭐ Thank you for your rating!');
-  } catch(err) {}
+      body:JSON.stringify({rating:curRating})});
+    showToast(t('ratethanks'));
+  } catch(e){}
 }
 
 // ── EDIT PROFILE ──
-function openEdit(field, label, current) {
+function openEdit(field, label, cur) {
   editField=field;
   document.getElementById('editTitle').textContent=(lang==='sv'?'Ändra ':'Edit ')+label;
-  document.getElementById('editInput').value=current||'';
-  document.getElementById('editInput').placeholder=label;
+  document.getElementById('editInput').value=cur||'';
   document.getElementById('editModal').classList.add('open');
 }
 
@@ -1420,82 +1199,76 @@ async function saveEdit() {
   const val=document.getElementById('editInput').value.trim();
   closeMod('editModal');
   try {
-    if (editField==='preferred_payment'&&val==='invoice'&&!isBusinessCustomer()) {
-      showToast(t('invoice_private')); return;
-    }
-    const body={};
-    body[editField]=val;
-    const res=await fetch(API+'/customers/profile',{
-      method:'PATCH',
+    if (editField==='preferred_payment'&&val==='invoice'&&!isBiz()) { showToast(t('inv_priv')); return; }
+    const body={}; body[editField]=val;
+    const res=await fetch(API+'/customers/profile',{method:'PATCH',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body:JSON.stringify(body)
-    });
+      body:JSON.stringify(body)});
     const data=await res.json();
     if (data.customer) {
       customer={...customer,...data.customer};
       localStorage.setItem('waygo_customer',JSON.stringify(customer));
       showToast(t('saved')); showTab(2);
     }
-  } catch(err) { showToast(t('save_failed')); }
+  } catch(e) { showToast(t('savefail')); }
 }
 
 // ── DRIVER ANIMATION ──
-function animateDriver(bookingId) {
-  if (driverAnimations[bookingId]) return;
+function animDrv(id) {
+  if (driverAnims[id]) return;
   let x=30; let y=30;
-  driverAnimations[bookingId]=setInterval(()=>{
+  driverAnims[id]=setInterval(()=>{
     x=Math.min(75,Math.max(15,x+(Math.random()-.4)*8));
     y=Math.min(75,Math.max(15,y+(Math.random()-.4)*8));
-    const m=document.getElementById('dm-'+bookingId);
+    const m=document.getElementById('dm-'+id);
     if (m) { m.style.left=x+'%'; m.style.top=y+'%'; }
   },3000);
 }
 
 // ── DATA ──
-async function loadMyBookings() {
+async function loadBookings() {
   if (!customer) return;
-  const saved=localStorage.getItem('waygo_bookings');
-  if (saved) { try { myBookings=JSON.parse(saved); } catch(e){} }
+  const sv=localStorage.getItem('waygo_bookings');
+  if (sv) { try { myBookings=JSON.parse(sv); } catch(e){} }
   try {
     const res=await fetch(API+'/bookings');
     const data=await res.json();
     myBookings=myBookings.map(mb=>{
-      const updated=data.bookings.find(b=>b.id===mb.id);
-      return updated||mb;
+      const u=data.bookings.find(b=>b.id===mb.id);
+      return u||mb;
     });
-    saveBookings();
-    if (currentTab===1) showTab(1);
-    if (currentTab===3) showTab(3);
-  } catch(err){}
+    saveBooks();
+    if (curTab===1) showTab(1);
+    if (curTab===3) showTab(3);
+  } catch(e){}
 }
 
-function saveBookings() {
+function saveBooks() {
   localStorage.setItem('waygo_bookings',JSON.stringify(myBookings));
 }
 
-// ── SOCKET — with fallback ──
-function tryConnectSocket() {
+// ── SOCKET ──
+function trySocket() {
   try {
-    if (typeof io === 'undefined') return;
-    const socket = io(API, { timeout: 5000 });
-    socket.on('booking:assigned', b => {
+    if (typeof io==='undefined') return;
+    const s=io(API,{timeout:5000});
+    s.on('booking:assigned',b=>{
       myBookings=myBookings.map(mb=>mb.id===b.id?{...mb,...b}:mb);
-      saveBookings();
-      if (b.driver_name) showToast(t('driver_assigned')+' '+b.driver_name);
-      if (currentTab===1) showTab(1);
+      saveBooks();
+      if (b.driver_name) showToast(t('driverassigned')+' '+b.driver_name);
+      if (curTab===1) showTab(1);
     });
-    socket.on('booking:cancelled', d => {
+    s.on('booking:cancelled',d=>{
       myBookings=myBookings.map(b=>b.id===d.id?{...b,status:'cancelled'}:b);
-      saveBookings();
-      if (currentTab===1) showTab(1);
+      saveBooks();
+      if (curTab===1) showTab(1);
     });
-  } catch(e) { console.log('Socket not available'); }
+  } catch(e){}
 }
 
-setInterval(loadMyBookings, 30000);
+setInterval(loadBookings, 30000);
 </script>
 
-<!-- Load socket.io async so it does not block the app -->
 <script async src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </body>
 </html>
