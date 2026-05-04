@@ -888,17 +888,21 @@ function tabRides() {
   const past=myBookings.filter(b=>['cancelled','completed'].includes(b.status));
   return `
     <div class="tabbar">
-      <div class="tab active" id="htab0"
-  onclick="switchH(0)"
-  ontouchend="event.preventDefault();switchH(0)">
-  ${t('active')} (${active.length})
+  <button id="htab0"
+    style="flex:1;padding:13px 8px;text-align:center;font-size:13px;
+    font-weight:700;color:#0d1b3e;border:none;background:white;
+    border-bottom:2.5px solid #0d1b3e;cursor:pointer"
+    onclick="switchH(0)">
+    ${t('active')} (${active.length})
+  </button>
+  <button id="htab1"
+    style="flex:1;padding:13px 8px;text-align:center;font-size:13px;
+    font-weight:500;color:#64748b;border:none;background:white;
+    border-bottom:2.5px solid transparent;cursor:pointer"
+    onclick="switchH(1)">
+    ${t('history')} (${past.length})
+  </button>
 </div>
-<div class="tab" id="htab1"
-  onclick="switchH(1)"
-  ontouchend="event.preventDefault();switchH(1)">
-  ${t('history')} (${past.length})
-</div>
-    </div>
     <div id="hContent" class="page">${activeCards(active)}</div>
     <div class="bspace"></div>`;
 }
