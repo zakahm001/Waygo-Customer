@@ -486,7 +486,10 @@ function bcard(b){
     '<div style="display:flex;gap:4px">'+(isPre?'<span class="badge bpre">📅 Förbokning</span>':'')+getBadge(b.status)+'</div></div>'+
     (isPre&&b.scheduled_at?'<div style="font-size:11px;color:#7c3aed;font-weight:700;margin-bottom:4px">📅 '+new Date(b.scheduled_at).toLocaleString('sv-SE',{dateStyle:'medium',timeStyle:'short'})+'</div>':'')+
     '<div class="broute">📍 '+b.from_address+' → 🏁 '+b.to_address+'</div>'+
-    '<div class="bdetail">👤 '+b.customer_name+' · '+(b.customer_phone||'')+'<br>'+(b.driver_name?'🚖 '+b.driver_name+' · ':'')+b.fare_sek+' kr · '+b.payment_method+'<br>🕐 '+new Date(b.created_at).toLocaleString('sv-SE',{dateStyle:'short',timeStyle:'short'})+'</div>'+
+    '<div class="bdetail">👤 '+b.customer_name+' · '+(b.customer_phone||'')+'<br>'+
+    (b.passengers&&b.passengers>1?'👥 '+b.passengers+' passagerare · ':'')+
+    (b.child_seat?'🧒 Barnstol'+(b.child_age?' ('+b.child_age+')':'')+' · ':'')+
+    (b.driver_name?'🚖 '+b.driver_name+' · ':'')+b.fare_sek+' kr · '+b.payment_method+'<br>🕐 '+new Date(b.created_at).toLocaleString('sv-SE',{dateStyle:'short',timeStyle:'short'})+'</div>'+
     (actions?'<div class="bactions">'+actions+'</div>':'')+
     '</div>';
 }
@@ -627,10 +630,13 @@ async function openDriverProfile(id){
     h+='<div class="card"><div class="stitle">Åtgärder</div>'+
       '<div class="agrid">'+
       (isBlocked?
-        '<button class="btn btnS" onclick="manageDriver('+d.id+',\'unblock\')">✅ Avblockera</button>':
-        '<button class="btn btnD" onclick="manageDriver('+d.id+',\'block\')">🔴 Blockera</button>')+
-      '<button class="btn btnP" onclick="openSuspend('+d.id+')">⏸ Stäng av</button>'+
-      '</div></div>';
+        '<button class="btn btnS" onclick="manageDriver('+d.id+',\'unblock\')">✅ Avblockera permanent</button>':
+        '<button class="btn btnD" onclick="manageDriver('+d.id+',\'block\')">🔴 Blockera permanent</button>')+
+      '<button class="btn btnP" onclick="openSuspend('+d.id+')">⏸ Stäng av med datum</button>'+
+      (isSusp&&!isBlocked?'<button class="btn btnS" style="grid-column:span 2" onclick="manageDriver('+d.id+',\'unblock\')">✅ Ta bort alla avstängningar</button>':'')+
+      '</div>'+
+      '<div style="margin-top:10px"><button class="btn btnB btn-sm" onclick="openChat(\'central-driver-'+d.id+'\',\''+d.name+'\')">💬 Chatta med föraren</button></div>'+
+      '</div>';
 
     h+='<div class="card"><div class="stitle">👑 Ägarinställning</div>'+
       (d.is_owner?
