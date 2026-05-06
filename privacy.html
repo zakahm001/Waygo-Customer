@@ -3,215 +3,155 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Integritetspolicy — Waygo</title>
+  <title>Integritetspolicy — Trollhättan Cab</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:Arial,sans-serif;background:#f8fafc;color:#0d1b3e;line-height:1.7}
-    .header{background:#0d1b3e;padding:20px;text-align:center;position:sticky;top:0;z-index:100}
-    .header-logo{color:#fbbf24;font-size:20px;font-weight:bold}
-    .header-back{color:#4a6090;font-size:13px;margin-top:4px;cursor:pointer}
-    .container{max-width:680px;margin:0 auto;padding:24px 20px 60px}
-    .page-title{font-size:24px;font-weight:800;color:#0d1b3e;margin-bottom:6px}
-    .page-date{font-size:13px;color:#64748b;margin-bottom:28px}
-    h2{font-size:17px;font-weight:700;color:#0d1b3e;margin:24px 0 10px;
-      padding-bottom:6px;border-bottom:2px solid #eef1f8}
-    h3{font-size:15px;font-weight:700;color:#0d1b3e;margin:16px 0 8px}
-    p{font-size:14px;color:#334155;margin-bottom:12px}
-    ul{padding-left:20px;margin-bottom:12px}
-    li{font-size:14px;color:#334155;margin-bottom:6px}
-    .highlight{background:#dbeafe;border-left:4px solid #1a56db;
-      padding:12px 16px;border-radius:0 8px 8px 0;margin-bottom:16px;font-size:14px;color:#1a56db}
-    .contact-box{background:#0d1b3e;color:white;border-radius:12px;
-      padding:20px;margin-top:28px}
-    .contact-box h3{color:#fbbf24;border:none;margin-top:0}
-    .contact-box p{color:#94a3b8}
-    .contact-box a{color:#fbbf24}
-    .footer{text-align:center;padding:20px;font-size:12px;color:#94a3b8;
-      border-top:1px solid #e2e8f0;margin-top:28px}
+    body{font-family:Arial,sans-serif;background:#fff;color:#1a1a2e;line-height:1.8;font-size:15px}
+    .header{background:#0d1b3e;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+    .header-logo{color:#fbbf24;font-size:20px;font-weight:bold;letter-spacing:1px}
+    .header-back{color:#94a3b8;font-size:13px;text-decoration:none}
+    .hero{background:#0d1b3e;padding:48px 24px 36px;color:white;text-align:center}
+    .hero h1{font-size:28px;font-weight:800;color:#fbbf24;margin-bottom:8px}
+    .hero p{color:#6b82b8;font-size:14px}
+    .container{max-width:720px;margin:0 auto;padding:40px 24px 80px}
+    .section{margin-bottom:40px}
+    .section-label{font-size:11px;font-weight:800;color:#fbbf24;text-transform:uppercase;letter-spacing:2px;background:#0d1b3e;display:inline-block;padding:4px 12px;border-radius:4px;margin-bottom:14px}
+    h2{font-size:20px;font-weight:700;color:#0d1b3e;margin-bottom:14px}
+    h3{font-size:16px;font-weight:700;color:#0d1b3e;margin:18px 0 10px}
+    p{color:#334155;margin-bottom:14px}
+    ul{padding-left:22px;margin-bottom:14px}
+    li{color:#334155;margin-bottom:8px}
+    .company-box{background:#f0f3f9;border-radius:12px;padding:20px 24px;margin-bottom:32px;border-left:4px solid #0d1b3e}
+    .company-box p{margin-bottom:6px;font-size:14px}
+    .company-box strong{color:#0d1b3e}
+    .rights-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+    .right-item{background:#f0f3f9;border-radius:10px;padding:14px;font-size:13px;color:#334155}
+    .right-item strong{display:block;color:#0d1b3e;margin-bottom:4px;font-size:13px}
+    .divider{height:1px;background:#e2e8f0;margin:32px 0}
+    .contact-box{background:#0d1b3e;border-radius:14px;padding:28px 24px;color:white;margin-top:40px}
+    .contact-box h2{color:#fbbf24;margin-bottom:16px}
+    .contact-box p{color:#94a3b8;margin-bottom:8px}
+    .contact-box a{color:#fbbf24;text-decoration:none}
+    .footer{text-align:center;padding:24px;font-size:12px;color:#94a3b8;border-top:1px solid #e2e8f0;margin-top:40px}
+    .footer a{color:#1a56db;text-decoration:none}
+    @media(max-width:500px){.rights-grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
-
 <div class="header">
-  <div class="header-logo">▲ WAYGO</div>
-  <div class="header-back" onclick="history.back()">← Tillbaka till appen</div>
+  <div class="header-logo">🚖 TROLLHÄTTAN CAB</div>
+  <a class="header-back" href="index.html">← Tillbaka till appen</a>
 </div>
-
+<div class="hero">
+  <h1>Integritetspolicy</h1>
+  <p>Senast uppdaterad: maj 2026</p>
+</div>
 <div class="container">
 
-  <div class="page-title">Integritetspolicy</div>
-  <div class="page-date">Senast uppdaterad: maj 2026</div>
-
-  <div class="highlight">
-    Waygo värnar om din personliga integritet. Denna policy förklarar hur vi samlar in,
-    använder och skyddar dina personuppgifter i enlighet med GDPR
-    (EU:s dataskyddsförordning 2016/679).
+  <div class="company-box">
+    <p><strong>Trollhättan Cab AB</strong> (org.nr 559312-7128), med adress Lantmannavägen 20, 461 60 Trollhättan, är personuppgiftsansvarig för behandlingen av dina personuppgifter. Vi värnar om din integritet och är engagerade i att skydda dina personuppgifter i enlighet med GDPR (EU:s dataskyddsförordning 2016/679). Denna policy förklarar hur vi samlar in, använder och skyddar din information.</p>
+    <p>För frågor om vår databehandling, kontakta oss på <strong>info@trollhattancab.com</strong>.</p>
   </div>
 
-  <h2>1. Personuppgiftsansvarig</h2>
-  <p>
-    Waygo Sverige är personuppgiftsansvarig för behandlingen av dina personuppgifter.
-    Vi ansvarar för att dina uppgifter behandlas lagligt, korrekt och transparent.
-  </p>
-  <ul>
-    <li><strong>Företag:</strong> Waygo Sverige</li>
-    <li><strong>Adress:</strong> Sverige</li>
-    <li><strong>E-post:</strong> info@waygo.se</li>
-    <li><strong>Telefon:</strong> +46 10 123 45 67</li>
-  </ul>
+  <div class="section">
+    <div class="section-label">Ändamål</div>
+    <h2>Varför vi samlar in dina uppgifter</h2>
+    <p>Vi samlar in och använder dina personuppgifter för att tillhandahålla och förbättra våra tjänster. Den information vi samlar in inkluderar:</p>
+    <ul>
+      <li><strong>Registreringsuppgifter</strong> — namn, telefonnummer och e-postadress</li>
+      <li><strong>Ytterligare uppgifter</strong> — sparade adresser (hem, jobb), betalningspreferenser, ålder och organisationsnummer för företagskunder</li>
+      <li><strong>Användningsdata</strong> — bokningshistorik, kundtjänstinteraktioner, betyg, tidpunkter för plattformsåtkomst och IP-adresser</li>
+      <li><strong>Resedata</strong> — upphämtnings- och destinationsadresser, datum, tid och förarbetyg kopplade till dina resor</li>
+      <li><strong>Positionsdata</strong> — GPS-position för aktiva förare under körning, upphämtningsplats vid bokning</li>
+    </ul>
+    <p>Vi samlar in denna information för att behandla och hantera dina taxibokningar, ge kundtjänst, administrera ditt konto, skicka bokningsbekräftelser via SMS, förbättra våra tjänster samt uppfylla rättsliga skyldigheter.</p>
+  </div>
 
-  <h2>2. Vilka uppgifter vi samlar in</h2>
+  <div class="divider"></div>
 
-  <h3>2.1 Uppgifter du lämnar till oss</h3>
-  <ul>
-    <li>Namn och efternamn</li>
-    <li>E-postadress</li>
-    <li>Telefonnummer</li>
-    <li>Hemadress och arbetsadress (om du sparar dessa)</li>
-    <li>Organisationsnummer (för företagskunder)</li>
-    <li>Betalningspreferenser</li>
-    <li>Lösenord (lagras krypterat med bcrypt)</li>
-  </ul>
+  <div class="section">
+    <div class="section-label">Datainsamling och delning</div>
+    <h2>Hur vi hanterar och delar dina uppgifter</h2>
+    <p>Vår rättsliga grund för att behandla dina uppgifter inkluderar avtalsnödvändighet för bokning och kundtjänst, våra berättigade intressen för att hantera ditt konto, samt skyldighet att följa lagar och regler.</p>
+    <p>Vi kan dela dina personuppgifter med tredje parter för att underlätta dessa ändamål:</p>
+    <ul>
+      <li><strong>Förare</strong> — namn och telefonnummer för att genomföra din resa</li>
+      <li><strong>Finansiella institutioner</strong> — för att behandla betalningar via Swish eller kort</li>
+      <li><strong>SMS-leverantör (46elks)</strong> — för bokningsbekräftelser och statusuppdateringar</li>
+      <li><strong>Molntjänster (Amazon Web Services)</strong> — servrar placerade i Stockholm, Sverige (EU)</li>
+      <li><strong>Myndigheter</strong> — om vi är skyldiga att lämna ut uppgifter enligt lag</li>
+    </ul>
+    <p>Vi säljer aldrig dina personuppgifter till tredje part. Vi delar endast uppgifter om du har gett ditt uttryckliga samtycke eller när det krävs enligt lag.</p>
+  </div>
 
-  <h3>2.2 Uppgifter vi samlar in automatiskt</h3>
-  <ul>
-    <li>Upphämtnings- och destinationsadresser</li>
-    <li>Tidpunkt för bokningar</li>
-    <li>Prisinformation för genomförda resor</li>
-    <li>Betalningsmetod (ej kortuppgifter)</li>
-    <li>Kommunikation via vår chattfunktion</li>
-  </ul>
+  <div class="divider"></div>
 
-  <h3>2.3 Föraruppgifter</h3>
-  <ul>
-    <li>Namn, e-post och telefonnummer</li>
-    <li>Registreringsskylt och taxinummer</li>
-    <li>GPS-position under aktiv körning</li>
-    <li>Antal resor och intäkter</li>
-    <li>Kundbetyg</li>
-  </ul>
+  <div class="section">
+    <div class="section-label">Lagring</div>
+    <h2>Hur länge vi sparar dina uppgifter</h2>
+    <ul>
+      <li><strong>Kontouppgifter</strong> — så länge ditt konto är aktivt</li>
+      <li><strong>Bokningshistorik</strong> — 7 år (bokföringskrav enligt lag)</li>
+      <li><strong>Chattmeddelanden</strong> — 90 dagar</li>
+      <li><strong>GPS-positionsdata</strong> — raderas efter avslutad resa</li>
+    </ul>
+    <p>När du avslutar ditt konto raderas dina personuppgifter inom 30 dagar, med undantag för information vi är skyldiga att behålla av rättsliga eller betalningsrelaterade skäl.</p>
+  </div>
 
-  <h2>3. Hur vi använder dina uppgifter</h2>
-  <p>Vi behandlar dina personuppgifter för följande ändamål:</p>
-  <ul>
-    <li><strong>Utföra taxitjänster</strong> — förmedla bokningar mellan kunder och förare</li>
-    <li><strong>Kontohantering</strong> — skapa och hantera ditt användarkonto</li>
-    <li><strong>Kommunikation</strong> — skicka bokningsbekräftelser och uppdateringar</li>
-    <li><strong>Betalning</strong> — hantera och registrera betalningar</li>
-    <li><strong>Säkerhet</strong> — skydda mot bedrägeri och missbruk</li>
-    <li><strong>Förbättring av tjänsten</strong> — analysera användningsmönster</li>
-    <li><strong>Lagstadgade krav</strong> — uppfylla rättsliga skyldigheter</li>
-  </ul>
+  <div class="divider"></div>
 
-  <h2>4. Rättslig grund för behandling</h2>
-  <ul>
-    <li><strong>Avtalets fullgörande</strong> — för att leverera taxitjänsten du beställt</li>
-    <li><strong>Rättslig förpliktelse</strong> — för att uppfylla lagkrav (bokföring, Transportstyrelsen)</li>
-    <li><strong>Berättigat intresse</strong> — för att förbättra och säkra tjänsten</li>
-    <li><strong>Samtycke</strong> — för marknadsföring (du kan alltid återkalla)</li>
-  </ul>
+  <div class="section">
+    <div class="section-label">Dina rättigheter</div>
+    <h2>Hur du utövar dina rättigheter</h2>
+    <div class="rights-grid">
+      <div class="right-item"><strong>Tillgång</strong>Begär en kopia av de uppgifter vi har om dig</div>
+      <div class="right-item"><strong>Rättelse</strong>Korrigera felaktiga eller ofullständiga uppgifter</div>
+      <div class="right-item"><strong>Radering</strong>Begär att vi raderar dina uppgifter</div>
+      <div class="right-item"><strong>Begränsning</strong>Begär att vi begränsar behandlingen</div>
+      <div class="right-item"><strong>Dataportabilitet</strong>Få ut dina uppgifter i maskinläsbart format</div>
+      <div class="right-item"><strong>Invändning</strong>Invända mot behandling baserad på berättigat intresse</div>
+    </div>
+    <p>Kontakta oss på <strong>info@trollhattancab.com</strong> för att utöva dina rättigheter. Vi svarar inom 30 dagar. Om du inte är nöjd med vårt svar kan du kontakta Integritetsskyddsmyndigheten (IMY) på <strong>imy.se</strong>.</p>
+  </div>
 
-  <h2>5. Delning av uppgifter</h2>
-  <p>
-    Vi säljer aldrig dina personuppgifter till tredje part.
-    Vi kan dela uppgifter med:
-  </p>
-  <ul>
-    <li><strong>Förare</strong> — ditt namn och telefonnummer för att genomföra resan</li>
-    <li><strong>Betalningsleverantörer</strong> — Swish för betalningshantering</li>
-    <li><strong>SMS-leverantör</strong> — 46elks för bokningsbekräftelser</li>
-    <li><strong>Myndigheter</strong> — om vi är skyldiga enligt lag</li>
-    <li><strong>Molntjänster</strong> — Amazon Web Services (EU-region) för datalagring</li>
-  </ul>
+  <div class="divider"></div>
 
-  <h2>6. Lagring och säkerhet</h2>
-  <ul>
-    <li>Dina uppgifter lagras på säkra servrar inom EU (Stockholm, Sverige)</li>
-    <li>Lösenord krypteras med bcrypt — vi kan aldrig läsa ditt lösenord</li>
-    <li>All kommunikation sker via HTTPS (krypterad)</li>
-    <li>JWT-tokens används för säker autentisering</li>
-    <li>Regelbundna säkerhetskopior görs av all data</li>
-  </ul>
+  <div class="section">
+    <div class="section-label">Säkerhet</div>
+    <h2>Hur vi skyddar dina uppgifter</h2>
+    <ul>
+      <li>Kryptering av lösenord med bcrypt</li>
+      <li>Krypterad kommunikation via HTTPS på trollhattancab.com</li>
+      <li>JWT-tokens för säker autentisering</li>
+      <li>Servrar placerade inom EU (Stockholm, Sverige)</li>
+      <li>Kontrollerad åtkomst av behörig personal</li>
+      <li>Regelbundna säkerhetskopior av all data</li>
+    </ul>
+  </div>
 
-  <h2>7. Hur länge sparar vi dina uppgifter</h2>
-  <ul>
-    <li><strong>Kontouppgifter</strong> — så länge ditt konto är aktivt</li>
-    <li><strong>Bokningshistorik</strong> — 7 år (bokföringskrav)</li>
-    <li><strong>Chattmeddelanden</strong> — 90 dagar</li>
-    <li><strong>GPS-data</strong> — raderas efter genomförd resa</li>
-    <li>Efter avslutat konto raderas personuppgifter inom 30 dagar
-        (utom vad lagen kräver)</li>
-  </ul>
+  <div class="divider"></div>
 
-  <h2>8. Dina rättigheter enligt GDPR</h2>
-  <p>Du har rätt att:</p>
-  <ul>
-    <li><strong>Få tillgång</strong> till dina personuppgifter</li>
-    <li><strong>Rätta</strong> felaktiga uppgifter</li>
-    <li><strong>Radera</strong> dina uppgifter (rätten att bli glömd)</li>
-    <li><strong>Begränsa</strong> behandlingen av dina uppgifter</li>
-    <li><strong>Invända</strong> mot behandling</li>
-    <li><strong>Dataportabilitet</strong> — få ut dina uppgifter i maskinläsbart format</li>
-    <li><strong>Återkalla samtycke</strong> när som helst</li>
-  </ul>
-  <p>
-    För att utöva dina rättigheter, kontakta oss på info@waygo.se.
-    Vi svarar inom 30 dagar.
-  </p>
-
-  <h2>9. Cookies och lokal lagring</h2>
-  <p>
-    Waygo-appen använder lokal lagring (localStorage) i din webbläsare för att:
-  </p>
-  <ul>
-    <li>Hålla dig inloggad</li>
-    <li>Spara dina bokningar lokalt</li>
-    <li>Komma ihåg dina språkinställningar</li>
-  </ul>
-  <p>
-    Inga spårningscookies eller reklam-cookies används.
-  </p>
-
-  <h2>10. Barn</h2>
-  <p>
-    Waygo-tjänsten riktar sig till personer över 18 år.
-    Vi samlar inte medvetet in uppgifter från barn under 18 år.
-  </p>
-
-  <h2>11. Ändringar i policyn</h2>
-  <p>
-    Vi kan uppdatera denna policy vid behov. Vid väsentliga ändringar
-    meddelar vi dig via e-post eller i appen. Fortsatt användning
-    av tjänsten efter ändringar innebär att du accepterar den uppdaterade policyn.
-  </p>
-
-  <h2>12. Klagomål</h2>
-  <p>
-    Om du anser att vi behandlar dina uppgifter felaktigt har du rätt att
-    lämna klagomål till Integritetsskyddsmyndigheten (IMY).
-  </p>
-  <ul>
-    <li>Webb: imy.se</li>
-    <li>Telefon: 08-657 61 00</li>
-    <li>E-post: imy@imy.se</li>
-  </ul>
+  <div class="section">
+    <div class="section-label">Uppdateringar</div>
+    <h2>Ändringar i denna policy</h2>
+    <p>Vi förbehåller oss rätten att uppdatera denna policy. Väsentliga ändringar kommuniceras via e-post eller meddelande i appen innan de träder i kraft. Genom att använda våra tjänster godkänner du villkoren i denna policy.</p>
+  </div>
 
   <div class="contact-box">
-    <h3>Kontakta oss om integritet</h3>
-    <p>Har du frågor om hur vi hanterar dina personuppgifter?</p>
-    <p>📧 <a href="mailto:info@waygo.se">info@waygo.se</a></p>
-    <p>📞 <a href="tel:+46101234567">+46 10 123 45 67</a></p>
-    <p style="margin-top:10px;font-size:12px">
-      Waygo Sverige · Svarar inom 30 dagar
-    </p>
+    <h2>Kontakta oss</h2>
+    <p>📧 <a href="mailto:info@trollhattancab.com">info@trollhattancab.com</a></p>
+    <p>🌐 <a href="https://trollhattancab.com">trollhattancab.com</a></p>
+    <p>📍 Lantmannavägen 20, 461 60 Trollhättan</p>
+    <p>🏢 Org.nr 559312-7128</p>
+    <p style="margin-top:16px;font-size:12px;color:#4a6090">Svarar inom 30 dagar</p>
   </div>
 
   <div class="footer">
-    © 2026 Waygo Sverige · Alla rättigheter förbehållna<br>
-    <a href="terms.html" style="color:#1a56db">Användarvillkor</a> ·
-    <a href="index.html" style="color:#1a56db">Tillbaka till appen</a>
+    © 2026 Trollhättan Cab AB · Org.nr 559312-7128<br>
+    Lantmannavägen 20, 461 60 Trollhättan<br><br>
+    <a href="terms.html">Användarvillkor</a> &nbsp;·&nbsp;
+    <a href="index.html">Tillbaka till appen</a>
   </div>
-
 </div>
 </body>
 </html>
