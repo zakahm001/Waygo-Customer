@@ -422,18 +422,32 @@ function connectSocket(){
       if(activeBooking&&activeBooking.id===booking.id)return;
       triggerAlert(booking);
     });
+    socket.on('driver:blocked',(data)=>{
+      driverStatus='blocked';updateStatusBadge();
+      const secs=Math.floor((new Date(data.until)-Date.now())/1000);
+      if(secs>0){
+        localStorage.setItem('thtcab_block_until',data.until);
+        showBlockedScreen(secs);
+      }
+    });
     socket.on('booking:cancelled',(data)=>{
       if(activeBooking&&activeBooking.id===data.id){
-        activeBooking=null;localStorage.removeItem('thtcab_active_booking');
+        activeBooking=null;
+        localStorage.removeItem('thtcab_active_booking');
         driverStatus='available';updateStatusBadge();
-        showToast('⚠️ Bokning avbokad av kund','#d97706','white');showTab(0);
+        if(socket)socket.emit('driver:status',{driverId:parseInt(driver.id),status:'available'});
+        showToast('⚠️ Bokning avbokad av kund eller central','#d97706','white');
+        showTab(0);
       }
     });
     socket.on('driver:unblocked',()=>{
       driverStatus='available';updateStatusBadge();
       localStorage.removeItem('thtcab_block_until');
-      showToast('✅ Du är ledig igen — redo för bokningar','#15803d','white');
-      showTab(0);
+      if(blockTimer)clearInterval(blockTimer);
+      const b=document.getElementById('blockBanner');
+      if(b)b.style.display='none';
+      showToast('✅ Din blockering har tagits bort av Central','#15803d','white');
+      showTab(curTab);
     });
   }catch(e){console.log('Socket error:',e);}
 }
@@ -450,6 +464,16 @@ function showPopup(booking){
   document.getElementById('popupRoute').textContent='📍 '+booking.from_address+' → 🏁 '+booking.to_address;
   document.getElementById('popupDetail').textContent='👤 '+booking.customer_name+' · '+(booking.customer_phone||'');
   document.getElementById('popupFare').textContent=booking.fare_sek+' kr';
+  // Passengers and child seat
+  var extraEl=document.getElementById('popupExtra');
+  if(!extraEl){
+    extraEl=document.createElement('div');extraEl.id='popupExtra';
+    document.getElementById('popupPayment').parentNode.insertBefore(extraEl,document.getElementById('popupPayment'));
+  }
+  var extraHtml='';
+  if(booking.passengers&&booking.passengers>1)extraHtml+='<div style="background:#dbeafe;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:700;color:#1a56db;margin-bottom:8px">👥 '+booking.passengers+' passagerare</div>';
+  if(booking.child_seat)extraHtml+='<div style="background:#fee2e2;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:800;color:#dc2626;margin-bottom:8px">🧒 BARNSTOL KRÄVS'+(booking.child_age?' — '+booking.child_age:'')+'</div>';
+  extraEl.innerHTML=extraHtml;
   const pm={swish:'📱 Swish',card:'💳 Kort',invoice:'📄 Faktura'};
   document.getElementById('popupPayment').textContent='Betalning: '+(pm[booking.payment_method]||booking.payment_method);
   const preBadge=document.getElementById('popupPreBadge');
@@ -506,15 +530,18 @@ async function declineBooking(){
 
 function showBlockedScreen(initialSeconds){
   let secs=initialSeconds||120;
-  const c=document.getElementById('tabContent');
-  if(!c)return;
-  c.innerHTML='<div class="block-screen">'+
-    '<div style="font-size:56px;margin-bottom:16px">⛔</div>'+
-    '<div style="font-size:20px;font-weight:800;color:white;margin-bottom:8px">Du nekade en bokning</div>'+
-    '<div style="font-size:14px;color:rgba(255,255,255,.7);margin-bottom:32px">Du är tillfälligt blockerad</div>'+
-    '<div style="font-size:72px;font-weight:800;color:white;font-family:monospace" id="blockTimerEl">'+formatTime(secs)+'</div>'+
-    '<div style="font-size:14px;color:rgba(255,255,255,.7);margin-top:16px">Du kan ta emot bokningar igen när timern är klar</div>'+
-    '</div>';
+  // Show banner at top instead of blocking full screen
+  let banner=document.getElementById('blockBanner');
+  if(!banner){
+    banner=document.createElement('div');
+    banner.id='blockBanner';
+    banner.style.cssText='background:#dc2626;color:white;padding:12px 20px;text-align:center;font-size:14px;font-weight:700;position:sticky;top:56px;z-index:150;display:flex;align-items:center;justify-content:center;gap:12px';
+    const appEl=document.getElementById('sApp');
+    const tabbar=appEl.querySelector('.bnav');
+    if(appEl)appEl.insertBefore(banner,document.getElementById('tabContent'));
+  }
+  banner.innerHTML='⛔ Blockerad — kan ej ta emot bokningar · <span id="blockTimerEl" style="font-family:monospace;font-size:16px;font-weight:800">'+formatTime(secs)+'</span>';
+  banner.style.display='flex';
   if(blockTimer)clearInterval(blockTimer);
   blockTimer=setInterval(()=>{
     secs--;
@@ -524,8 +551,10 @@ function showBlockedScreen(initialSeconds){
       clearInterval(blockTimer);
       driverStatus='available';updateStatusBadge();
       localStorage.removeItem('thtcab_block_until');
-      showToast('✅ Du är ledig igen!','#15803d','white');
-      showTab(0);
+      const b=document.getElementById('blockBanner');
+      if(b)b.style.display='none';
+      showToast('✅ Du är ledig igen — redo för bokningar','#15803d','white');
+      showTab(curTab);
     }
   },1000);
 }
@@ -560,7 +589,6 @@ function endPause(){
 
 function showTab(i){
   try{
-    if(driverStatus==='blocked')return;
     curTab=i;document.querySelectorAll('.bni').forEach((b,j)=>b.classList.toggle('on',i===j));
     const c=document.getElementById('tabContent');if(!c)return;
     if(i===0)c.innerHTML=tabHome();
@@ -608,6 +636,8 @@ function tabHome(){
       '<span class="badge b-green">Pågår</span></div>'+
       '<div style="font-size:13px;font-weight:600;color:#0d1b3e;margin-bottom:6px">📍 '+activeBooking.from_address+'<br>🏁 '+activeBooking.to_address+'</div>'+
       '<div style="font-size:12px;color:#64748b;margin-bottom:10px">👤 '+activeBooking.customer_name+' · '+(activeBooking.customer_phone||'')+'<br>💰 '+activeBooking.fare_sek+' kr · '+activeBooking.payment_method+'</div>'+
+      (activeBooking.passengers&&activeBooking.passengers>1?'<div style="background:#dbeafe;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;color:#1a56db;margin-bottom:8px">👥 '+activeBooking.passengers+' passagerare</div>':'')+
+      (activeBooking.child_seat?'<div style="background:#fee2e2;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:800;color:#dc2626;margin-bottom:8px">🧒 BARNSTOL KRÄVS'+(activeBooking.child_age?' — Ålder: '+activeBooking.child_age:'')+'</div>':'')+
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">'+
       '<a href="tel:'+(activeBooking.customer_phone||'')+'" style="text-decoration:none"><button class="btn btn-success btn-sm">📞 Ring kund</button></a>'+
       '<button class="btn btn-blue btn-sm" onclick="openChat(\'customer-driver-'+activeBooking.id+'\',\'Kund\')">💬 Kund</button>'+
