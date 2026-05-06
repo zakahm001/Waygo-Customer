@@ -137,6 +137,7 @@ select.finput{appearance:none}
   <button class="tab" id="tab2" onclick="showTab(2)">🚖 Förare</button>
   <button class="tab" id="tab3" onclick="showTab(3)">👤 Kunder</button>
   <button class="tab" id="tab4" onclick="showTab(4)">💬 Chatt</button>
+  <button class="tab" id="tab6" onclick="showTab(6)">🏢 Företag</button>
   <button class="tab" id="tab5" onclick="showTab(5)" style="display:none">👥 Personal</button>
 </div>
 
@@ -243,7 +244,7 @@ select.finput{appearance:none}
 
 <script>
 var API = 'https://16.16.153.106.sslip.io';
-var allBookings = [], allDrivers = [], allCustomers = [], allStaff = [];
+var allBookings = [], allDrivers = [], allCustomers = [], allStaff = [], allCompanies = [];
 var curTab = 0, socket = null, driverPos = {}, refreshTimer = null;
 var staffUser = null, staffToken = null;
 var assignId = null, assignRef = null, cancelId = null, cancelRef = null;
@@ -369,6 +370,10 @@ async function loadData(){
         var r4=await fetch(API+'/staff',{headers:{'Authorization':'Bearer '+staffToken}});
         var d3=await r3.json();var d4=await r4.json();
         allCustomers=d3.customers||[];allStaff=d4.staff||[];
+        try{
+          var r5=await fetch(API+'/companies',{headers:{'Authorization':'Bearer '+staffToken}});
+          var d5=await r5.json();allCompanies=d5.companies||[];
+        }catch(e){}
       }catch(e){}
     }
   }catch(e){console.log('Load error:',e);}
@@ -432,6 +437,7 @@ function showTab(i){
     else if(i===3)m.innerHTML=tabCustomers();
     else if(i===4)m.innerHTML=tabChat();
     else if(i===5)m.innerHTML=tabStaff();
+    else if(i===6)m.innerHTML=tabCompanies();
   }catch(e){console.log('showTab error:',e);}
 }
 
@@ -1010,6 +1016,88 @@ async function sendChat(){
     await fetch(API+'/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({thread_key:chatKey,sender_name:staffUser?staffUser.name:'Central Dispatch',sender_role:'central',content:text})});
   }catch(e){}
 }
+// ── COMPANIES TAB ──
+function tabCompanies(){
+  var canManage=staffUser&&staffUser.level<=2;
+  var h='<div class="page">';
+  if(canManage){
+    h+='<div class="card"><div class="stitle">➕ Lägg till partnerföretag</div>'+
+      '<input class="finput" id="cName" placeholder="Företagsnamn *"/>'+
+      '<input class="finput" id="cOrg" placeholder="Org.nummer * (556xxx-xxxx)"/>'+
+      '<input class="finput" id="cEmail" type="email" placeholder="Kontakt e-post"/>'+
+      '<input class="finput" id="cPhone" placeholder="Kontakt telefon"/>'+
+      '<input class="finput" id="cDate" type="date"/>'+
+      '<input class="finput" id="cNotes" placeholder="Anteckningar"/>'+
+      '<div class="ib ib-r" id="cErr" style="display:none"></div>'+
+      '<button class="btn btnP" id="addCoBtn" onclick="addCompany()">Lägg till företag →</button></div>';
+  }
+  h+='<div class="stitle">Partnerföretag ('+allCompanies.length+')</div>';
+  allCompanies.forEach(function(c){
+    var drivers=allDrivers.filter(function(d){return d.company_id===c.id;});
+    h+='<div class="card">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">'+
+      '<div><div style="font-size:15px;font-weight:700;color:#0d1b3e">'+c.name+'</div>'+
+      '<div style="font-size:12px;color:#64748b">Org.nr: '+c.org_number+'</div>'+
+      (c.contact_email?'<div style="font-size:12px;color:#1a56db">'+c.contact_email+'</div>':'')+
+      (c.contact_phone?'<div style="font-size:12px;color:#64748b">'+c.contact_phone+'</div>':'')+
+      '</div><span class="badge '+(c.status==='active'?'bc':'bx')+'">'+(c.status==='active'?'Aktiv':'Inaktiv')+'</span></div>'+
+      '<div class="stitle" style="margin-bottom:6px">Kopplade förare ('+drivers.length+')</div>'+
+      (drivers.length?drivers.map(function(d){
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f1f5f9">'+
+          '<span style="font-size:13px">🚖 '+d.name+' · '+d.plate+'</span>'+
+          (canManage?'<button class="btn btnG" style="padding:4px 10px;font-size:11px" onclick="unassignDriver('+d.id+')">Ta bort</button>':'')+
+          '</div>';}).join(''):
+        '<div style="font-size:12px;color:#94a3b8;margin-bottom:8px">Inga förare kopplade</div>')+
+      (canManage?'<div style="margin-top:10px;display:flex;gap:8px">'+
+        '<select class="finput" id="dsel-'+c.id+'" style="margin-bottom:0;flex:1">'+
+        '<option value="">Välj förare...</option>'+
+        allDrivers.filter(function(d){return !d.company_id;}).map(function(d){
+          return '<option value="'+d.id+'">'+d.name+' · '+d.plate+'</option>';}).join('')+
+        '</select><button class="btn btnP" onclick="assignDriver('+c.id+')" style="padding:8px 14px">Koppla</button></div>':'')+
+      '</div>';
+  });
+  if(!allCompanies.length)h+='<div class="card" style="text-align:center;color:#94a3b8;padding:30px">🏢<br>Inga partnerföretag ännu</div>';
+  h+='<div style="height:80px"></div></div>';
+  return h;
+}
+
+async function addCompany(){
+  var name=document.getElementById('cName').value.trim();
+  var org=document.getElementById('cOrg').value.trim();
+  var email=document.getElementById('cEmail').value.trim();
+  var phone=document.getElementById('cPhone').value.trim();
+  var date=document.getElementById('cDate').value;
+  var notes=document.getElementById('cNotes').value.trim();
+  var err=document.getElementById('cErr');var btn=document.getElementById('addCoBtn');
+  if(!name||!org){err.textContent='⚠️ Namn och org.nr krävs';err.style.display='';return;}
+  btn.textContent='Lägger till...';btn.disabled=true;err.style.display='none';
+  try{
+    var res=await fetch(API+'/companies/add',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify({name,org_number:org,contact_email:email,contact_phone:phone,agreement_date:date||null,notes})});
+    var data=await res.json();
+    if(data.company){allCompanies.push(data.company);showToast('✅ '+name+' tillagd!');showTab(6);}
+    else{err.textContent='⚠️ '+(data.error||'Fel');err.style.display='';}
+  }catch(e){err.textContent='⚠️ Nätverksfel';err.style.display='';}
+  btn.textContent='Lägg till företag →';btn.disabled=false;
+}
+
+async function assignDriver(companyId){
+  var sel=document.getElementById('dsel-'+companyId);
+  if(!sel||!sel.value){showToast('⚠️ Välj en förare');return;}
+  var driverId=parseInt(sel.value);
+  try{
+    var res=await fetch(API+'/companies/'+companyId+'/assign-driver',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify({driver_id:driverId})});
+    if(res.ok){allDrivers=allDrivers.map(function(d){return d.id===driverId?Object.assign({},d,{company_id:companyId}):d;});showToast('✅ Förare kopplad!');showTab(6);}
+  }catch(e){showToast('⚠️ Nätverksfel');}
+}
+
+async function unassignDriver(driverId){
+  try{
+    await fetch(API+'/drivers/'+driverId+'/manage',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify({action:'update',company_id:null})});
+    allDrivers=allDrivers.map(function(d){return d.id===driverId?Object.assign({},d,{company_id:null}):d;});
+    showToast('✅ Borttagen');showTab(6);
+  }catch(e){showToast('⚠️ Nätverksfel');}
+}
+
 </script>
 </body>
 </html>
