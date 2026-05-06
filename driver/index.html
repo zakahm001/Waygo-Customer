@@ -646,8 +646,21 @@ function tabHome(){
       (activeBooking.child_seat?'<div style="background:#fee2e2;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:800;color:#dc2626;margin-bottom:8px">🧒 BARNSTOL KRÄVS'+(activeBooking.child_age?' — Ålder: '+activeBooking.child_age:'')+'</div>':'')+
       '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">'+
       '<a href="tel:'+(activeBooking.customer_phone||'')+'" style="text-decoration:none"><button class="btn btn-success btn-sm">📞 Ring kund</button></a>'+
-      '<button class="btn btn-blue btn-sm" onclick="openChat(\'customer-driver-'+activeBooking.id+'\',\'Kund\')">💬 Kund</button>'+
       '<button class="btn btn-primary btn-sm" onclick="openChat(\'central-driver-'+driver.id+'\',\'Central\')">📡 Central</button></div>'+
+      '<div style="margin-bottom:10px">'+
+      '<select id="callbackSel" class="finput" style="margin-bottom:6px">'+
+      '<option value="">📱 Skicka SMS till kund...</option>'+
+      '<option value="framme_nu">✅ Framme nu</option>'+
+      '<option value="framme_5">🕐 Framme om 5 minuter</option>'+
+      '<option value="framme_10">🕐 Framme om 10 minuter</option>'+
+      '<option value="framme_15">🕐 Framme om 15 minuter</option>'+
+      '<option value="framme_20">🕐 Framme om 20 minuter</option>'+
+      '<option value="forsen_5">⚠️ Kommer försent ca 5 min</option>'+
+      '<option value="forsen_10">⚠️ Kommer försent ca 10 min</option>'+
+      '<option value="forsen_15">⚠️ Kommer försent ca 15 min</option>'+
+      '</select>'+
+      '<button class="btn btn-blue btn-sm" onclick="sendCallback()">Skicka →</button>'+
+      '</div>'+
       '<button class="btn btn-success" onclick="completeTrip()">✓ Slutför resa</button></div>':
       '<div style="text-align:center;padding:24px;background:white;border-radius:14px;border:1px solid #d0d7ea;margin-bottom:14px">'+
       '<div style="font-size:40px;margin-bottom:10px">🚖</div>'+
@@ -782,6 +795,33 @@ async function sendChat(){
     '<div class="cbubble">'+text+'</div></div>';
   el.appendChild(msg);el.scrollTop=el.scrollHeight;if(input)input.value='';
   try{await fetch(API+'/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({thread_key:currentChatKey,sender_name:driver.name,sender_role:'driver',content:text})});}catch(e){}
+}
+
+
+async function sendCallback(){
+  const sel=document.getElementById('callbackSel');
+  if(!sel||!sel.value){showToast('Välj ett alternativ','#d97706','white');return;}
+  const messages={
+    framme_nu:'Din förare är framme nu. Vänligen kom ut.',
+    framme_5:'Din förare är framme om ca 5 minuter.',
+    framme_10:'Din förare är framme om ca 10 minuter.',
+    framme_15:'Din förare är framme om ca 15 minuter.',
+    framme_20:'Din förare är framme om ca 20 minuter.',
+    forsen_5:'Din förare är tyvärr försenad ca 5 minuter. Vi ber om ursäkt.',
+    forsen_10:'Din förare är tyvärr försenad ca 10 minuter. Vi ber om ursäkt.',
+    forsen_15:'Din förare är tyvärr försenad ca 15 minuter. Vi ber om ursäkt.'
+  };
+  const msg='Trollhättan Cab: '+messages[sel.value];
+  try{
+    // Send via API SMS route
+    await fetch(API+'/bookings/'+activeBooking.id+'/driver-message',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message:msg,phone:activeBooking.customer_phone})
+    });
+    showToast('✅ SMS skickat till kunden','#15803d','white');
+    sel.value='';
+  }catch(e){showToast('⚠️ Kunde inte skicka','#dc2626','white');}
 }
 
 function confirmLogout(){
