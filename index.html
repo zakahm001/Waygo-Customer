@@ -243,7 +243,7 @@ select.finput{appearance:none}
       <input class="finput" id="lPwd" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
       <div class="ib ib-r" id="lErr" style="display:none"></div>
       <button class="btn btn-primary" id="lBtn" onclick="doLogin()">Logga in →</button>
-      <div style="text-align:center;margin-top:10px;font-size:12px;color:#94a3b8">BankID kommer snart</div>
+      <div style="text-align:center;margin-top:10px"><span style="font-size:12px;color:#1a56db;cursor:pointer" onclick="showForgotPwd()">Glömt lösenord?</span></div><div style="text-align:center;margin-top:6px;font-size:12px;color:#94a3b8">BankID kommer snart</div>
     </div>
     <div id="regForm" style="display:none">
       <div class="mtitle">Skapa konto</div>
@@ -519,10 +519,10 @@ window.addEventListener('load',()=>{
   setLang(lang);
   setTimeout(()=>{
     try{
-      const sc=localStorage.getItem('wsupp');
+      const sc=localStorage.getItem('thtcab_supp');
       if(sc){try{suppContacted=JSON.parse(sc);}catch(e){}}
-      const sv=localStorage.getItem('waygo_customer');
-      const st=localStorage.getItem('waygo_token');
+      const sv=localStorage.getItem('thtcab_customer');
+      const st=localStorage.getItem('thtcab_token');
       if(sv&&st){
         try{
           customer=JSON.parse(sv);token=st;
@@ -701,7 +701,7 @@ async function doLogin(){
     const data=await res.json();
     if(data.token){
       customer=data.customer;token=data.token;
-      localStorage.setItem('waygo_customer',JSON.stringify(customer));localStorage.setItem('waygo_token',token);
+      localStorage.setItem('thtcab_customer',JSON.stringify(customer));localStorage.setItem('thtcab_token',token);
       closeMod('authModal');selPay=customer.preferred_payment||'swish';
       if(!isBiz()&&selPay==='invoice')selPay='swish';
       myBookings=[];bookingsLoaded=false;updateTopbar();loadBookings();trySocket();
@@ -728,7 +728,7 @@ async function doRegister(){
     const data=await res.json();
     if(data.token){
       customer=data.customer;token=data.token;
-      localStorage.setItem('waygo_customer',JSON.stringify(customer));localStorage.setItem('waygo_token',token);
+      localStorage.setItem('thtcab_customer',JSON.stringify(customer));localStorage.setItem('thtcab_token',token);
       closeMod('authModal');selPay=customer.preferred_payment||'swish';
       myBookings=[];bookingsLoaded=false;updateTopbar();trySocket();
       showToast(t('created')+' '+customer.name.split(' ')[0]+'!');
@@ -753,7 +753,7 @@ async function completePending(){
 }
 
 function logout(){
-  localStorage.removeItem('waygo_customer');localStorage.removeItem('waygo_token');localStorage.removeItem('waygo_bookings');
+  localStorage.removeItem('thtcab_customer');localStorage.removeItem('thtcab_token');localStorage.removeItem('thtcab_bookings');
   customer=null;token=null;myBookings=[];bookingsLoaded=false;updateTopbar();showToast(t('loggedout'));showScreen('sWelcome');
 }
 
@@ -906,7 +906,7 @@ function tabPay(){
 }
 
 function openSupp(id,ref){
-  suppId=id;suppContacted[id]=true;localStorage.setItem('wsupp',JSON.stringify(suppContacted));
+  suppId=id;suppContacted[id]=true;localStorage.setItem('thtcab_supp',JSON.stringify(suppContacted));
   const si=document.getElementById('suppInfo');const sc=document.getElementById('suppChat');const si2=document.getElementById('suppIn');
   if(si)si.innerHTML='<strong>'+(lang==='sv'?'Bokning':'Booking')+':</strong> '+ref+'<br><strong>'+(lang==='sv'?'Vi hjälper dig direkt!':'We will help you right away!')+'</strong>';
   if(sc)sc.innerHTML='<div class="cmsg other"><div class="cav sup">T</div><div class="cbub">'+t('supp_hi')+' '+ref+'?</div></div>';
@@ -971,7 +971,7 @@ async function saveEdit(){
     var body={};body[editField]=val;
     const res=await fetch(API+'/customers/profile',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(body)});
     const data=await res.json();
-    if(data.customer){customer=Object.assign({},customer,data.customer);localStorage.setItem('waygo_customer',JSON.stringify(customer));showToast(t('saved'));showTab(2);}
+    if(data.customer){customer=Object.assign({},customer,data.customer);localStorage.setItem('thtcab_customer',JSON.stringify(customer));showToast(t('saved'));showTab(2);}
   }catch(e){showToast(t('savefail'));}
 }
 
@@ -1003,7 +1003,7 @@ function animDrv(id){
 
 async function loadBookings(){
   if(!customer||!token)return;
-  var sv=localStorage.getItem('waygo_bookings');
+  var sv=localStorage.getItem('thtcab_bookings');
   if(sv){try{myBookings=JSON.parse(sv);if(curTab===1)showTab(1);}catch(e){}}
   try{
     const res=await fetch(API+'/my-bookings',{headers:{'Authorization':'Bearer '+token}});
@@ -1012,7 +1012,7 @@ async function loadBookings(){
   }catch(e){bookingsLoaded=true;if(curTab===1)showTab(1);}
 }
 
-function saveBooks(){localStorage.setItem('waygo_bookings',JSON.stringify(myBookings));}
+function saveBooks(){localStorage.setItem('thtcab_bookings',JSON.stringify(myBookings));}
 
 function trySocket(){
   try{
