@@ -378,6 +378,17 @@ function connectSocket(){
       showAlert('✅ Avslutad — '+b.booking_ref+' · '+(b.fare_sek||0)+' kr','success');
       if(curTab===0)showTab(0);
     });
+    socket.on('booking:declined',function(data){
+      var driver=allDrivers.find(function(d){return d.id===data.driverId;});
+      var driverName=driver?driver.name:'Förare';
+      showAlert('⚠️ '+driverName+' avböjde bokning #'+data.bookingId+' — tillbaka i kön','warn');
+      showToast('⚠️ '+driverName+' avböjde — tilldela ny förare');
+      loadData().then(function(){if(curTab===0)showTab(0);});
+    });
+    socket.on('booking:returned',function(b){
+      allBookings=allBookings.map(function(x){return x.id===b.id?Object.assign({},x,{status:'pending',driver_id:null,driver_name:null}):x;});
+      if(curTab===0)showTab(0);
+    });
     socket.on('booking:cancelled',function(data){
       allBookings=allBookings.map(function(b){return b.id===data.id?Object.assign({},b,{status:'cancelled',driver_id:null,driver_name:null}):b;});
       if(curTab===0)showTab(0);
