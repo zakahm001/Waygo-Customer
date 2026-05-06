@@ -486,6 +486,7 @@ function bcard(b){
     '<div style="display:flex;gap:4px">'+(isPre?'<span class="badge bpre">📅 Förbokning</span>':'')+getBadge(b.status)+'</div></div>'+
     (isPre&&b.scheduled_at?'<div style="font-size:11px;color:#7c3aed;font-weight:700;margin-bottom:4px">📅 '+new Date(b.scheduled_at).toLocaleString('sv-SE',{dateStyle:'medium',timeStyle:'short'})+'</div>':'')+
     '<div class="broute">📍 '+b.from_address+' → 🏁 '+b.to_address+'</div>'+
+    (b.passengers>=5?'<div style="background:#fee2e2;border:1px solid #fecaca;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:#dc2626;margin-bottom:8px">⚠️ '+b.passengers+' PASSAGERARE — BEHÖVER MÖJLIGEN 2 BILAR</div>':'')+
     '<div class="bdetail">👤 '+b.customer_name+' · '+(b.customer_phone||'')+'<br>'+
     (b.passengers&&b.passengers>1?'👥 '+b.passengers+' passagerare · ':'')+
     (b.child_seat?'🧒 Barnstol'+(b.child_age?' ('+b.child_age+')':'')+' · ':'')+
