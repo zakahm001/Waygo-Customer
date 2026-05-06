@@ -419,6 +419,8 @@ function connectSocket(){
       if(socket&&driverStatus!=='offline')socket.emit('driver:status',{driverId:parseInt(driver.id),status:driverStatus==='available'?'available':'busy'});
     });
     socket.on('booking:assigned:driver',(booking)=>{
+      // Only handle if this booking is assigned to ME
+      if(parseInt(booking.driver_id)!==parseInt(driver.id))return;
       if(activeBooking&&activeBooking.id===booking.id)return;
       triggerAlert(booking);
     });
@@ -460,27 +462,31 @@ function triggerAlert(booking){
 
 function showPopup(booking){
   pendingBooking=booking;let countdown=30;
+  // Set all text content first
   document.getElementById('popupRef').textContent=booking.booking_ref;
   document.getElementById('popupRoute').textContent='📍 '+booking.from_address+' → 🏁 '+booking.to_address;
   document.getElementById('popupDetail').textContent='👤 '+booking.customer_name+' · '+(booking.customer_phone||'');
-  document.getElementById('popupFare').textContent=booking.fare_sek+' kr';
-  // Passengers and child seat
-  var extraEl=document.getElementById('popupExtra');
-  if(!extraEl){
-    extraEl=document.createElement('div');extraEl.id='popupExtra';
-    document.getElementById('popupPayment').parentNode.insertBefore(extraEl,document.getElementById('popupPayment'));
-  }
-  var extraHtml='';
-  if(booking.passengers&&booking.passengers>1)extraHtml+='<div style="background:#dbeafe;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:700;color:#1a56db;margin-bottom:8px">👥 '+booking.passengers+' passagerare</div>';
-  if(booking.child_seat)extraHtml+='<div style="background:#fee2e2;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:800;color:#dc2626;margin-bottom:8px">🧒 BARNSTOL KRÄVS'+(booking.child_age?' — '+booking.child_age:'')+'</div>';
-  extraEl.innerHTML=extraHtml;
+  document.getElementById('popupFare').textContent=(booking.fare_sek||0)+' kr';
   const pm={swish:'📱 Swish',card:'💳 Kort',invoice:'📄 Faktura'};
-  document.getElementById('popupPayment').textContent='Betalning: '+(pm[booking.payment_method]||booking.payment_method);
+  document.getElementById('popupPayment').textContent='Betalning: '+(pm[booking.payment_method]||booking.payment_method||'Kontant');
+  // Pre-booking badge
   const preBadge=document.getElementById('popupPreBadge');
   if(booking.booking_type==='pre'&&booking.scheduled_at){preBadge.style.display='';document.getElementById('popupPreTime').textContent=new Date(booking.scheduled_at).toLocaleString('sv-SE',{dateStyle:'medium',timeStyle:'short'});}
   else{preBadge.style.display='none';}
+  // Passengers and child seat badges
+  let extraHtml='';
+  if(booking.passengers&&booking.passengers>1)extraHtml+='<div style="background:#dbeafe;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:700;color:#1a56db;margin-bottom:8px">👥 '+booking.passengers+' passagerare</div>';
+  if(booking.child_seat)extraHtml+='<div style="background:#fee2e2;border-radius:8px;padding:7px 12px;font-size:13px;font-weight:800;color:#dc2626;margin-bottom:8px">🧒 BARNSTOL KRÄVS'+(booking.child_age?' — Ålder: '+booking.child_age:'')+'</div>';
+  let extraEl=document.getElementById('popupExtra');
+  if(!extraEl){
+    extraEl=document.createElement('div');extraEl.id='popupExtra';
+    const payEl=document.getElementById('popupPayment');
+    if(payEl&&payEl.parentNode)payEl.parentNode.insertBefore(extraEl,payEl);
+  }
+  extraEl.innerHTML=extraHtml;
+  // Show overlay and start timer
   const timerEl=document.getElementById('popupTimer');
-  timerEl.textContent=countdown;timerEl.classList.remove('urgent');
+  if(timerEl){timerEl.textContent=countdown;timerEl.classList.remove('urgent');}
   document.getElementById('bookingOverlay').classList.add('show');
   if(popupTimerInterval)clearInterval(popupTimerInterval);
   popupTimerInterval=setInterval(()=>{
