@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trollhättan Cab — Förarapp</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:Arial,sans-serif;background:#0d1b3e;color:white;min-height:100vh}
+    .screen{display:none;min-height:100vh;flex-direction:column}
+    .screen.active{display:flex}
+    #sLoad{background:#0d1b3e;align-items:center;justify-content:center;gap:12px}
+    .load-logo{font-size:56px;animation:bounce 1s infinite}
+    .load-name{color:#fbbf24;font-size:20px;font-weight:bold;letter-spacing:2px;text-align:center}
+    .load-sub{color:#4a6090;font-size:13px}
+    .dots{display:flex;gap:8px;margin-top:12px}
+    .dot{width:10px;height:10px;background:#fbbf24;border-radius:50%;animation:dp 1.2s infinite}
+    .dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+    @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+    @keyframes dp{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+    #sLogin{background:#0d1b3e;padding:30px 24px;align-items:center;justify-content:center}
+    .login-wrap{width:100%;max-width:400px}
+    .login-logo{text-align:center;margin-bottom:32px}
+    .login-icon{font-size:48px}
+    .login-name{font-size:22px;font-weight:bold;color:#fbbf24;letter-spacing:2px;margin-top:6px}
+    .login-sub{color:#4a6090;font-size:13px;margin-top:4px}
+    .login-box{background:#1a2f5e;border-radius:16px;padding:24px;border:1px solid #2a4080}
+    .flabel{font-size:11px;font-weight:700;color:#4a6090;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;display:block}
+    .finput{width:100%;padding:12px 14px;border-radius:10px;border:1px solid #2a4080;background:#0d1b3e;color:white;font-size:15px;outline:none;box-sizing:border-box;margin-bottom:14px}
+    .finput:focus{border-color:#fbbf24}
+    .finput::placeholder{color:#2a4080}
+    .err-box{background:#fee2e2;color:#dc2626;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none;font-weight:600}
+    .topbar{background:#0d1b3e;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1a2f5e;position:sticky;top:0;z-index:100}
+    .tlogo{color:#fbbf24;font-size:15px;font-weight:bold}
+    .toggle-wrap{display:flex;align-items:center;gap:8px;cursor:pointer}
+    .toggle-track{width:52px;height:28px;border-radius:14px;background:#2a4080;position:relative;transition:background .3s}
+    .toggle-track.on{background:#15803d}
+    .toggle-thumb{position:absolute;width:22px;height:22px;border-radius:50%;background:white;top:3px;left:3px;transition:left .3s}
+    .toggle-track.on .toggle-thumb{left:27px}
+    .toggle-label{font-size:12px;font-weight:700;color:#4a6090}
+    .toggle-track.on + .toggle-label{color:#22c55e}
+    .bnav{position:fixed;bottom:0;left:0;right:0;background:#0d1b3e;display:flex;justify-content:space-around;padding:10px 0;border-top:1px solid #1a2f5e;z-index:100}
+    .bni{display:flex;flex-direction:column;align-items:center;gap:3px;color:#4a6090;font-size:10px;cursor:pointer;border:none;background:none;padding:4px 8px}
+    .bni.on{color:#fbbf24}
+    .bni-icon{font-size:20px}
+    .page{padding:20px;background:#eef1f8;color:#0d1b3e;flex:1;overflow-y:auto}
+    .card{background:white;border-radius:14px;padding:18px;margin-bottom:14px;border:1px solid #d0d7ea;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+    .stitle{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}
+    .btn{padding:14px;border-radius:10px;font-size:15px;font-weight:700;border:none;cursor:pointer;width:100%;text-align:center}
+    .btn:disabled{opacity:.6;cursor:default}
+    .btn-primary{background:#0d1b3e;color:#fbbf24}
+    .btn-success{background:#15803d;color:white}
+    .btn-danger{background:#dc2626;color:white}
+    .btn-gray{background:#f1f5f9;color:#64748b}
+    .btn-blue{background:#1a56db;color:white}
+    .btn-yellow{background:#fbbf24;color:#0d1b3e}
+    .btn-sm{padding:8px 16px;font-size:13px;width:auto;border-radius:8px;display:inline-block}
+    .badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap}
+    .b-green{background:#dcfce7;color:#15803d;border:1px solid #86efac}
+    .b-gray{background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0}
+    .b-blue{background:#dbeafe;color:#1a56db;border:1px solid #93c5fd}
+    .booking-overlay{position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:500;display:none;align-items:center;justify-content:center;padding:20px}
+    .booking-overlay.show{display:flex}
+    .booking-popup{background:white;border-radius:20px;padding:24px;width:100%;max-width:420px;color:#0d1b3e}
+    .popup-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+    .popup-new{background:#dc2626;color:white;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;animation:blink 1s infinite}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+    .popup-timer{font-size:32px;font-weight:800;color:#dc2626;font-family:monospace}
+    .popup-route{font-size:16px;font-weight:700;color:#0d1b3e;margin-bottom:6px}
+    .popup-detail{font-size:13px;color:#64748b;margin-bottom:10px}
+    .popup-fare{font-size:32px;font-weight:800;color:#0d1b3e;margin-bottom:14px}
+    .popup-btns{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .popup-accept{background:#15803d;color:white;border:none;border-radius:12px;padding:18px;font-size:17px;font-weight:800;cursor:pointer;animation:pulse-green 1.5s infinite}
+    @keyframes pulse-green{0%,100%{box-shadow:0 0 0 0 rgba(21,128,61,.5)}50%{box-shadow:0 0 0 14px rgba(21,128,61,0)}}
+    .popup-decline{background:#f1f5f9;color:#64748b;border:none;border-radius:12px;padding:18px;font-size:17px;font-weight:700;cursor:pointer}
+    .driver-map{background:#d4e8d4;border-radius:12px;height:160px;position:relative;overflow:hidden;margin-bottom:14px;border:1px solid #b8d4b8}
+    .map-bg{position:absolute;inset:0;background-image:linear-gradient(#b8d4b8 1px,transparent 1px),linear-gradient(90deg,#b8d4b8 1px,transparent 1px);background-size:25px 25px;opacity:.5}
+    .map-road-h{position:absolute;height:5px;background:white;left:0;right:0;opacity:.8}
+    .map-road-v{position:absolute;width:5px;background:white;top:0;bottom:0;opacity:.8}
+    .my-marker{position:absolute;width:40px;height:40px;border-radius:50%;background:#0d1b3e;border:4px solid #fbbf24;display:flex;align-items:center;justify-content:center;font-size:18px;transform:translate(-50%,-50%);transition:left 1s ease,top 1s ease}
+    .map-gps{position:absolute;bottom:8px;left:8px;background:rgba(13,27,62,.9);color:#fbbf24;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:bold}
+    .trip-card{background:white;border-radius:12px;padding:16px;margin-bottom:10px;border:1px solid #d0d7ea}
+    .trip-active{border-color:#15803d;box-shadow:0 0 0 3px #dcfce7}
+    .trip-ref{font-size:13px;font-weight:700;color:#1a56db}
+    .trip-route{font-size:14px;font-weight:600;color:#0d1b3e;margin:4px 0}
+    .trip-detail{font-size:12px;color:#64748b;margin-bottom:10px}
+    .moverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center}
+    .moverlay.open{display:flex}
+    .mbox{background:white;border-radius:20px 20px 0 0;padding:24px 20px;width:100%;max-width:500px;max-height:88vh;overflow-y:auto;color:#0d1b3e}
+    .mtitle{font-size:17px;font-weight:bold;color:#0d1b3e;margin-bottom:16px}
+    .chatbox{height:220px;overflow-y:auto;padding:8px 0;display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+    .cmsg{display:flex;gap:8px;align-items:flex-end}
+    .cmsg.mine{flex-direction:row-reverse}
+    .cav{width:28px;height:28px;border-radius:50%;background:#0d1b3e;color:#fbbf24;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;flex-shrink:0}
+    .cav.other{background:#7c3aed}
+    .cbubble{max-width:72%;padding:8px 12px;border-radius:12px;font-size:13px;line-height:1.4}
+    .cmsg.mine .cbubble{background:#0d1b3e;color:#fbbf24;border-radius:12px 12px 4px 12px}
+    .cmsg.other .cbubble{background:#f1f5f9;color:#0d1b3e;border-radius:12px 12px 12px 4px}
+    .cinput-row{display:flex;gap:8px}
+    .cinput{flex:1;padding:9px 12px;border-radius:24px;border:1px solid #d0d7ea;background:#f8fafc;font-size:13px;color:#0d1b3e;outline:none}
+    .csend{width:38px;height:38px;border-radius:50%;background:#0d1b3e;border:none;color:#fbbf24;font-size:15px;cursor:pointer;flex-shrink:0}
+    .toast{position:fixed;bottom:90px;left:20px;right:20px;padding:14px 20px;border-radius:12px;font-size:14px;font-weight:bold;text-align:center;z-index:400;display:none;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+    .toast.show{display:block}
+    .ib{border-radius:8px;padding:10px 12px;font-size:12px;margin-bottom:10px}
+    .ib-yellow{background:#fef3c7;border:1px solid #fde68a;color:#d97706}
+    .ib-blue{background:#dbeafe;border:1px solid #93c5fd;color:#1a56db}
+    .driver-header{background:linear-gradient(135deg,#0d1b3e,#1a3066);padding:24px 20px;display:flex;align-items:center;gap:16px}
+    .driver-avatar{width:60px;height:60px;border-radius:50%;background:#fbbf24;color:#0d1b3e;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:bold;flex-shrink:0}
+    .list-item{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid #f8fafc}
+    .list-item:last-child{border-bottom:none}
+    .notif-banner{background:#fbbf24;color:#0d1b3e;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .notif-banner-text{font-size:13px;font-weight:700;flex:1}
+    .notif-banner-btn{background:#0d1b3e;color:#fbbf24;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+    .stat-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+    .stat-box{background:#1a2f5e;border-radius:10px;padding:12px 8px;text-align:center}
+    .stat-val{font-size:18px;font-weight:800;color:#fbbf24}
+    .stat-lbl{font-size:10px;color:#4a6090;margin-top:2px}
+  </style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="screen active" id="sLoad">
+  <div class="load-logo">🚖</div>
+  <div class="load-name">TROLLHÄTTAN CAB</div>
+  <div class="load-sub">Förarapp · Driver App</div>
+  <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+</div>
+
+<!-- LOGIN -->
+<div class="screen" id="sLogin">
+  <div class="login-wrap">
+    <div class="login-logo">
+      <div class="login-icon">🚖</div>
+      <div class="login-name">TROLLHÄTTAN CAB</div>
+      <div class="login-sub">Förarapp — Driver Portal</div>
+    </div>
+    <div class="login-box">
+      <label class="flabel">E-postadress</label>
+      <input class="finput" id="loginEmail" type="email" placeholder="din@email.se" onkeydown="if(event.key==='Enter')doLogin()"/>
+      <label class="flabel">Lösenord</label>
+      <input class="finput" id="loginPassword" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+      <div class="err-box" id="loginErr"></div>
+      <button class="btn btn-yellow" id="loginBtn" onclick="doLogin()">Logga in →</button>
+    </div>
+    <div style="text-align:center;margin-top:20px;font-size:12px;color:#4a6090">
+      Trollhättan Cab AB · Org.nr 559312-7128<br>
+      <span style="margin-top:6px;display:block">Problem att logga in? Kontakta central.</span>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div class="screen" id="sApp">
+  <div id="notifBanner" class="notif-banner" style="display:none">
+    <div class="notif-banner-text">🔔 Aktivera notiser — missa inga bokningar!</div>
+    <button class="notif-banner-btn" onclick="requestNotif()">Aktivera nu</button>
+  </div>
+  <div class="topbar">
+    <div class="tlogo">🚖 TROLLHÄTTAN CAB</div>
+    <div class="toggle-wrap" onclick="toggleOnline()">
+      <div class="toggle-track" id="toggleTrack"><div class="toggle-thumb"></div></div>
+      <span class="toggle-label" id="toggleLabel">Offline</span>
+    </div>
+  </div>
+  <div style="flex:1;overflow-y:auto;background:#eef1f8" id="tabContent"></div>
+  <div class="bnav">
+    <button class="bni on" id="bni0" onclick="showTab(0)"><span class="bni-icon">🏠</span><span>Hem</span></button>
+    <button class="bni" id="bni1" onclick="showTab(1)"><span class="bni-icon">📋</span><span>Resor</span></button>
+    <button class="bni" id="bni2" onclick="showTab(2)"><span class="bni-icon">💬</span><span>Chatt</span></button>
+    <button class="bni" id="bni3" onclick="showTab(3)"><span class="bni-icon">👤</span><span>Profil</span></button>
+  </div>
+</div>
+
+<!-- INCOMING BOOKING OVERLAY -->
+<div class="booking-overlay" id="bookingOverlay">
+  <div class="booking-popup">
+    <div class="popup-header">
+      <div>
+        <div class="popup-new">🚨 NY BOKNING!</div>
+        <div style="font-size:12px;color:#64748b;margin-top:4px" id="popupRef"></div>
+      </div>
+      <div class="popup-timer" id="popupTimer">30</div>
+    </div>
+    <div id="popupPreBadge" style="display:none;margin-bottom:8px">
+      <span class="badge b-blue">📅 Förbokning</span>
+      <span style="font-size:12px;color:#7c3aed;margin-left:6px" id="popupPreTime"></span>
+    </div>
+    <div class="popup-route" id="popupRoute"></div>
+    <div class="popup-detail" id="popupDetail"></div>
+    <div class="popup-fare" id="popupFare"></div>
+    <div class="ib ib-blue" id="popupPayment" style="margin-bottom:16px"></div>
+    <div class="popup-btns">
+      <button class="popup-decline" onclick="declineBooking()">✕ Neka</button>
+      <button class="popup-accept" onclick="acceptBooking()">✓ Acceptera</button>
+    </div>
+  </div>
+</div>
+
+<!-- CHAT MODAL -->
+<div class="moverlay" id="chatModal" onclick="closeMIfOut(event,'chatModal')">
+  <div class="mbox">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="mtitle" id="chatTitle" style="margin-bottom:0">Chatt</div>
+      <button onclick="closeMod('chatModal')" style="background:none;border:none;font-size:22px;cursor:pointer;color:#64748b">✕</button>
+    </div>
+    <div class="chatbox" id="chatMessages"></div>
+    <div class="cinput-row">
+      <input class="cinput" id="chatInput" placeholder="Skriv meddelande..." onkeydown="if(event.key==='Enter')sendChat()"/>
+      <button class="csend" onclick="sendChat()">➤</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const API = 'https://16.16.153.106.sslip.io';
+const COMPANY = 'Trollhättan Cab';
+
+let driver = null;
+let token = null;
+let isOnline = false;
+let activeBooking = null;
+let myTrips = [];
+let curTab = 0;
+let socket = null;
+let gpsInterval = null;
+let currentLat = 58.2837;
+let currentLng = 12.2878;
+let popupTimerInterval = null;
+let pendingBooking = null;
+let currentChatKey = null;
+let audioCtx = null;
+let workStartTime = null;
+let onlineSeconds = 0;
+let onlineTimer = null;
+
+function initAudio(){
+  if(!audioCtx){try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+}
+document.addEventListener('touchstart',initAudio,{passive:true});
+document.addEventListener('click',initAudio);
+
+function playAlert(){
+  try{
+    initAudio();if(!audioCtx)return;
+    if(audioCtx.state==='suspended')audioCtx.resume();
+    const beep=(freq,start,dur)=>{
+      const osc=audioCtx.createOscillator();const gain=audioCtx.createGain();
+      osc.connect(gain);gain.connect(audioCtx.destination);
+      osc.frequency.value=freq;osc.type='sine';
+      gain.gain.setValueAtTime(1.0,audioCtx.currentTime+start);
+      gain.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+start+dur);
+      osc.start(audioCtx.currentTime+start);osc.stop(audioCtx.currentTime+start+dur);
+    };
+    beep(880,.0,.15);beep(660,.2,.15);beep(880,.4,.15);beep(660,.6,.15);beep(880,.8,.4);
+    beep(1100,1.3,.15);beep(880,1.5,.15);beep(1100,1.7,.15);beep(880,1.9,.15);beep(1100,2.1,.6);
+  }catch(e){}
+}
+
+function vibrateAlert(){try{if('vibrate' in navigator)navigator.vibrate([800,200,400,200,800,200,400,200,800]);}catch(e){}}
+function sendPushNotif(title,body){try{if('Notification' in window&&Notification.permission==='granted')new Notification(title,{body,tag:'thtcab-booking',requireInteraction:true});}catch(e){}}
+
+function triggerAlert(booking){
+  playAlert();vibrateAlert();
+  sendPushNotif('🚨 Ny bokning! '+booking.booking_ref,'📍 '+booking.from_address+' → '+booking.to_address+' · '+booking.fare_sek+' kr');
+  showPopup(booking);
+}
+
+function checkNotifPermission(){
+  if('Notification' in window&&Notification.permission==='default')document.getElementById('notifBanner').style.display='flex';
+}
+
+function requestNotif(){
+  if('Notification' in window){Notification.requestPermission().then(p=>{document.getElementById('notifBanner').style.display='none';if(p==='granted')showToast('✅ Notiser aktiverade!','#15803d','white');});}
+}
+
+function showToast(msg,bg,fg){
+  try{const el=document.getElementById('toast');el.textContent=msg;el.style.background=bg||'#fbbf24';el.style.color=fg||'#0d1b3e';el.classList.add('show');setTimeout(()=>el.classList.remove('show'),3500);}catch(e){}
+}
+
+function closeMod(id){try{document.getElementById(id).classList.remove('open');}catch(e){}}
+function closeMIfOut(e,id){if(e.target===document.getElementById(id))closeMod(id);}
+
+window.addEventListener('load',()=>{
+  setTimeout(()=>{
+    try{
+      const saved=localStorage.getItem('thtcab_driver');
+      const savedTok=localStorage.getItem('thtcab_driver_token');
+      if(saved&&savedTok){driver=JSON.parse(saved);token=savedTok;enterApp();}
+      else{showScreen('sLogin');}
+    }catch(e){console.log('Init error:',e);showScreen('sLogin');}
+  },2000);
+});
+
+function showScreen(id){
+  try{document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));const el=document.getElementById(id);if(el)el.classList.add('active');}catch(e){}
+}
+
+async function doLogin(){
+  const emailEl=document.getElementById('loginEmail');const pwdEl=document.getElementById('loginPassword');
+  const err=document.getElementById('loginErr');const btn=document.getElementById('loginBtn');
+  const email=emailEl.value.trim().toLowerCase();const password=pwdEl.value.trim();
+  err.style.display='none';
+  if(!email||!password){err.textContent='⚠️ Fyll i e-post och lösenord';err.style.display='';return;}
+  btn.textContent='Loggar in...';btn.disabled=true;
+  try{
+    const res=await fetch(API+'/drivers/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+    const data=await res.json();
+    if(data.token){
+      driver=data.driver;token=data.token;
+      driver.trips_today=driver.trips_today||0;driver.earnings_today=driver.earnings_today||0;
+      localStorage.setItem('thtcab_driver',JSON.stringify(driver));localStorage.setItem('thtcab_driver_token',token);
+      enterApp();
+    }else{err.textContent='⚠️ '+(data.error||'Fel e-post eller lösenord');err.style.display='';}
+  }catch(e){err.textContent='⚠️ Kunde inte ansluta till servern';err.style.display='';}
+  btn.textContent='Logga in →';btn.disabled=false;
+}
+
+function enterApp(){
+  showScreen('sApp');showTab(0);startGPS();checkNotifPermission();
+  setTimeout(()=>{connectSocket();},1500);
+}
+
+function toggleOnline(){
+  isOnline=!isOnline;
+  const track=document.getElementById('toggleTrack');const label=document.getElementById('toggleLabel');
+  track.classList.toggle('on',isOnline);label.textContent=isOnline?'Online':'Offline';
+  if(isOnline){
+    workStartTime=Date.now();
+    onlineTimer=setInterval(()=>{onlineSeconds++;updateWorkTimer();},1000);
+    showToast('✅ Du är online','#15803d','white');
+    if(socket){socket.emit('driver:status',{driverId:parseInt(driver.id),status:'available'});socket.emit('driver:join',parseInt(driver.id));}
+  }else{
+    if(onlineTimer){clearInterval(onlineTimer);onlineTimer=null;}
+    showToast('⭕ Du är offline');
+    if(socket)socket.emit('driver:status',{driverId:parseInt(driver.id),status:'offline'});
+  }
+  showTab(curTab);
+}
+
+function updateWorkTimer(){
+  const el=document.getElementById('workTimer');
+  if(!el)return;
+  const h=Math.floor(onlineSeconds/3600);const m=Math.floor((onlineSeconds%3600)/60);const s=onlineSeconds%60;
+  el.textContent=(h>0?h+'h ':'')+m+'m '+s+'s';
+}
+
+function startGPS(){
+  if('geolocation' in navigator){navigator.geolocation.watchPosition(pos=>{currentLat=pos.coords.latitude;currentLng=pos.coords.longitude;sendGPS();},err=>console.log('GPS:',err.message),{enableHighAccuracy:true,maximumAge:5000,timeout:10000});}
+  gpsInterval=setInterval(()=>{
+    currentLat+=(Math.random()-0.5)*0.001;currentLng+=(Math.random()-0.5)*0.001;
+    if(isOnline)sendGPS();updateMapMarker();
+  },5000);
+}
+
+function sendGPS(){if(socket&&isOnline)socket.emit('driver:location',{driverId:parseInt(driver.id),lat:currentLat,lng:currentLng});}
+
+function updateMapMarker(){
+  const m=document.getElementById('myMarker');if(!m)return;
+  const minLat=58.1,maxLat=58.4,minLng=12.1,maxLng=12.5;
+  const x=((currentLng-minLng)/(maxLng-minLng))*80+10;
+  const y=((maxLat-currentLat)/(maxLat-minLat))*80+10;
+  m.style.left=Math.min(90,Math.max(10,x))+'%';m.style.top=Math.min(90,Math.max(10,y))+'%';
+}
+
+function connectSocket(){
+  try{
+    if(typeof io==='undefined'){setTimeout(connectSocket,1000);return;}
+    socket=io(API,{timeout:5000});
+    socket.on('connect',()=>{socket.emit('driver:join',parseInt(driver.id));if(isOnline)socket.emit('driver:status',{driverId:parseInt(driver.id),status:'available'});});
+    socket.on('booking:new',(booking)=>{if(!isOnline||activeBooking)return;triggerAlert(booking);});
+    socket.on('booking:assigned:driver',(booking)=>{if(activeBooking)return;triggerAlert(booking);});
+    socket.on('booking:assigned',(booking)=>{if(!isOnline||activeBooking)return;if(parseInt(booking.driver_id)===parseInt(driver.id)){activeBooking=booking;showTab(curTab);}});
+    socket.on('booking:cancelled',(data)=>{if(activeBooking&&activeBooking.id===data.id){activeBooking=null;showToast('⚠️ Bokning avbokad','#dc2626','white');showTab(0);}});
+    socket.on('disconnect',()=>{console.log('Socket disconnected');});
+  }catch(e){console.log('Socket error:',e);}
+}
+
+function showPopup(booking){
+  pendingBooking=booking;let countdown=30;
+  document.getElementById('popupRef').textContent=booking.booking_ref;
+  document.getElementById('popupRoute').textContent='📍 '+booking.from_address+' → 🏁 '+booking.to_address;
+  document.getElementById('popupDetail').textContent='👤 '+booking.customer_name+' · '+(booking.customer_phone||'');
+  document.getElementById('popupFare').textContent=booking.fare_sek+' kr';
+  const pm={swish:'📱 Swish',card:'💳 Kort',invoice:'📄 Faktura'};
+  document.getElementById('popupPayment').textContent='Betalning: '+(pm[booking.payment_method]||booking.payment_method);
+  const preBadge=document.getElementById('popupPreBadge');
+  if(booking.booking_type==='pre'&&booking.scheduled_at){preBadge.style.display='';document.getElementById('popupPreTime').textContent=new Date(booking.scheduled_at).toLocaleString('sv-SE',{dateStyle:'medium',timeStyle:'short'});}
+  else{preBadge.style.display='none';}
+  document.getElementById('popupTimer').textContent=countdown;
+  document.getElementById('bookingOverlay').classList.add('show');
+  if(popupTimerInterval)clearInterval(popupTimerInterval);
+  popupTimerInterval=setInterval(()=>{countdown--;const el=document.getElementById('popupTimer');if(el)el.textContent=countdown;if(countdown<=0){clearInterval(popupTimerInterval);declineBooking();}},1000);
+}
+
+async function acceptBooking(){
+  if(!pendingBooking)return;
+  clearInterval(popupTimerInterval);document.getElementById('bookingOverlay').classList.remove('show');
+  try{
+    const res=await fetch(API+'/bookings/'+pendingBooking.id+'/assign',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({driver_id:parseInt(driver.id)})});
+    if(res.ok){activeBooking={...pendingBooking};pendingBooking=null;showToast('✅ Bokning accepterad!','#15803d','white');showTab(1);}
+    else{showToast('⚠️ Kunde inte acceptera','#dc2626','white');}
+  }catch(e){showToast('⚠️ Nätverksfel','#dc2626','white');}
+}
+
+function declineBooking(){clearInterval(popupTimerInterval);document.getElementById('bookingOverlay').classList.remove('show');pendingBooking=null;}
+
+async function completeTrip(){
+  if(!activeBooking)return;
+  const fare=activeBooking.fare_sek||0;const bookingId=activeBooking.id;
+  showToast('⏳ Slutför resa...','#0d9488','white');
+  try{
+    const res=await fetch(API+'/bookings/'+bookingId+'/complete',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({driver_id:parseInt(driver.id),fare:fare})});
+    if(res.ok){
+      myTrips.unshift({...activeBooking,status:'completed',completed_at:new Date()});
+      driver.earnings_today=(driver.earnings_today||0)+fare;driver.trips_today=(driver.trips_today||0)+1;
+      localStorage.setItem('thtcab_driver',JSON.stringify(driver));
+      activeBooking=null;
+      if(socket)socket.emit('driver:status',{driverId:parseInt(driver.id),status:'available'});
+      showToast('✅ Resa slutförd! +'+fare+' kr','#15803d','white');showTab(0);
+    }else{showToast('⚠️ Kunde inte slutföra','#dc2626','white');}
+  }catch(e){showToast('⚠️ Nätverksfel: '+e.message,'#dc2626','white');}
+}
+
+function showTab(i){
+  try{
+    curTab=i;document.querySelectorAll('.bni').forEach((b,j)=>b.classList.toggle('on',i===j));
+    const c=document.getElementById('tabContent');if(!c)return;
+    if(i===0)c.innerHTML=tabHome();else if(i===1)c.innerHTML=tabTrips();
+    else if(i===2)c.innerHTML=tabChat();else if(i===3)c.innerHTML=tabProfile();
+  }catch(e){console.log('showTab error:',e);}
+}
+
+function tabHome(){
+  const statusText=!isOnline?'Offline':activeBooking?'På uppdrag':'Ledig';
+  const statusColor=!isOnline?'#64748b':activeBooking?'#1a56db':'#15803d';
+  const h=Math.floor(onlineSeconds/3600);const m=Math.floor((onlineSeconds%3600)/60);
+  const workTime=isOnline?(h>0?h+'h ':'')+m+' min':'—';
+  return '<div style="background:#0d1b3e;padding:20px">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'+
+    '<div><div style="color:#fbbf24;font-size:16px;font-weight:bold">'+driver.name+'</div>'+
+    '<div style="color:#4a6090;font-size:12px;margin-top:2px">'+(driver.plate||'')+' · '+(driver.taxi_nr||'')+'</div></div>'+
+    '<span style="background:'+statusColor+';color:white;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700">'+statusText+'</span></div>'+
+    '<div class="stat-row">'+
+    '<div class="stat-box"><div class="stat-val">'+(driver.earnings_today||0)+' kr</div><div class="stat-lbl">INTÄKTER</div></div>'+
+    '<div class="stat-box"><div class="stat-val">'+(driver.trips_today||0)+'</div><div class="stat-lbl">RESOR</div></div>'+
+    '<div class="stat-box"><div class="stat-val" id="workTimer">'+workTime+'</div><div class="stat-lbl">ARBETSTID</div></div>'+
+    '</div></div>'+
+    '<div style="padding:20px">'+
+    (!isOnline?'<div class="ib ib-yellow">⭐ Slå på toggle i topbaren för att börja ta emot bokningar.</div>':'')+
+    '<div class="stitle">📍 Min position — Trollhättan</div>'+
+    '<div class="driver-map">'+
+    '<div class="map-bg"></div>'+
+    '<div class="map-road-h" style="top:35%"></div><div class="map-road-h" style="top:65%"></div>'+
+    '<div class="map-road-v" style="left:30%"></div><div class="map-road-v" style="left:65%"></div>'+
+    '<div class="my-marker" id="myMarker" style="left:50%;top:50%">🚖</div>'+
+    '<div class="map-gps">🔴 GPS '+(isOnline?'Live':'Pausad')+'</div></div>'+
+    (activeBooking?'<div class="stitle">🚖 Aktivt uppdrag</div>'+
+    '<div class="trip-card trip-active">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
+    '<span class="trip-ref">'+activeBooking.booking_ref+'</span><span class="badge b-green">Pågår</span></div>'+
+    '<div class="trip-route">📍 '+activeBooking.from_address+'<br>🏁 '+activeBooking.to_address+'</div>'+
+    '<div class="trip-detail">👤 '+activeBooking.customer_name+'<br>📞 '+(activeBooking.customer_phone||'—')+'<br>💰 '+activeBooking.fare_sek+' kr · '+activeBooking.payment_method+'</div>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">'+
+    '<a href="tel:'+(activeBooking.customer_phone||'')+'" style="text-decoration:none"><button class="btn btn-success btn-sm">📞 Ring kund</button></a>'+
+    '<button class="btn btn-blue btn-sm" onclick="openChat(\'customer-driver-'+activeBooking.id+'\',\'Kund\')">💬 Kund</button>'+
+    '<button class="btn btn-primary btn-sm" onclick="openChat(\'central-driver-'+driver.id+'\',\'Central\')">📡 Central</button></div>'+
+    '<button class="btn btn-success" onclick="completeTrip()">✓ Slutför resa</button></div>':
+    isOnline?'<div style="text-align:center;padding:30px 20px;background:white;border-radius:14px;border:1px solid #d0d7ea">'+
+    '<div style="font-size:48px;margin-bottom:12px">🚖</div>'+
+    '<div style="font-size:16px;font-weight:700;color:#0d1b3e;margin-bottom:6px">Väntar på bokningar...</div>'+
+    '<div style="font-size:13px;color:#64748b">Ljud + vibration + notis när bokning kommer in</div></div>':'')+
+    '<div style="margin-top:14px"><button class="btn btn-gray" onclick="testAlert()" style="font-size:12px;padding:10px">🔔 Testa notifieringssystem</button></div>'+
+    '<div style="height:80px"></div></div>';
+}
+
+function testAlert(){
+  initAudio();
+  triggerAlert({id:9999,booking_ref:'TEST-001',from_address:'Trollhättan Centralstation',to_address:'Västra Götaland Airport',customer_name:'Test Kund',customer_phone:'070-000 00 00',fare_sek:320,payment_method:'swish',booking_type:'now'});
+}
+
+function tabTrips(){
+  return '<div style="background:#0d1b3e;padding:16px 20px">'+
+    '<div style="color:#fbbf24;font-size:16px;font-weight:bold">Mina resor</div>'+
+    '<div style="color:#4a6090;font-size:12px;margin-top:2px">Historik idag</div></div>'+
+    '<div style="padding:20px">'+
+    (activeBooking?'<div class="stitle">Pågående resa</div>'+
+    '<div class="trip-card trip-active">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
+    '<span class="trip-ref">'+activeBooking.booking_ref+'</span><span class="badge b-green">Pågår</span></div>'+
+    '<div class="trip-route">'+activeBooking.from_address+' → '+activeBooking.to_address+'</div>'+
+    '<div class="trip-detail">'+activeBooking.customer_name+' · '+activeBooking.fare_sek+' kr</div>'+
+    '<button class="btn btn-success" onclick="completeTrip()">✓ Slutför resa</button></div>':'')+
+    '<div class="stitle">Slutförda idag ('+myTrips.length+')</div>'+
+    (myTrips.length===0?'<div style="text-align:center;padding:30px;color:#94a3b8;font-size:13px;background:white;border-radius:12px;border:1px solid #d0d7ea">Inga avslutade resor idag</div>':
+    myTrips.map(t=>'<div class="trip-card">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'+
+      '<span class="trip-ref">'+t.booking_ref+'</span><span class="badge b-gray">Avslutad</span></div>'+
+      '<div class="trip-route">'+t.from_address+' → '+t.to_address+'</div>'+
+      '<div class="trip-detail">'+t.customer_name+'</div>'+
+      '<div style="font-size:15px;font-weight:700;color:#15803d">'+t.fare_sek+' kr</div></div>').join(''))+
+    '<div style="height:80px"></div></div>';
+}
+
+function tabChat(){
+  return '<div style="background:#0d1b3e;padding:16px 20px">'+
+    '<div style="color:#fbbf24;font-size:16px;font-weight:bold">Kommunikation</div>'+
+    '<div style="color:#4a6090;font-size:12px;margin-top:2px">Chatta med central och kunder</div></div>'+
+    '<div style="padding:20px">'+
+    '<div class="stitle">Central Dispatch</div>'+
+    '<div class="card" onclick="openChat(\'central-driver-'+driver.id+'\',\'Central Dispatch\')" style="cursor:pointer;display:flex;align-items:center;gap:14px">'+
+    '<div style="width:44px;height:44px;border-radius:50%;background:#7c3aed;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">📡</div>'+
+    '<div><div style="font-size:14px;font-weight:700;color:#0d1b3e">Central Dispatch</div>'+
+    '<div style="font-size:12px;color:#64748b">Trollhättan Cab · Alltid tillgängliga</div></div>'+
+    '<div style="margin-left:auto;color:#94a3b8;font-size:20px">›</div></div>'+
+    (activeBooking?'<div class="stitle" style="margin-top:6px">Aktiv kund</div>'+
+    '<div class="card" onclick="openChat(\'customer-driver-'+activeBooking.id+'\',\''+activeBooking.customer_name+'\')" style="cursor:pointer;display:flex;align-items:center;gap:14px">'+
+    '<div style="width:44px;height:44px;border-radius:50%;background:#1a56db;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">👤</div>'+
+    '<div style="flex:1"><div style="font-size:14px;font-weight:700;color:#0d1b3e">'+activeBooking.customer_name+'</div>'+
+    '<div style="font-size:12px;color:#64748b">'+activeBooking.booking_ref+' · '+(activeBooking.customer_phone||'')+'</div></div>'+
+    '<a href="tel:'+(activeBooking.customer_phone||'')+'" onclick="event.stopPropagation()" style="text-decoration:none"><button class="btn btn-success btn-sm">📞</button></a>'+
+    '<div style="color:#94a3b8;font-size:20px;margin-left:6px">›</div></div>':
+    '<div class="ib ib-blue" style="margin-top:6px">ℹ️ Kundchatt visas när du har ett aktivt uppdrag.</div>')+
+    '<div style="height:80px"></div></div>';
+}
+
+function tabProfile(){
+  const notifOk='Notification' in window&&Notification.permission==='granted';
+  const h=Math.floor(onlineSeconds/3600);const m=Math.floor((onlineSeconds%3600)/60);
+  return '<div class="driver-header">'+
+    '<div class="driver-avatar">'+(driver.name?.charAt(0)||'?')+'</div>'+
+    '<div><div style="font-size:18px;font-weight:bold;color:white">'+driver.name+'</div>'+
+    '<div style="color:#6b82b8;font-size:13px;margin-top:2px">'+(driver.email||'')+'</div>'+
+    '<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">'+
+    '<span class="badge b-blue">'+(driver.taxi_nr||'')+'</span>'+
+    '<span class="badge b-gray">'+(driver.plate||'')+'</span>'+
+    '<span class="badge b-gray">'+(driver.city||'Trollhättan')+'</span>'+(driver.is_owner?' <span class="badge" style="background:#fef3c7;color:#d97706;border:1px solid #fde68a">👑 Ägare</span>':'')+'</div></div></div>'+
+    '<div style="padding:20px;background:#eef1f8">'+
+    '<div class="card"><div class="stitle">Statistik idag</div>'+
+    '<div class="list-item"><span style="font-size:14px;color:#0d1b3e">Avslutade resor</span><span style="font-size:14px;font-weight:700;color:#15803d">'+(driver.trips_today||0)+'</span></div>'+
+    '<div class="list-item"><span style="font-size:14px;color:#0d1b3e">Intäkter idag</span><span style="font-size:14px;font-weight:700;color:#15803d">'+(driver.earnings_today||0)+' kr</span></div>'+
+    '<div class="list-item"><span style="font-size:14px;color:#0d1b3e">Arbetstid</span><span style="font-size:14px;color:#64748b">'+(isOnline?(h>0?h+'h ':'')+m+' min':'Ej online')+'</span></div>'+
+    '<div class="list-item"><span style="font-size:14px;color:#0d1b3e">Betyg</span><span style="font-size:14px;color:#64748b">⭐ '+(driver.rating||'5.0')+'</span></div></div>'+
+    '<div class="card"><div class="stitle">Notifieringar</div>'+
+    '<div class="list-item"><span style="font-size:14px;color:#0d1b3e">🔊 Bokningsljud</span><span class="badge b-green">✅ Aktivt</span></div>'+
+    '<div class="list-item"><span style="font-size:14px;color:#0d1b3e">📳 Vibration</span><span class="badge b-green">✅ Aktivt</span></div>'+
+    '<div class="list-item"><span style="font-size:14px;color:#0d1b3e">🔔 Push-notiser</span>'+
+    '<span class="badge '+(notifOk?'b-green':'b-gray')+'">'+(notifOk?'✅ Aktiverat':'⚠️ Ej aktiverat')+'</span></div>'+
+    (!notifOk?'<button class="btn btn-primary" style="margin-top:12px" onclick="requestNotif()">Aktivera push-notiser</button>':'')+
+    '</div>'+
+    '<button class="btn btn-danger" onclick="logout()" style="margin-bottom:14px">Logga ut</button>'+
+    '<div style="text-align:center;font-size:11px;color:#94a3b8;margin-bottom:20px">'+
+    'Trollhättan Cab AB · Org.nr 559312-7128<br>trollhattancab.com</div>'+
+    '<div style="height:80px"></div></div>';
+}
+
+function openChat(threadKey,personName){
+  currentChatKey=threadKey;
+  document.getElementById('chatTitle').textContent='💬 '+personName;
+  document.getElementById('chatMessages').innerHTML='<div style="text-align:center;color:#94a3b8;font-size:12px;padding:20px">Laddar...</div>';
+  document.getElementById('chatModal').classList.add('open');
+  loadChatMessages(threadKey);
+}
+
+async function loadChatMessages(threadKey){
+  try{
+    const res=await fetch(API+'/messages/'+threadKey);const data=await res.json();const msgs=data.messages||[];
+    const chatEl=document.getElementById('chatMessages');
+    if(!msgs.length){chatEl.innerHTML='<div style="text-align:center;color:#94a3b8;font-size:12px;padding:20px">Inga meddelanden ännu</div>';return;}
+    chatEl.innerHTML=msgs.map(m=>{const mine=m.sender_role==='driver';
+      return '<div class="cmsg '+(mine?'mine':'other')+'">'+
+        '<div class="cav '+(mine?'':'other')+'">'+(m.sender_name?.charAt(0)||'?')+'</div>'+
+        '<div style="max-width:72%"><div style="font-size:10px;color:#94a3b8;margin-bottom:2px;text-align:'+(mine?'right':'left')+'">'+m.sender_name+'</div>'+
+        '<div class="cbubble">'+m.content+'</div></div></div>';}).join('');
+    chatEl.scrollTop=chatEl.scrollHeight;
+  }catch(e){document.getElementById('chatMessages').innerHTML='<div style="text-align:center;color:#dc2626;font-size:12px;padding:20px">Kunde inte ladda</div>';}
+}
+
+async function sendChat(){
+  const input=document.getElementById('chatInput');const text=input?input.value.trim():'';
+  if(!text||!currentChatKey)return;
+  const chatEl=document.getElementById('chatMessages');
+  const msg=document.createElement('div');msg.className='cmsg mine';
+  msg.innerHTML='<div class="cav">'+(driver.name?.charAt(0)||'F')+'</div>'+
+    '<div style="max-width:72%"><div style="font-size:10px;color:#94a3b8;margin-bottom:2px;text-align:right">'+(driver.name?.split(' ')[0]||'Förare')+'</div>'+
+    '<div class="cbubble">'+text+'</div></div>';
+  chatEl.appendChild(msg);chatEl.scrollTop=chatEl.scrollHeight;if(input)input.value='';
+  try{await fetch(API+'/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({thread_key:currentChatKey,sender_name:driver.name,sender_role:'driver',content:text})});}catch(e){}
+}
+
+function logout(){
+  if(gpsInterval)clearInterval(gpsInterval);if(onlineTimer)clearInterval(onlineTimer);
+  if(socket)socket.disconnect();
+  localStorage.removeItem('thtcab_driver');localStorage.removeItem('thtcab_driver_token');
+  driver=null;token=null;isOnline=false;activeBooking=null;onlineSeconds=0;
+  showScreen('sLogin');
+}
+</script>
+<script async src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</body>
+</html>
