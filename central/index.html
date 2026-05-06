@@ -253,6 +253,22 @@ var driverPositions = {};
 function closeMod(id){try{document.getElementById(id).classList.remove('open');}catch(e){}}
 function closeMIfOut(e,id){if(e.target===document.getElementById(id))closeMod(id);}
 
+function playDeclineAlert(){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const beep=(freq,start,dur)=>{
+      const osc=ctx.createOscillator();const gain=ctx.createGain();
+      osc.connect(gain);gain.connect(ctx.destination);
+      osc.frequency.value=freq;osc.type='sine';
+      gain.gain.setValueAtTime(0.8,ctx.currentTime+start);
+      gain.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+start+dur);
+      osc.start(ctx.currentTime+start);osc.stop(ctx.currentTime+start+dur);
+    };
+    beep(440,.0,.3);beep(330,.35,.3);beep(220,.7,.5);
+  }catch(e){}
+}
+
+
 function showToast(msg){
   var el=document.getElementById('toast');
   el.textContent=msg;el.classList.add('show');
@@ -381,8 +397,9 @@ function connectSocket(){
     socket.on('booking:declined',function(data){
       var driver=allDrivers.find(function(d){return d.id===data.driverId;});
       var driverName=driver?driver.name:'Förare';
-      showAlert('⚠️ '+driverName+' avböjde bokning #'+data.bookingId+' — tillbaka i kön','warn');
-      showToast('⚠️ '+driverName+' avböjde — tilldela ny förare');
+      playDeclineAlert();
+      showAlert('⚠️ '+driverName+' nekade bokning #'+data.bookingId+' — tilldela ny förare','warn');
+      showToast('⚠️ '+driverName+' nekade — tilldela ny förare');
       loadData().then(function(){if(curTab===0)showTab(0);});
     });
     socket.on('booking:returned',function(b){
@@ -533,7 +550,7 @@ function tabDrivers(){
     var isSusp=d.suspended_until&&new Date(d.suspended_until)>new Date();
     var isOwner=d.is_owner;
     var cls='dcard'+(isBlocked?' blocked':isSusp?' suspended':isOwner?' owner':'');
-    var st=isBlocked?'🔴 Blockerad':isSusp?'🟡 Avstängd':d.status==='available'?'🟢 Ledig':d.status==='busy'?'🟠 På uppdrag':'⚫ Offline';
+    var st=isBlocked?'🔴 Blockerad':isSusp?'🟡 Avstängd':d.status==='available'?'🟢 Ledig':d.status==='busy'?'🟠 På uppdrag':d.status==='paused'?'🟡 Paus':'⚫ Offline';
     var ab=allBookings.find(function(b){return b.driver_id===d.id&&b.status==='assigned';});
     h+='<div class="'+cls+'"><div class="davatar">'+d.name.charAt(0)+'</div>'+
       '<div style="flex:1">'+
