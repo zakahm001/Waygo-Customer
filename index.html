@@ -364,7 +364,7 @@ function goBook(){
   var from=document.getElementById('wFrom').value.trim();
   var to=document.getElementById('wTo').value.trim();
   var type=document.getElementById('wType').value;
-  var url='app.html';
+  var url='/customer';
   if(from||to)url+='?from='+encodeURIComponent(from)+'&to='+encodeURIComponent(to)+'&type='+type;
   window.location.href=url;
 }
