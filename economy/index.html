@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trollhättan Cab — Ekonomi</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Arial,sans-serif;background:#eef1f8;color:#0d1b3e;min-height:100vh}
+.navbar{background:#0d1b3e;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+.nav-logo{color:#fbbf24;font-size:15px;font-weight:bold;display:flex;align-items:center;gap:8px}
+.nav-user{color:#fbbf24;font-size:12px;font-weight:700}
+.nav-logout{color:#4a6090;font-size:12px;cursor:pointer;background:none;border:none}
+.page{padding:20px;padding-bottom:60px;max-width:700px;margin:0 auto}
+.card{background:white;border-radius:14px;padding:18px;margin-bottom:14px;border:1px solid #d0d7ea}
+.stitle{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+.scard{background:white;border-radius:12px;padding:14px;border:1px solid #d0d7ea;text-align:center}
+.sval{font-size:20px;font-weight:800}.slbl{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.btn{padding:10px 16px;border-radius:8px;font-size:13px;font-weight:700;border:none;cursor:pointer}
+.btnP{background:#0d1b3e;color:#fbbf24}.btnG{background:#f1f5f9;color:#64748b}
+.flabel{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;display:block}
+.finput{width:100%;padding:10px 14px;border-radius:8px;border:1px solid #d0d7ea;background:#f8fafc;color:#0d1b3e;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:10px}
+.row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f1f5f9;font-size:13px}
+.row:last-child{border-bottom:none}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.bc{background:#dcfce7;color:#15803d}.bp{background:#fef3c7;color:#d97706}.bx{background:#f1f5f9;color:#64748b}
+.err{background:#fee2e2;color:#dc2626;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{background:white;border-radius:16px;padding:28px 24px;width:100%;max-width:400px;border:1px solid #d0d7ea}
+.tab-row{display:flex;background:white;border-bottom:1px solid #d0d7ea;position:sticky;top:56px;z-index:50;overflow-x:auto}
+.tab{flex-shrink:0;padding:12px 14px;font-size:12px;font-weight:500;color:#64748b;cursor:pointer;border-bottom:2.5px solid transparent;background:none;border-top:none;border-left:none;border-right:none}
+.tab.on{color:#0d1b3e;font-weight:700;border-bottom-color:#0d1b3e}
+.export-btn{background:#15803d;color:white;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;border:none;cursor:pointer;margin-left:auto}
+</style>
+</head>
+<body>
+
+<div class="navbar" id="navbar" style="display:none">
+  <div class="nav-logo">💰 EKONOMI — TROLLHÄTTAN CAB</div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="nav-user" id="navName"></span>
+    <button class="nav-logout" onclick="logout()">Logga ut</button>
+  </div>
+</div>
+
+<div class="tab-row" id="tabRow" style="display:none">
+  <button class="tab on" id="et0" onclick="showETab(0)">📊 Översikt</button>
+  <button class="tab" id="et1" onclick="showETab(1)">📋 Bokningar</button>
+  <button class="tab" id="et2" onclick="showETab(2)">🚖 Förare</button>
+</div>
+
+<div id="main"></div>
+
+<script>
+const API='https://16.16.153.106.sslip.io';
+let staffUser=null,staffToken=null,summary=null,bookings=[],curETab=0;
+
+window.onload=function(){
+  const sv=localStorage.getItem('thtcab_eco_staff');
+  const st=localStorage.getItem('thtcab_eco_token');
+  if(sv&&st){try{staffUser=JSON.parse(sv);staffToken=st;enterEco();}catch(e){showLogin();}}
+  else{showLogin();}
+};
+
+function showLogin(){
+  document.getElementById('main').innerHTML=
+    '<div class="login-wrap"><div class="login-box">'+
+    '<div style="text-align:center;margin-bottom:24px"><div style="font-size:40px">💰</div>'+
+    '<div style="font-size:18px;font-weight:bold;color:#0d1b3e;margin-top:8px">Ekonomiportalen</div>'+
+    '<div style="color:#64748b;font-size:13px;margin-top:4px">Trollhättan Cab AB</div></div>'+
+    '<label class="flabel">E-post</label><input class="finput" id="lEmail" type="email" placeholder="din@trollhattancab.com"/>'+
+    '<label class="flabel">Lösenord</label><input class="finput" id="lPwd" type="password" placeholder="••••••••" onkeydown="if(event.key===\'Enter\')doLogin()"/>'+
+    '<div class="err" id="lErr"></div>'+
+    '<button class="btn btnP" style="width:100%;padding:14px" onclick="doLogin()">Logga in →</button>'+
+    '</div></div>';
+}
+
+async function doLogin(){
+  const email=document.getElementById('lEmail').value.trim();
+  const pwd=document.getElementById('lPwd').value.trim();
+  const err=document.getElementById('lErr');
+  if(!email||!pwd){err.textContent='⚠️ Fyll i e-post och lösenord';err.style.display='';return;}
+  try{
+    const res=await fetch(API+'/staff/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pwd})});
+    const data=await res.json();
+    if(data.token){
+      staffUser=data.staff;staffToken=data.token;
+      localStorage.setItem('thtcab_eco_staff',JSON.stringify(staffUser));
+      localStorage.setItem('thtcab_eco_token',staffToken);
+      enterEco();
+    }else{err.textContent='⚠️ '+(data.error||'Fel uppgifter');err.style.display='';}
+  }catch(e){err.textContent='⚠️ Anslutningsfel';err.style.display='';}
+}
+
+function logout(){
+  localStorage.removeItem('thtcab_eco_staff');localStorage.removeItem('thtcab_eco_token');
+  document.getElementById('navbar').style.display='none';
+  document.getElementById('tabRow').style.display='none';
+  showLogin();
+}
+
+async function enterEco(){
+  document.getElementById('navbar').style.display='flex';
+  document.getElementById('tabRow').style.display='flex';
+  document.getElementById('navName').textContent=staffUser.name;
+  await loadSummary();
+  showETab(0);
+}
+
+async function loadSummary(){
+  try{
+    const res=await fetch(API+'/economy/summary',{headers:{'Authorization':'Bearer '+staffToken}});
+    summary=await res.json();
+  }catch(e){console.log('Summary error:',e);}
+}
+
+async function loadBookings(from,to,status){
+  try{
+    let url=API+'/economy/bookings?';
+    if(from)url+='from='+from+'&';
+    if(to)url+='to='+to+'&';
+    if(status)url+='status='+status;
+    const res=await fetch(url,{headers:{'Authorization':'Bearer '+staffToken}});
+    const data=await res.json();
+    bookings=data.bookings||[];
+  }catch(e){bookings=[];}
+}
+
+function showETab(i){
+  curETab=i;
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('on',i===j));
+  const m=document.getElementById('main');
+  if(i===0)m.innerHTML=tabOverview();
+  else if(i===1){m.innerHTML=tabBookingsUI();loadAndShowBookings();}
+  else if(i===2)m.innerHTML=tabDrivers();
+}
+
+function tabOverview(){
+  if(!summary)return '<div class="page"><div class="card">Laddar...</div></div>';
+  const t=summary.today,w=summary.week,mo=summary.month;
+  return '<div class="page">'+
+    '<div class="stitle">Idag</div>'+
+    '<div class="stats">'+
+    '<div class="scard"><div class="sval" style="color:#15803d">'+(t.revenue||0)+' kr</div><div class="slbl">Intäkter</div></div>'+
+    '<div class="scard"><div class="sval" style="color:#1a56db">'+(t.bookings||0)+'</div><div class="slbl">Bokningar</div></div>'+
+    '<div class="scard"><div class="sval" style="color:#7c3aed">'+Math.round((t.revenue||0)/25*100)/100+' kr</div><div class="slbl">Moms 25%</div></div>'+
+    '</div>'+
+    '<div class="stitle">Senaste 7 dagarna</div>'+
+    '<div class="stats">'+
+    '<div class="scard"><div class="sval" style="color:#15803d">'+(w.revenue||0)+' kr</div><div class="slbl">Intäkter</div></div>'+
+    '<div class="scard"><div class="sval" style="color:#1a56db">'+(w.bookings||0)+'</div><div class="slbl">Bokningar</div></div>'+
+    '<div class="scard"><div class="sval" style="color:#d97706">'+Math.round((w.revenue||0)/1.25/25*100)/100+' kr</div><div class="slbl">Netto</div></div>'+
+    '</div>'+
+    '<div class="stitle">Senaste 30 dagarna</div>'+
+    '<div class="stats">'+
+    '<div class="scard"><div class="sval" style="color:#15803d">'+(mo.revenue||0)+' kr</div><div class="slbl">Intäkter</div></div>'+
+    '<div class="scard"><div class="sval" style="color:#1a56db">'+(mo.bookings||0)+'</div><div class="slbl">Bokningar</div></div>'+
+    '<div class="scard"><div class="sval" style="color:#d97706">'+Math.round((mo.revenue||0)*0.8)+' kr</div><div class="slbl">Exkl. moms</div></div>'+
+    '</div>'+
+    '<button class="btn btnP" onclick="showETab(1)">📋 Visa alla bokningar →</button>'+
+    '</div>';
+}
+
+function tabBookingsUI(){
+  const today=new Date().toISOString().split('T')[0];
+  const monthAgo=new Date(Date.now()-30*24*60*60*1000).toISOString().split('T')[0];
+  return '<div class="page">'+
+    '<div class="card">'+
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">'+
+    '<div><label class="flabel">Från</label><input class="finput" id="fFrom" type="date" value="'+monthAgo+'" style="margin-bottom:0;width:140px"/></div>'+
+    '<div><label class="flabel">Till</label><input class="finput" id="fTo" type="date" value="'+today+'" style="margin-bottom:0;width:140px"/></div>'+
+    '<div><label class="flabel">Status</label><select class="finput" id="fStatus" style="margin-bottom:0;width:130px">'+
+    '<option value="">Alla</option><option value="completed">Avslutade</option>'+
+    '<option value="pending">Väntar</option><option value="cancelled">Avbokade</option>'+
+    '</select></div>'+
+    '<button class="btn btnP" onclick="loadAndShowBookings()">Sök</button>'+
+    '<button class="export-btn" onclick="exportCSV()">⬇ Exportera CSV</button>'+
+    '</div></div>'+
+    '<div id="bookingsList"><div class="card">Laddar...</div></div>'+
+    '</div>';
+}
+
+async function loadAndShowBookings(){
+  const from=document.getElementById('fFrom')?.value;
+  const to=document.getElementById('fTo')?.value;
+  const status=document.getElementById('fStatus')?.value;
+  await loadBookings(from,to,status);
+  const el=document.getElementById('bookingsList');
+  if(!el)return;
+  const total=bookings.reduce((s,b)=>s+(b.fare_sek||0),0);
+  let h='<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:10px">'+
+    '<span style="font-size:13px;font-weight:700;color:#0d1b3e">'+bookings.length+' bokningar</span>'+
+    '<span style="font-size:13px;font-weight:800;color:#15803d">Totalt: '+total+' kr</span></div>';
+  bookings.forEach(b=>{
+    const st=b.status==='completed'?'bc':b.status==='pending'?'bp':'bx';
+    const stTxt=b.status==='completed'?'Avslutad':b.status==='pending'?'Väntar':'Avbokad';
+    h+='<div class="row">'+
+      '<div><div style="font-weight:700;color:#1a56db">'+b.booking_ref+'</div>'+
+      '<div style="color:#64748b;font-size:12px">'+b.customer_name+' · '+(b.driver_name||'Ej tilldelad')+'</div>'+
+      '<div style="color:#94a3b8;font-size:11px">'+new Date(b.created_at).toLocaleString('sv-SE',{dateStyle:'short',timeStyle:'short'})+'</div></div>'+
+      '<div style="text-align:right">'+
+      '<div style="font-weight:800;color:#15803d">'+(b.fare_sek||0)+' kr</div>'+
+      '<span class="badge '+st+'">'+stTxt+'</span>'+
+      '</div></div>';
+  });
+  if(!bookings.length)h+='<div style="text-align:center;padding:20px;color:#94a3b8">Inga bokningar hittades</div>';
+  h+='</div>';
+  el.innerHTML=h;
+}
+
+function exportCSV(){
+  if(!bookings.length){alert('Inga bokningar att exportera');return;}
+  const headers=['Ref','Kund','Telefon','Från','Till','Förare','Belopp','Betalning','Status','Datum'];
+  const rows=bookings.map(b=>[
+    b.booking_ref,b.customer_name,b.customer_phone||'',
+    b.from_address,b.to_address,b.driver_name||'',
+    b.fare_sek||0,b.payment_method,b.status,
+    new Date(b.created_at).toLocaleString('sv-SE')
+  ]);
+  const csv=[headers,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;
+  a.download='trollhattancab-bokningar-'+new Date().toISOString().split('T')[0]+'.csv';
+  a.click();URL.revokeObjectURL(url);
+}
+
+function tabDrivers(){
+  if(!summary||!summary.drivers)return '<div class="page"><div class="card">Laddar...</div></div>';
+  let h='<div class="page"><div class="stitle">Förarstatistik — senaste 30 dagarna</div>';
+  summary.drivers.forEach(d=>{
+    const payout=d.is_owner?Math.round(d.earnings*(d.owner_share/100)):Math.round(d.earnings*0.8);
+    h+='<div class="card">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
+      '<div><div style="font-size:14px;font-weight:700;color:#0d1b3e">'+d.name+'</div>'+
+      '<div style="font-size:12px;color:#64748b">'+d.plate+(d.is_owner?' · 👑 Ägare '+d.owner_share+'%':'')+'</div></div>'+
+      '<div style="text-align:right">'+
+      '<div style="font-size:18px;font-weight:800;color:#15803d">'+(d.earnings||0)+' kr</div>'+
+      '<div style="font-size:11px;color:#64748b">'+d.trips+' resor</div></div></div>'+
+      '<div style="background:#f8fafc;border-radius:8px;padding:8px 12px;font-size:12px;color:#0d1b3e">'+
+      '💰 Utbetalning: <strong>'+payout+' kr</strong> · '+
+      'Trollhättan Cab andel: <strong>'+(d.earnings-payout)+' kr</strong></div>'+
+      '</div>';
+  });
+  if(!summary.drivers.length)h+='<div class="card" style="text-align:center;color:#94a3b8">Inga förare</div>';
+  h+='</div>';
+  return h;
+}
+</script>
+</body>
+</html>
