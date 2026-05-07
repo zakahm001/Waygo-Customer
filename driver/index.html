@@ -355,7 +355,58 @@ function enterApp(){
   startWorkTimer();
   if('Notification' in window&&Notification.permission==='default')Notification.requestPermission();
   setTimeout(()=>{connectSocket();},1500);
+  // Start polling as reliable fallback
+  startPolling();
   showTab(0);
+}
+
+// ── iOS AUDIO UNLOCK ──
+var audioUnlocked=false;
+function unlockAudio(){
+  if(audioUnlocked)return;
+  try{
+    initAudio();
+    if(audioCtx){
+      var buf=audioCtx.createBuffer(1,1,22050);
+      var src=audioCtx.createBufferSource();
+      src.buffer=buf;src.connect(audioCtx.destination);
+      src.start(0);audioUnlocked=true;
+      console.log('iOS audio unlocked');
+    }
+  }catch(e){}
+}
+// Unlock on first touch anywhere on screen
+document.addEventListener('touchstart',unlockAudio,{once:false,passive:true});
+document.addEventListener('click',unlockAudio,{once:false,passive:true});
+
+// ── POLLING SYSTEM ──
+var pollInterval=null;
+var lastSeenBookingId=null;
+
+function startPolling(){
+  if(pollInterval)clearInterval(pollInterval);
+  pollInterval=setInterval(pollForBooking,3000);
+  console.log('Polling started');
+}
+
+async function pollForBooking(){
+  if(!driver)return;
+  if(driverStatus==='blocked'||driverStatus==='paused'||driverStatus==='busy')return;
+  if(pendingBooking)return; // Already showing a popup
+  try{
+    var res=await fetch(API+'/drivers/'+driver.id+'/pending-booking');
+    if(!res.ok)return;
+    var data=await res.json();
+    if(data.booking&&data.booking.id){
+      // Skip if we already showed this booking
+      if(lastSeenBookingId===data.booking.id)return;
+      lastSeenBookingId=data.booking.id;
+      console.log('Poll found booking:',data.booking.booking_ref);
+      triggerAlert(data.booking);
+    }
+  }catch(e){
+    // Silent fail — polling continues
+  }
 }
 
 function startWorkTimer(){
@@ -565,6 +616,7 @@ async function acceptBooking(){
 }
 
 async function declineBooking(){
+  lastSeenBookingId=null; // Allow polling to show next booking
   clearInterval(popupTimerInterval);
   document.getElementById('bookingOverlay').classList.remove('show');
   if(!pendingBooking)return;
