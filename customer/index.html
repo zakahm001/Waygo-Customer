@@ -615,7 +615,7 @@ function showTab(i){
     curTab=i;
     document.querySelectorAll('.bni').forEach((b,j)=>b.classList.toggle('on',i===j));
     const c=document.getElementById('tabContent');if(!c)return;
-    if(i===0)c.innerHTML=tabBook();
+    if(i===0){c.innerHTML=tabBook();setTimeout(()=>{setupAutocomplete('bFrom');setupAutocomplete('bTo');},100);}
     else if(i===1)c.innerHTML=tabRides();
     else if(i===2)c.innerHTML=tabProfile();
     else if(i===3)c.innerHTML=tabPay();
@@ -673,6 +673,8 @@ function tabBook(){
     '<input class="finput" id="childAge" placeholder="Barnets/barnens ålder (t.ex. 3 år, 6 år)"/>'+
     '</div>'+
     '<input type="hidden" id="fareInput" value="150"/>'+
+    '<label class="flabel">💬 Meddelande till föraren (valfritt)</label>'+
+    '<input class="finput" id="driverNote" placeholder="T.ex. Adressen finns ej i GPS, ring mig när du är nära"/>'+
     '<div class="farebox"><div><div style="font-size:13px;color:#64748b">'+t('estcost')+'</div>'+
     '<div style="font-size:11px;color:#94a3b8;margin-top:2px" id="fareDistance"></div>'+
     '<div style="font-size:11px;color:#94a3b8;margin-top:2px">'+t('incvat')+'</div></div>'+
@@ -766,7 +768,9 @@ async function doBook(from,to,fare,silent,note){
   const btn=document.getElementById('bookBtn');
   if(!silent&&btn){btn.textContent='...';btn.disabled=true;}
   try{
-    const body={customer_name:customer.name+(note?' ('+note+')':''),customer_phone:customer.phone,from_address:from,to_address:to,payment_method:selPay,fare_sek:fare,customer_id:customer.id,passengers:selPassengers,child_seat:selChildSeat,child_age:selChildSeat?(document.getElementById('childAge')?document.getElementById('childAge').value.trim():null):null};
+    const driverNoteEl=document.getElementById('driverNote');
+    const driverNote=driverNoteEl?driverNoteEl.value.trim():'';
+    const body={customer_name:customer.name+(note?' ('+note+')':''),customer_phone:customer.phone,from_address:from,to_address:to,payment_method:selPay,fare_sek:fare,customer_id:customer.id,passengers:selPassengers,child_seat:selChildSeat,child_age:selChildSeat?(document.getElementById('childAge')?document.getElementById('childAge').value.trim():null):null,driver_note:driverNote||null};
     if(bookMode==='pre'&&preDate&&preTime){body.scheduled_at=preDate+'T'+preTime+':00';body.booking_type='pre';}
     const res=await fetch(API+'/bookings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const data=await res.json();
