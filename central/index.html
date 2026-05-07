@@ -363,7 +363,13 @@ window.onload=function(){if(checkAuth())init();};
 async function init(){
   await loadData();connectSocket();showTab(0);
   if(refreshTimer)clearInterval(refreshTimer);
-  refreshTimer=setInterval(async function(){await loadData();showTab(curTab);},5000);
+  refreshTimer=setInterval(async function(){
+    await loadData();
+    // Only re-render if user is not typing in a form field
+    var active=document.activeElement;
+    var isTyping=active&&(active.tagName==='INPUT'||active.tagName==='TEXTAREA'||active.tagName==='SELECT');
+    if(!isTyping)showTab(curTab);
+  },8000);
 }
 
 async function loadData(){
