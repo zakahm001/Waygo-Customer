@@ -2,7 +2,7 @@
 <html lang="sv">
 <head>
 <meta charset="UTF-8">
-<link rel="manifest" href="/manifest.json">
+<link rel="manifest" href="/manifest-customer.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -674,6 +674,7 @@ function tabBook(){
     '</div>'+
     '<input type="hidden" id="fareInput" value="150"/>'+
     '<div class="farebox"><div><div style="font-size:13px;color:#64748b">'+t('estcost')+'</div>'+
+    '<div style="font-size:11px;color:#94a3b8;margin-top:2px" id="fareDistance"></div>'+
     '<div style="font-size:11px;color:#94a3b8;margin-top:2px">'+t('incvat')+'</div></div>'+
     '<div class="fareamt" id="fareAmt">— kr</div>'+
     '<div id="fareDetail" style="display:none;font-size:11px;color:#94a3b8;margin-top:2px"></div>'+
@@ -704,7 +705,7 @@ function setChildSeat(val){
   if(div)div.style.display=val?'':'none';
 }
 function sAddr(id,v){const e=document.getElementById(id);if(e)e.value=v;}
-function calcFare(){const f=document.getElementById('bFrom')?document.getElementById('bFrom').value:'';const t2=document.getElementById('bTo')?document.getElementById('bTo').value:'';if(f&&t2){const e=document.getElementById('fareAmt');if(e)e.textContent=(Math.floor(Math.random()*300)+100)+' kr';}}
+function calcFare(){if(fromCoords&&toCoords){calcRealRoute();}}
 
 function tryBook(){
   const from=(document.getElementById('bFrom')?document.getElementById('bFrom').value:'').trim();
@@ -1202,199 +1203,219 @@ var LOCAL_PLACES = [
   {name:'Trollhättan Arena',addr:'Trollhättan Arena, Trollhättan',lat:58.2933,lng:12.3089,tags:['arenan','trollhättan arena','fotboll']},
 ];
 
+// ── KNOWN PLACES DATABASE ──
+var knownPlaces = [
+  {name:'NÄL - Norra Älvsborgs Länssjukhus', addr:'Trollhättan', lat:58.2782, lng:12.2737},
+  {name:'NU-sjukhuset', addr:'Trollhättan', lat:58.2782, lng:12.2737},
+  {name:'Trollhättan Station', addr:'Trollhättan', lat:58.2843, lng:12.2888},
+  {name:'Trollhättan Centralstation', addr:'Trollhättan', lat:58.2843, lng:12.2888},
+  {name:'Trollhättan City Airport', addr:'Trollhättan', lat:58.3182, lng:12.3446},
+  {name:'Göteborg Landvetter Flygplats', addr:'Härryda', lat:57.6628, lng:12.2798},
+  {name:'Landvetter', addr:'Göteborg', lat:57.6628, lng:12.2798},
+  {name:'Göteborg Centralstation', addr:'Göteborg', lat:57.7089, lng:11.9736},
+  {name:'Sahlgrenska Sjukhuset', addr:'Göteborg', lat:57.6834, lng:11.9601},
+  {name:'Östra Sjukhuset', addr:'Göteborg', lat:57.7199, lng:12.0350},
+  {name:'Kungälvs Sjukhus', addr:'Kungälv', lat:57.8714, lng:11.9807},
+  {name:'Frölunda Torg', addr:'Göteborg', lat:57.6506, lng:11.9068},
+  {name:'Nordstan', addr:'Göteborg', lat:57.7079, lng:11.9701},
+  {name:'Liseberg', addr:'Göteborg', lat:57.6956, lng:11.9921},
+  {name:'Chalmers', addr:'Göteborg', lat:57.6891, lng:11.9775},
+  {name:'Vänersborg Sjukhus', addr:'Vänersborg', lat:58.3796, lng:12.3231},
+  {name:'Trollhättan Resecentrum', addr:'Trollhättan', lat:58.2843, lng:12.2888},
+  {name:'Kronogården', addr:'Trollhättan', lat:58.2760, lng:12.3020},
+  {name:'IKEA Göteborg', addr:'Bäckebol, Göteborg', lat:57.7667, lng:12.0042},
+  {name:'Arlanda Airport', addr:'Stockholm', lat:59.6519, lng:17.9186}
+];
+
 // ── ADDRESS AUTOCOMPLETE ──
 var acTimeout = null;
-var acCoords = {};
+var fromCoords = null;
+var toCoords = null;
 
 function setupAutocomplete(inputId) {
   var input = document.getElementById(inputId);
-  if (!input) return;
-  if (input.parentNode && input.parentNode.className === 'ac-wrap') return;
+  if (!input || input.getAttribute('data-ac-setup')) return;
+  input.setAttribute('data-ac-setup','1');
+
   var wrapper = document.createElement('div');
   wrapper.className = 'ac-wrap';
-  wrapper.style.position = 'relative';
   input.parentNode.insertBefore(wrapper, input);
   wrapper.appendChild(input);
+
   var dropdown = document.createElement('div');
   dropdown.className = 'ac-dropdown';
   dropdown.id = 'ac-' + inputId;
   dropdown.style.display = 'none';
   wrapper.appendChild(dropdown);
+
+  // House number field shown after street selection
+  var numWrap = document.createElement('div');
+  numWrap.id = 'numwrap-' + inputId;
+  numWrap.style.cssText = 'display:none;margin-top:4px';
+  numWrap.innerHTML = '<input class="finput" id="num-'+inputId+'" placeholder="Ange husnummer (t.ex. 12)" style="margin-bottom:0" oninput="updateFullAddress(''+inputId+'')" onkeydown="if(event.key==='Enter')calcRealRoute()"/>';
+  wrapper.parentNode.insertBefore(numWrap, wrapper.nextSibling);
+
   input.addEventListener('input', function() {
     clearTimeout(acTimeout);
     var val = input.value.trim();
     if (val.length < 2) { dropdown.style.display = 'none'; return; }
-    acTimeout = setTimeout(function() { fetchSuggestions(val, dropdown, input); }, 250);
+    acTimeout = setTimeout(function() { fetchSuggestions(val, dropdown, input); }, 350);
   });
   input.addEventListener('blur', function() {
     setTimeout(function() { dropdown.style.display = 'none'; }, 200);
   });
 }
 
-function searchLocalPlaces(query) {
-  var q = query.toLowerCase().trim();
-  var results = [];
-  LOCAL_PLACES.forEach(function(p) {
-    var score = 0;
-    if (p.name.toLowerCase().startsWith(q)) score = 4;
-    else if (p.name.toLowerCase().includes(q)) score = 3;
-    else if (p.tags.some(function(t) { return t.startsWith(q) || q.startsWith(t); })) score = 2;
-    else if (p.addr.toLowerCase().includes(q)) score = 1;
-    if (score > 0) results.push({p:p, s:score});
-  });
-  results.sort(function(a,b) { return b.s - a.s; });
-  return results.slice(0, 4).map(function(r) { return r.p; });
+function searchKnownPlaces(query) {
+  var q = query.toLowerCase();
+  return knownPlaces.filter(function(p) {
+    return p.name.toLowerCase().includes(q) || p.addr.toLowerCase().includes(q);
+  }).slice(0, 3);
 }
 
 async function fetchSuggestions(query, dropdown, input) {
   try {
     var results = [];
-    var local = searchLocalPlaces(query);
-    local.forEach(function(p) {
-      results.push({display:p.name, full:p.addr, lat:p.lat, lng:p.lng});
+    // Known places first
+    searchKnownPlaces(query).forEach(function(p) {
+      results.push({display:p.name, sub:p.addr, lat:p.lat, lng:p.lng, needsNumber:false, icon:'📍'});
     });
-    if (results.length < 5) {
-      try {
-        var url = 'https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&countrycodes=se&q=' + encodeURIComponent(query);
-        var res = await fetch(url, {headers:{'Accept-Language':'sv','User-Agent':'TrollhattanCab/1.0'}});
-        var data = await res.json();
-        data.forEach(function(item) {
-          var addr = item.address || {};
-          var road = addr.road || item.display_name.split(',')[0];
-          var num = addr.house_number || '';
-          var city = addr.city || addr.town || addr.village || '';
-          var display = road + (num?' '+num:'') + (city?', '+city:'');
-          if (!results.some(function(r) { return r.display === display; })) {
-            results.push({display:display, full:display, lat:parseFloat(item.lat), lng:parseFloat(item.lon)});
-          }
-        });
-      } catch(e) {}
+    // Nominatim streets
+    var urls = [
+      'https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&countrycodes=se&q='+encodeURIComponent(query+' Trollhättan'),
+      'https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&countrycodes=se&q='+encodeURIComponent(query)
+    ];
+    for (var i=0; i<urls.length && results.length<6; i++) {
+      var res = await fetch(urls[i], {headers:{'Accept-Language':'sv'}});
+      var data = await res.json();
+      data.forEach(function(item) {
+        var a = item.address;
+        var road = a.road||a.pedestrian||a.footway||item.display_name.split(',')[0];
+        if (!road) return;
+        var city = a.city||a.town||a.village||a.municipality||'';
+        var exists = results.find(function(r){return r.display===road&&r.sub===city;});
+        if (!exists && results.length < 6) {
+          results.push({display:road, sub:city, lat:parseFloat(item.lat), lng:parseFloat(item.lon), needsNumber:true, icon:'🏠'});
+        }
+      });
     }
-    if (!results.length) { dropdown.style.display = 'none'; return; }
-    dropdown.innerHTML = results.slice(0,6).map(function(r) {
-      var safeAddr = (r.full||'').replace(/"/g,'&quot;');
-      return '<div class="ac-item" onmousedown="selectAddressById(this)" data-addr="'+safeAddr+'" data-lat="'+(r.lat||0)+'" data-lng="'+(r.lng||0)+'" data-input="'+input.id+'">'+r.display+'</div>';
+    if (!results.length) { dropdown.style.display='none'; return; }
+    dropdown.innerHTML = results.map(function(r) {
+      var sd=r.display.replace(/"/g,'&quot;');
+      var ss=(r.sub||'').replace(/"/g,'&quot;');
+      return '<div class="ac-item" onmousedown="selectStreet(this)" '+
+        'data-display="'+sd+'" data-sub="'+ss+'" '+
+        'data-lat="'+r.lat+'" data-lng="'+r.lng+'" '+
+        'data-needs="'+(r.needsNumber?'1':'0')+'" data-input="'+input.id+'">'+
+        r.icon+' <strong>'+r.display+'</strong>'+
+        (r.sub?'<br><span style="font-size:11px;color:#94a3b8">'+r.sub+'</span>':'')+
+        '</div>';
     }).join('');
     dropdown.style.display = 'block';
-  } catch(e) { dropdown.style.display = 'none'; }
+  } catch(e) { dropdown.style.display='none'; }
 }
 
-function selectAddressById(el) {
-  var address = el.getAttribute('data-addr');
+function selectStreet(el) {
   var inputId = el.getAttribute('data-input');
+  var display = el.getAttribute('data-display');
+  var sub = el.getAttribute('data-sub');
   var lat = parseFloat(el.getAttribute('data-lat'));
   var lng = parseFloat(el.getAttribute('data-lng'));
-  acCoords[inputId] = {lat:lat, lng:lng};
-  selectAddress(address, inputId);
-  calcFare();
+  var needsNum = el.getAttribute('data-needs')==='1';
+  var input = document.getElementById(inputId);
+  var dropdown = document.getElementById('ac-'+inputId);
+  var numWrap = document.getElementById('numwrap-'+inputId);
+  if (dropdown) dropdown.style.display = 'none';
+  var full = display + (sub?', '+sub:'');
+  input.value = full;
+  input.setAttribute('data-street', display);
+  input.setAttribute('data-city', sub||'');
+  if (inputId==='bFrom') fromCoords={lat:lat,lng:lng};
+  else toCoords={lat:lat,lng:lng};
+  if (numWrap) {
+    if (needsNum) {
+      numWrap.style.display='block';
+      var ni=document.getElementById('num-'+inputId);
+      if (ni){ni.value='';setTimeout(function(){ni.focus();},100);}
+    } else {
+      numWrap.style.display='none';
+      calcRealRoute();
+    }
+  }
 }
 
-// Setup autocomplete after tab renders
-var origShowTab = showTab;
-showTab = function(i) {
-  origShowTab(i);
-  if (i === 0) {
-    setTimeout(function() {
-      setupAutocomplete('bFrom');
-      setupAutocomplete('bTo');
-    }, 100);
+function updateFullAddress(inputId) {
+  var input = document.getElementById(inputId);
+  var ni = document.getElementById('num-'+inputId);
+  if (!input||!ni) return;
+  var street = input.getAttribute('data-street')||'';
+  var city = input.getAttribute('data-city')||'';
+  var num = ni.value.trim();
+  input.value = street+(num?' '+num:'')+(city?', '+city:'');
+  if (num.length>=1) {
+    clearTimeout(acTimeout);
+    acTimeout = setTimeout(calcRealRoute, 800);
   }
-};
+}
 
-// ── REAL FARE CALCULATION ──
-async function calcFare() {
-  var fromInput = document.getElementById('bFrom');
-  var toInput = document.getElementById('bTo');
+// ── REAL FARE CALCULATION — Cabonline Tariff ──
+function getCabonlineTariff() {
+  var now = new Date();
+  var h = now.getHours();
+  var day = now.getDay(); // 0=Sun, 6=Sat
+  var isWeekend = day===0||day===6;
+  // Tariff 1: Vardagar 09-15
+  if (!isWeekend && h>=9 && h<15) {
+    return {id:1, label:'Tariff 1 — Vardag 09-15', base:54, hourly:590, km:19.70};
+  }
+  // Tariff 2: Everything else
+  return {id:2, label:'Tariff 2 — Kväll/Natt/Helg', base:54, hourly:655, km:20.65};
+}
+
+async function calcRealRoute() {
+  if (!fromCoords || !toCoords) return;
   var fareEl = document.getElementById('fareAmt');
-  var fareBox = document.getElementById('fareBox');
-  if (!fromInput || !toInput || !fareEl) return;
-  var from = fromInput.value.trim();
-  var to = toInput.value.trim();
-  if (!from || !to) return;
-
-  // Show loading
-  fareEl.textContent = '...';
+  var distEl = document.getElementById('fareDistance');
+  if (fareEl) fareEl.textContent = 'Beräknar...';
 
   try {
-    // Get coordinates for both addresses
-    var fromCoord = acCoords['bFrom'];
-    var toCoord = acCoords['bTo'];
-
-    // If no stored coords, geocode them
-    if (!fromCoord || !fromCoord.lat) {
-      fromCoord = await geocode(from);
-      if (fromCoord) acCoords['bFrom'] = fromCoord;
-    }
-    if (!toCoord || !toCoord.lat) {
-      toCoord = await geocode(to);
-      if (toCoord) acCoords['bTo'] = toCoord;
-    }
-
-    if (!fromCoord || !toCoord) {
-      fareEl.textContent = '— kr';
-      return;
-    }
-
-    // Get route from OSRM
-    var osrmUrl = 'https://router.project-osrm.org/route/v1/driving/' +
-      fromCoord.lng + ',' + fromCoord.lat + ';' +
-      toCoord.lng + ',' + toCoord.lat +
+    // OSRM routing — free, no API key
+    var url = 'https://router.project-osrm.org/route/v1/driving/'+
+      fromCoords.lng+','+fromCoords.lat+';'+
+      toCoords.lng+','+toCoords.lat+
       '?overview=false';
+    var res = await fetch(url);
+    var data = await res.json();
+    if (!data.routes||!data.routes[0]) { if(fareEl) fareEl.textContent='–'; return; }
 
-    var routeRes = await fetch(osrmUrl);
-    var routeData = await routeRes.json();
+    var route = data.routes[0];
+    var distKm = route.distance / 1000;
+    var durationMin = route.duration / 60;
 
-    if (!routeData.routes || !routeData.routes.length) {
-      fareEl.textContent = '— kr';
-      return;
-    }
+    var tariff = getCabonlineTariff();
+    var fare = tariff.base + (tariff.hourly * durationMin/60) + (tariff.km * distKm);
+    fare = Math.round(fare);
 
-    var distanceKm = routeData.routes[0].distance / 1000;
-    var durationMin = routeData.routes[0].duration / 60;
+    if (fareEl) fareEl.textContent = fare + ' kr';
+    if (distEl) distEl.textContent = Math.round(durationMin)+' min · '+distKm.toFixed(1)+' km';
 
-    // Apply Cabonline tariff
-    var now = new Date();
-    var hour = now.getHours();
-    var day = now.getDay();
-    var isWeekend = day === 0 || day === 6;
-    var isDaytime = hour >= 9 && hour < 15;
-    var isTariff1 = !isWeekend && isDaytime;
-
-    var baseFee = 54;
-    var hourlyRate = isTariff1 ? 590 : 655;
-    var kmRate = isTariff1 ? 19.70 : 20.65;
-    var tariffNum = isTariff1 ? 1 : 2;
-
-    var fare = Math.round(baseFee + (hourlyRate * durationMin / 60) + (kmRate * distanceKm));
-
-    // Update fare display
-    fareEl.textContent = fare + ' kr';
-
-    // Show route details
-    var detailEl = document.getElementById('fareDetail');
-    if (detailEl) {
-      detailEl.textContent = Math.round(distanceKm) + ' km · ' + Math.round(durationMin) + ' min · Tariff ' + tariffNum;
-      detailEl.style.display = '';
-    }
-
-    // Update hidden fare input for booking
-    var fareInput = document.getElementById('fareInput');
-    if (fareInput) fareInput.value = fare;
-
+    // Store for booking
+    window._lastFare = fare;
+    window._lastDistKm = distKm;
+    window._lastDurMin = Math.round(durationMin);
   } catch(e) {
-    fareEl.textContent = '— kr';
+    // Fallback estimate
+    var tariff = getCabonlineTariff();
+    var fare = tariff.base + (tariff.hourly * 15/60) + (tariff.km * 10);
+    if (fareEl) fareEl.textContent = Math.round(fare) + ' kr';
   }
 }
 
-async function geocode(address) {
-  try {
-    var url = 'https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=se&q=' + encodeURIComponent(address);
-    var res = await fetch(url, {headers:{'Accept-Language':'sv','User-Agent':'TrollhattanCab/1.0'}});
-    var data = await res.json();
-    if (data.length) return {lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon)};
-    return null;
-  } catch(e) { return null; }
+function calcFare() {
+  // Called by existing code — now uses real routing if coords available
+  if (fromCoords && toCoords) calcRealRoute();
 }
+
 
 </script>
 <script async src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
