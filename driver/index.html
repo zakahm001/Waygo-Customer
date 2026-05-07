@@ -772,10 +772,10 @@ function tabHome(){
       '<div style="font-size:40px;margin-bottom:10px">🚖</div>'+
       '<div style="font-size:15px;font-weight:700;color:#0d1b3e;margin-bottom:4px">Ledig — väntar på bokningar</div>'+
       '<div style="font-size:12px;color:#64748b">Du får ljud, vibration och notis när en bokning kommer</div></div>')+
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'+
-    (!activeBooking?'<button class="btn btn-orange" onclick="startPause()">☕ Ta paus</button>':'<button class="btn btn-gray" disabled>☕ Ta paus</button>')+
+    (!activeBooking?'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'+
+    '<button class="btn btn-orange" onclick="startPause()">☕ Ta paus</button>'+
     '<button class="btn btn-danger" onclick="document.getElementById(\'logoutConfirm\').classList.add(\'open\')">🚪 Logga ut</button>'+
-    '</div>'+
+    '</div>':'')+
     '<div style="height:80px"></div></div>';
 }
 
@@ -841,7 +841,8 @@ function tabProfile(){
     '<div class="list-item"><span style="font-size:14px;color:#0d1b3e">Arbetstid</span><span style="font-size:14px;color:#64748b">'+(wh>0?wh+'h ':'')+wm+' min</span></div>'+
     '<div class="list-item"><span style="font-size:14px;color:#0d1b3e">Betyg</span><span style="font-size:14px;color:#64748b">⭐ '+(driver.rating||'5.0')+'</span></div>'+
     '</div>'+
-    '<button class="btn btn-danger" onclick="document.getElementById(\'logoutConfirm\').classList.add(\'open\')" style="margin-bottom:14px">🚪 Logga ut</button>'+
+    (!activeBooking?'<button class="btn btn-danger" onclick="document.getElementById(\'logoutConfirm\').classList.add(\'open\')" style="margin-bottom:14px">🚪 Logga ut</button>':
+    '<div class="ib ib-y" style="margin-bottom:14px">⚠️ Du kan inte logga ut under ett aktivt uppdrag</div>')+
     '<div style="text-align:center;font-size:11px;color:#94a3b8;margin-bottom:20px">Trollhättan Cab AB · Org.nr 559312-7128<br>trollhattancab.com</div>'+
     '<div style="height:80px"></div></div>';
 }
@@ -932,7 +933,10 @@ async function sendCallback(){
 
 function confirmLogout(){
   document.getElementById('logoutConfirm').classList.remove('open');
-  if(activeBooking){showToast('⚠️ Du kan inte logga ut under ett pågående uppdrag','#dc2626','white');return;}
+  if(activeBooking){
+    showToast('⚠️ Du kan inte logga ut under ett pågående uppdrag','#dc2626','white');
+    return;
+  }
   logout();
 }
 
