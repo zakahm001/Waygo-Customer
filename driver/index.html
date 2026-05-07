@@ -2,7 +2,7 @@
 <html lang="sv">
 <head>
 <meta charset="UTF-8">
-<link rel="manifest" href="/manifest-driver.json">
+<link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -143,12 +143,13 @@ body{font-family:Arial,sans-serif;background:#0d1b3e;color:white;min-height:100v
       <div class="login-sub">Förarapp — Driver Portal</div>
     </div>
     <div class="login-box">
-      <label class="flabel">E-postadress</label>
-      <input class="finput" id="loginEmail" type="email" placeholder="din@email.se" onkeydown="if(event.key==='Enter')doLogin()"/>
-      <label class="flabel">Lösenord</label>
-      <input class="finput" id="loginPassword" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"/>
+      <label class="flabel">Taxiförarlegitimation</label>
+      <input class="finput" id="loginLicense" type="text" inputmode="numeric" placeholder="T.ex. 122452" onkeydown="if(event.key==='Enter')document.getElementById('loginPin').focus()"/>
+      <label class="flabel">PIN-kod (sista 4 siffrorna)</label>
+      <input class="finput" id="loginPin" type="password" inputmode="numeric" maxlength="4" placeholder="••••" onkeydown="if(event.key==='Enter')doLogin()"/>
       <div class="err-box" id="loginErr"></div>
       <button class="btn btn-yellow" id="loginBtn" onclick="doLogin()">Logga in →</button>
+      <div style="text-align:center;margin-top:12px;font-size:11px;color:#4a6090">Problem att logga in? Kontakta central.</div>
     </div>
     <div style="text-align:center;margin-top:20px;font-size:12px;color:#4a6090">
       Trollhättan Cab AB · Org.nr 559312-7128<br>
@@ -334,14 +335,15 @@ function showScreen(id){
 }
 
 async function doLogin(){
-  const emailEl=document.getElementById('loginEmail');const pwdEl=document.getElementById('loginPassword');
+  const licenseEl=document.getElementById('loginLicense');const pinEl=document.getElementById('loginPin');
   const err=document.getElementById('loginErr');const btn=document.getElementById('loginBtn');
-  const email=emailEl.value.trim().toLowerCase();const password=pwdEl.value.trim();
+  const license=licenseEl.value.trim();const pin=pinEl.value.trim();
   err.style.display='none';
-  if(!email||!password){err.textContent='⚠️ Fyll i e-post och lösenord';err.style.display='';return;}
+  if(!license||!pin){err.textContent='⚠️ Fyll i legitimationsnummer och PIN';err.style.display='';return;}
+  if(pin.length<4){err.textContent='⚠️ PIN måste vara 4 siffror';err.style.display='';return;}
   btn.textContent='Loggar in...';btn.disabled=true;
   try{
-    const res=await fetch(API+'/drivers/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+    const res=await fetch(API+'/drivers/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({taxi_license:license,pin})});
     const data=await res.json();
     if(data.token){
       driver=data.driver;token=data.token;
@@ -356,6 +358,11 @@ async function doLogin(){
 }
 
 function enterApp(){
+  // Show company name in topbar
+  setTimeout(function(){
+    var cn=document.getElementById('companyName');
+    if(cn&&driver&&driver.company_name)cn.textContent=driver.company_name;
+  },500);
   showScreen('sApp');
   updateStatusBadge();
   startGPS();
