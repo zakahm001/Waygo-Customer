@@ -1252,7 +1252,12 @@ function setupAutocomplete(inputId) {
   var numWrap = document.createElement('div');
   numWrap.id = 'numwrap-' + inputId;
   numWrap.style.cssText = 'display:none;margin-top:4px';
-  numWrap.innerHTML = '<input class="finput" id="num-'+inputId+'" placeholder="Ange husnummer (t.ex. 12)" style="margin-bottom:0" oninput="updateFullAddress(''+inputId+'')" onkeydown="if(event.key==='Enter')calcRealRoute()"/>';
+  numWrap.innerHTML = '<input class="finput" id="num-' + inputId + '" placeholder="Ange husnummer (t.ex. 12)" style="margin-bottom:0" data-for="' + inputId + '"/>';
+  var numInput = numWrap.querySelector('input');
+  if(numInput){
+    numInput.addEventListener('input', function(){updateFullAddress(this.getAttribute('data-for'));});
+    numInput.addEventListener('keydown', function(e){if(e.key==='Enter')calcRealRoute();});
+  }
   wrapper.parentNode.insertBefore(numWrap, wrapper.nextSibling);
 
   input.addEventListener('input', function() {
