@@ -413,16 +413,52 @@ function updateMapMarker(){
 function connectSocket(){
   try{
     if(typeof io==='undefined'){setTimeout(connectSocket,1000);return;}
-    socket=io(API,{timeout:5000});
+    socket=io(API,{
+      timeout:8000,
+      reconnection:true,
+      reconnectionDelay:2000,
+      reconnectionAttempts:99
+    });
     socket.on('connect',()=>{
+      console.log('Socket connected');
+      if(!driver)return;
       socket.emit('driver:join',parseInt(driver.id));
-      if(socket&&driverStatus!=='offline')socket.emit('driver:status',{driverId:parseInt(driver.id),status:driverStatus==='available'?'available':'busy'});
+      const st=driverStatus==='available'?'available':driverStatus==='busy'?'busy':'paused';
+      socket.emit('driver:status',{driverId:parseInt(driver.id),status:st});
+    });
+    socket.on('disconnect',()=>{console.log('Socket disconnected - will reconnect');});
+    socket.on('reconnect',()=>{
+      console.log('Socket reconnected');
+      if(!driver)return;
+      socket.emit('driver:join',parseInt(driver.id));
     });
     socket.on('booking:assigned:driver',(booking)=>{
-      // Only handle if this booking is assigned to ME
-      if(parseInt(booking.driver_id)!==parseInt(driver.id))return;
-      if(activeBooking&&activeBooking.id===booking.id)return;
-      triggerAlert(booking);
+      try{
+        if(!driver){console.log('Driver not logged in');return;}
+        // Accept if assigned to me OR if it is a dispatch attempt for me
+        var myId=parseInt(driver.id);
+        var bookingDriverId=parseInt(booking.driver_id);
+        if(bookingDriverId!==myId){return;}
+        // Skip if already have this active booking
+        if(activeBooking&&activeBooking.id===booking.id){return;}
+        // Skip if already have any active booking
+        if(activeBooking&&driverStatus==='busy'){
+          console.log('Already on a trip - ignoring dispatch');
+          return;
+        }
+        // Skip if blocked
+        if(driverStatus==='blocked'){
+          console.log('Blocked - ignoring dispatch');
+          return;
+        }
+        // Skip if paused
+        if(driverStatus==='paused'){
+          console.log('Paused - ignoring dispatch');
+          return;
+        }
+        console.log('Triggering alert for booking',booking.booking_ref);
+        triggerAlert(booking);
+      }catch(err){console.log('booking:assigned:driver error:',err);}
     });
     socket.on('driver:blocked',(data)=>{
       driverStatus='blocked';updateStatusBadge();
@@ -461,14 +497,16 @@ function triggerAlert(booking){
 }
 
 function showPopup(booking){
+  try{
   pendingBooking=booking;let countdown=30;
-  // Set all text content first
-  document.getElementById('popupRef').textContent=booking.booking_ref;
-  document.getElementById('popupRoute').textContent='📍 '+booking.from_address+' → 🏁 '+booking.to_address;
-  document.getElementById('popupDetail').textContent='👤 '+booking.customer_name+' · '+(booking.customer_phone||'');
-  document.getElementById('popupFare').textContent=(booking.fare_sek||0)+' kr';
-  const pm={swish:'📱 Swish',card:'💳 Kort',invoice:'📄 Faktura'};
-  document.getElementById('popupPayment').textContent='Betalning: '+(pm[booking.payment_method]||booking.payment_method||'Kontant');
+  // Set all text content safely
+  var setEl=function(id,val){var el=document.getElementById(id);if(el)el.textContent=val;};
+  setEl('popupRef',booking.booking_ref||'');
+  setEl('popupRoute','📍 '+(booking.from_address||'')+'  →  🏁 '+(booking.to_address||''));
+  setEl('popupDetail','👤 '+(booking.customer_name||'')+' · '+(booking.customer_phone||''));
+  setEl('popupFare',(booking.fare_sek||0)+' kr');
+  var pm={swish:'📱 Swish',card:'💳 Kort',invoice:'📄 Faktura'};
+  setEl('popupPayment','Betalning: '+(pm[booking.payment_method]||booking.payment_method||'Kontant'));
   // Pre-booking badge
   const preBadge=document.getElementById('popupPreBadge');
   if(booking.booking_type==='pre'&&booking.scheduled_at){preBadge.style.display='';document.getElementById('popupPreTime').textContent=new Date(booking.scheduled_at).toLocaleString('sv-SE',{dateStyle:'medium',timeStyle:'short'});}
@@ -487,7 +525,8 @@ function showPopup(booking){
   // Show overlay and start timer
   const timerEl=document.getElementById('popupTimer');
   if(timerEl){timerEl.textContent=countdown;timerEl.classList.remove('urgent');}
-  document.getElementById('bookingOverlay').classList.add('show');
+  var overlay=document.getElementById('bookingOverlay');
+  if(overlay)overlay.classList.add('show');
   if(popupTimerInterval)clearInterval(popupTimerInterval);
   popupTimerInterval=setInterval(()=>{
     countdown--;
@@ -495,6 +534,7 @@ function showPopup(booking){
     if(countdown<=10&&timerEl)timerEl.classList.add('urgent');
     if(countdown<=0){clearInterval(popupTimerInterval);declineBooking();}
   },1000);
+  }catch(err){console.log('showPopup error:',err);}
 }
 
 async function acceptBooking(){
