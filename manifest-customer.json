@@ -1,7 +1,18 @@
 {
+  "id": "thtcab-customer-app",
+  "name": "Trollhättan Cab",
+  "short_name": "THTCab",
+  "description": "Boka taxi i Trollhättan",
+  "start_url": "/customer/",
+  "scope": "/customer/",
+  "display": "standalone",
   "background_color": "#0d1b3e",
   "theme_color": "#0d1b3e",
   "orientation": "portrait-primary",
+  "categories": [
+    "travel",
+    "transportation"
+  ],
   "lang": "sv",
   "icons": [
     {
@@ -46,15 +57,5 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ],
-  "id": "thtcab-customer",
-  "name": "Trollhättan Cab",
-  "short_name": "THTCab",
-  "description": "Boka taxi i Trollhättan",
-  "start_url": "/customer",
-  "display": "standalone",
-  "categories": [
-    "travel",
-    "transportation"
   ]
 }
