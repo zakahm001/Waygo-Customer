@@ -2,6 +2,13 @@
 <html lang="sv">
 <head>
 <meta charset="UTF-8">
+<link rel="manifest" href="/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="THTCab Central">
+<link rel="apple-touch-icon" href="/icons/icon-152.png">
+<meta name="theme-color" content="#0d1b3e">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Trollhättan Cab — Central</title>
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
@@ -1128,5 +1135,17 @@ async function unassignDriver(driverId){
 }
 
 </script>
+
+<div id="iosBannerC" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#0d1b3e;color:white;padding:14px 16px;z-index:999;align-items:center;gap:12px;box-shadow:0 -4px 20px rgba(0,0,0,.3)">
+  <img src="/icons/icon-72.png" style="width:44px;height:44px;border-radius:10px;flex-shrink:0" alt="THTCab"/>
+  <div style="flex:1;font-size:13px;line-height:1.5"><strong>Installera Central</strong><br>Tryck <strong>□↑</strong> och välj <strong>"Lägg till på hemskärmen"</strong></div>
+  <button onclick="this.parentElement.style.display='none';localStorage.setItem('cntBannerDismissed','1')" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer">✕</button>
+</div>
+<div id="installBannerC" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#0d1b3e;color:white;padding:14px 16px;z-index:999;align-items:center;gap:12px;box-shadow:0 -4px 20px rgba(0,0,0,.3)">
+  <img src="/icons/icon-72.png" style="width:44px;height:44px;border-radius:10px;flex-shrink:0" alt="THTCab"/>
+  <div style="flex:1"><div style="font-size:14px;font-weight:700">Installera Central</div><div style="font-size:12px;color:#94a3b8">Lägg till på hemskärmen</div></div>
+  <button onclick="installAppC()" style="background:#fbbf24;color:#0d1b3e;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0">Installera</button>
+  <button onclick="document.getElementById('installBannerC').style.display='none'" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer">✕</button>
+</div>
 </body>
 </html>
