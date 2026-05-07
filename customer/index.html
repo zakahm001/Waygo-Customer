@@ -1240,13 +1240,20 @@ async function fetchSuggestions(query, dropdown, input) {
       else display = item.display_name.split(',')[0];
       var city = addr.city || addr.town || addr.village || addr.municipality || '';
       var full = display + (city ? ', ' + city : '');
-      return '<div class="ac-item" onmousedown="selectAddress('' + full.replace(/'/g, "\'") + '','' + input.id + '')">' + full + '</div>';
+      var safeAddr=full.replace(/"/g,'&quot;');
+      return '<div class="ac-item" onmousedown="selectAddressById(this)" data-addr="'+safeAddr+'" data-input="'+input.id+'">'+full+'</div>';
     }).join('');
     
     dropdown.style.display = 'block';
   } catch(e) {
     dropdown.style.display = 'none';
   }
+}
+
+function selectAddressById(el) {
+  var address = el.getAttribute('data-addr');
+  var inputId = el.getAttribute('data-input');
+  selectAddress(address, inputId);
 }
 
 function selectAddress(address, inputId) {
