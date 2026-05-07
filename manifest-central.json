@@ -1,6 +1,13 @@
 {
+  "id": "thtcab-central-app",
+  "name": "THTCab Central",
+  "short_name": "THTCab Central",
+  "description": "Central Dispatch — Trollhättan Cab",
+  "start_url": "/central/",
+  "scope": "/central/",
+  "display": "standalone",
   "background_color": "#0d1b3e",
-  "theme_color": "#0d1b3e",
+  "theme_color": "#7c3aed",
   "orientation": "any",
   "lang": "sv",
   "icons": [
@@ -46,11 +53,5 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ],
-  "id": "thtcab-central",
-  "name": "THTCab Central",
-  "short_name": "THTCab Central",
-  "description": "Central Dispatch — Trollhättan Cab",
-  "start_url": "/central",
-  "display": "standalone"
+  ]
 }
