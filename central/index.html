@@ -2,7 +2,7 @@
 <html lang="sv">
 <head>
 <meta charset="UTF-8">
-<link rel="manifest" href="/manifest-central.json">
+<link rel="manifest" href="manifest.json">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -535,6 +535,7 @@ function bcard(b){
     (isPre&&b.scheduled_at?'<div style="font-size:11px;color:#7c3aed;font-weight:700;margin-bottom:4px">📅 '+new Date(b.scheduled_at).toLocaleString('sv-SE',{dateStyle:'medium',timeStyle:'short'})+'</div>':'')+
     '<div class="broute">📍 '+b.from_address+' → 🏁 '+b.to_address+'</div>'+
     (b.passengers>=5?'<div style="background:#fee2e2;border:1px solid #fecaca;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:#dc2626;margin-bottom:8px">⚠️ '+b.passengers+' PASSAGERARE — BEHÖVER MÖJLIGEN 2 BILAR</div>':'')+
+    (b.driver_note?'<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:6px 12px;font-size:12px;color:#d97706;margin-bottom:8px">📝 '+b.driver_note+'</div>':'')+
     '<div class="bdetail">👤 '+b.customer_name+' · '+(b.customer_phone||'')+'<br>'+
     (b.passengers&&b.passengers>1?'👥 '+b.passengers+' passagerare · ':'')+
     (b.child_seat?'🧒 Barnstol'+(b.child_age?' ('+b.child_age+')':'')+' · ':'')+
@@ -589,10 +590,12 @@ function tabDrivers(){
       '<input class="finput" id="dnName" placeholder="Fullständigt namn *"/>'+
       '<input class="finput" id="dnEmail" type="email" placeholder="E-post *"/>'+
       '<input class="finput" id="dnPhone" placeholder="Telefon *"/>'+
+      '<input class="finput" id="dnLicense" placeholder="Taxiförarlegitimation * (t.ex. 122452)"/>'+
+      '<div class="ib ib-blue" style="font-size:11px">ℹ️ PIN sätts automatiskt till sista 4 siffrorna i legitimationsnumret</div>'+
       '<input class="finput" id="dnPlate" placeholder="Registreringsskylt * (ABC 123)"/>'+
       '<input class="finput" id="dnTaxi" placeholder="Taxinummer (TL-XXXX)"/>'+
       '<input class="finput" id="dnCity" placeholder="Stad"/>'+
-      '<input class="finput" id="dnPwd" type="password" placeholder="Lösenord *"/>'+
+      '<input class="finput" id="dnPwd" type="password" placeholder="Lösenord (för gammal inloggning)"/>'+
       '<div class="ib ib-r" id="dnErr" style="display:none"></div>'+
       '<button class="btn btnP" id="addDrvBtn" onclick="addDriver()">Lägg till förare →</button></div>';
   }
@@ -627,16 +630,17 @@ async function addDriver(){
   var name=document.getElementById('dnName').value.trim();
   var email=document.getElementById('dnEmail').value.trim();
   var phone=document.getElementById('dnPhone').value.trim();
+  var license=document.getElementById('dnLicense')?document.getElementById('dnLicense').value.trim():'';
   var plate=document.getElementById('dnPlate').value.trim();
   var taxi=document.getElementById('dnTaxi').value.trim();
   var city=document.getElementById('dnCity').value.trim();
   var pwd=document.getElementById('dnPwd').value.trim();
   var err=document.getElementById('dnErr');
   var btn=document.getElementById('addDrvBtn');
-  if(!name||!email||!phone||!plate||!pwd){err.textContent='⚠️ Fyll i alla obligatoriska fält';err.style.display='';return;}
+  if(!name||!email||!phone||!plate||!license){err.textContent='⚠️ Fyll i alla obligatoriska fält inkl. legitimationsnummer';err.style.display='';return;}
   btn.textContent='Lägger till...';btn.disabled=true;err.style.display='none';
   try{
-    var res=await fetch(API+'/drivers/add',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify({name:name,email:email,phone:phone,plate:plate,taxi_nr:taxi,city:city,password:pwd})});
+    var res=await fetch(API+'/drivers/add',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify({name:name,email:email,phone:phone,plate:plate,taxi_nr:taxi,city:city,password:pwd||'thtcab123',taxi_license:license})});
     var data=await res.json();
     if(data.driver){allDrivers.push(data.driver);showToast('✅ '+name+' tillagd!');showTab(2);}
     else{err.textContent='⚠️ '+(data.error||'Fel');err.style.display='';}
@@ -667,6 +671,7 @@ async function openDriverProfile(id){
     h+='<div class="card"><div class="stitle">Fordonsinformation</div>'+
       '<div class="litem"><span style="font-size:13px;color:#64748b">Registreringsskylt</span><span style="font-size:13px;font-weight:700">'+d.plate+'</span></div>'+
       '<div class="litem"><span style="font-size:13px;color:#64748b">Taxinummer</span><span style="font-size:13px">'+(d.taxi_nr||'—')+'</span></div>'+
+      '<div class="litem"><span style="font-size:13px;color:#64748b">Legitimationsnr</span><span style="font-size:13px;font-weight:700">'+(d.taxi_license||'—')+'</span></div>'+
       '<div class="litem"><span style="font-size:13px;color:#64748b">Stad</span><span style="font-size:13px">'+(d.city||'—')+'</span></div>'+
       '<div class="litem"><span style="font-size:13px;color:#64748b">Telefon</span><span style="font-size:13px">'+d.phone+'</span></div></div>';
 
@@ -1066,6 +1071,7 @@ function tabCompanies(){
     h+='<div class="card"><div class="stitle">➕ Lägg till partnerföretag</div>'+
       '<input class="finput" id="cName" placeholder="Företagsnamn *"/>'+
       '<input class="finput" id="cOrg" placeholder="Org.nummer * (556xxx-xxxx)"/>'+
+      '<input class="finput" id="cAkeri" placeholder="Åkerinummer (valfritt)"/>'+
       '<input class="finput" id="cEmail" type="email" placeholder="Kontakt e-post"/>'+
       '<input class="finput" id="cPhone" placeholder="Kontakt telefon"/>'+
       '<input class="finput" id="cDate" type="date"/>'+
@@ -1114,7 +1120,7 @@ async function addCompany(){
   if(!name||!org){err.textContent='⚠️ Namn och org.nr krävs';err.style.display='';return;}
   btn.textContent='Lägger till...';btn.disabled=true;err.style.display='none';
   try{
-    var res=await fetch(API+'/companies/add',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify({name,org_number:org,contact_email:email,contact_phone:phone,agreement_date:date||null,notes})});
+    var res=await fetch(API+'/companies/add',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify({name,org_number:org,contact_email:email,contact_phone:phone,agreement_date:date||null,notes,akeri_number:document.getElementById('cAkeri')?document.getElementById('cAkeri').value.trim():null})});
     var data=await res.json();
     if(data.company){allCompanies.push(data.company);showToast('✅ '+name+' tillagd!');showTab(6);}
     else{err.textContent='⚠️ '+(data.error||'Fel');err.style.display='';}
