@@ -1,6 +1,13 @@
 {
+  "id": "thtcab-driver-app",
+  "name": "THTCab Förare",
+  "short_name": "THTCab Förare",
+  "description": "Förarapp — Trollhättan Cab",
+  "start_url": "/driver/",
+  "scope": "/driver/",
+  "display": "standalone",
   "background_color": "#0d1b3e",
-  "theme_color": "#0d1b3e",
+  "theme_color": "#fbbf24",
   "orientation": "portrait-primary",
   "lang": "sv",
   "icons": [
@@ -46,11 +53,5 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ],
-  "id": "thtcab-driver",
-  "name": "THTCab Förare",
-  "short_name": "THTCab Förare",
-  "description": "Förarapp — Trollhättan Cab",
-  "start_url": "/driver",
-  "display": "standalone"
+  ]
 }
