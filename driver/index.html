@@ -502,16 +502,25 @@ async function acceptBooking(){
   clearInterval(popupTimerInterval);
   document.getElementById('bookingOverlay').classList.remove('show');
   try{
-    const res=await fetch(API+'/bookings/'+pendingBooking.id+'/assign',{
-      method:'PATCH',headers:{'Content-Type':'application/json'},
+    // Use /accept route which handles race conditions
+    const res=await fetch(API+'/bookings/'+pendingBooking.id+'/accept',{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({driver_id:parseInt(driver.id)})
     });
-    if(res.ok){
-      activeBooking={...pendingBooking};
+    const data=await res.json();
+    if(data.success){
+      activeBooking=data.booking||{...pendingBooking,driver_id:parseInt(driver.id)};
       localStorage.setItem('thtcab_active_booking',JSON.stringify(activeBooking));
       pendingBooking=null;driverStatus='busy';updateStatusBadge();
+      if(socket)socket.emit('driver:status',{driverId:parseInt(driver.id),status:'busy'});
       showToast('✅ Bokning accepterad!','#15803d','white');showTab(1);
-    }else{showToast('⚠️ Kunde inte acceptera','#dc2626','white');}
+    }else{
+      // Booking already taken by another driver
+      pendingBooking=null;
+      showToast('⚠️ '+(data.error||'Bokningen är inte längre tillgänglig'),'#d97706','white');
+      showTab(0);
+    }
   }catch(e){showToast('⚠️ Nätverksfel','#dc2626','white');}
 }
 
@@ -841,6 +850,19 @@ function logout(){
   driver=null;token=null;activeBooking=null;onlineSeconds=0;
   showScreen('sLogin');
 }
+// Register Service Worker for push notifications
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').then(function(reg){
+    console.log('SW registered');
+    // Request notification permission
+    if(Notification.permission==='default'){
+      Notification.requestPermission();
+    }
+  }).catch(function(err){
+    console.log('SW registration failed:',err);
+  });
+}
+
 </script>
 <script async src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </body>
