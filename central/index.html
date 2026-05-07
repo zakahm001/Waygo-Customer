@@ -411,6 +411,33 @@ function connectSocket(){
       allBookings=allBookings.map(function(x){return x.id===b.id?Object.assign({},x,{status:'pending',driver_id:null,driver_name:null}):x;});
       if(curTab===0)showTab(0);
     });
+
+    // Auto-dispatch status updates
+    socket.on('dispatch:status',function(data){
+      // Update or create dispatch status banner for this booking
+      var key='dispatch-'+data.booking_id;
+      var existing=document.getElementById(key);
+      var color=data.status==='accepted'?'#dcfce7':data.status==='failed'?'#fee2e2':data.status==='no_response'?'#fef3c7':'#dbeafe';
+      var textColor=data.status==='accepted'?'#15803d':data.status==='failed'?'#dc2626':data.status==='no_response'?'#d97706':'#1a56db';
+      var html='<div id="'+key+'" style="background:'+color+';border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:13px;color:'+textColor+';font-weight:600;display:flex;justify-content:space-between;align-items:center">'+
+        '<span>'+data.booking_ref+' — '+data.message+'</span>'+
+        (data.queue_total?'<span style="font-size:11px;opacity:.7">'+data.queue_position+'/'+data.queue_total+'</span>':'')+
+        '</div>';
+      var container=document.getElementById('dispatchLog');
+      if(container){
+        if(existing){existing.outerHTML=html;}
+        else{container.insertAdjacentHTML('afterbegin',html);}
+      }
+      // Play sound on failure
+      if(data.status==='failed'){playDeclineAlert();}
+      if(curTab===0)showTab(0);
+    });
+    socket.on('dispatch:failed',function(data){
+      showAlert('🚨 '+data.booking_ref+' — '+data.reason+' — Tilldela manuellt!','warn');
+      playDeclineAlert();
+      loadData().then(function(){if(curTab===0)showTab(0);});
+    });
+
     socket.on('booking:cancelled',function(data){
       allBookings=allBookings.map(function(b){return b.id===data.id?Object.assign({},b,{status:'cancelled',driver_id:null,driver_name:null}):b;});
       if(curTab===0)showTab(0);
@@ -454,7 +481,9 @@ function tabBookings(){
   h+=sc(allDrivers.filter(function(d){return d.status==='available';}).length,'Lediga förare','#15803d');
   h+=sc(earnings+' kr','Intäkter idag','#7c3aed');
   h+='</div>';
-  if(pending.length)h+='<div class="stitle">🔴 Väntar ('+pending.length+')</div>'+pending.map(bcard).join('');
+  if(pending.length)h+='<div class="stitle">🔴 Väntar ('+pending.length+')</div>'+
+    '<div id="dispatchLog" style="margin-bottom:10px"></div>'+
+    pending.map(bcard).join('');
   if(active.length)h+='<div class="stitle">🔵 Aktiva ('+active.length+')</div>'+active.map(bcard).join('');
   if(completed.length)h+='<div class="stitle">✅ Avslutade ('+completed.length+')</div>'+completed.slice(0,10).map(bcard).join('');
   if(cancelled.length)h+='<div class="stitle">❌ Avbokade ('+cancelled.length+')</div>'+cancelled.slice(0,5).map(bcard).join('');
