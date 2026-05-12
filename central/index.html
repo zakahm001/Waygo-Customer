@@ -546,21 +546,27 @@ function checkAuth(){
 }
 
 function showLogin(){
-  document.getElementById('main').innerHTML=
-    '<div style="min-height:80vh;display:flex;align-items:center;justify-content:center;padding:20px">'+
-    '<div style="background:white;border-radius:16px;padding:32px 24px;width:100%;max-width:400px;border:1px solid #d0d7ea">'+
-    '<div style="text-align:center;margin-bottom:24px">'+
-    '<div style="font-size:44px">🚖</div>'+
-    '<div style="font-size:20px;font-weight:bold;color:#0d1b3e;margin-top:8px">Trollhättan Cab</div>'+
-    '<div style="color:#64748b;font-size:13px;margin-top:4px">Central Dispatch · Admin Portal</div></div>'+
-    '<label class="flabel">E-postadress</label>'+
-    '<input class="finput" id="lEmail" type="email" placeholder="din@trollhattancab.com"/>'+
-    '<label class="flabel">Lösenord</label>'+
-    '<input class="finput" id="lPwd" type="password" placeholder="••••••••" onkeydown="if(event.key===\'Enter\')doLogin()"/>'+
-    '<div class="ib ib-r" id="lErr" style="display:none"></div>'+
-    '<button class="btn btnP" style="width:100%;padding:14px" id="lBtn" onclick="doLogin()">Logga in →</button>'+
-    '<div style="text-align:center;margin-top:16px;font-size:11px;color:#94a3b8">Trollhättan Cab AB · Org.nr 559312-7128</div>'+
-    '</div></div>';
+  // Show loginPage div (new shell)
+  var lp=document.getElementById('loginPage'); if(lp)lp.style.display='block';
+  var ap=document.getElementById('appShell'); if(ap)ap.style.display='none';
+  // Fallback: also render into #main for compatibility
+  var m=document.getElementById('main');
+  if(m&&(!lp||lp.style.display==='none')){
+    m.innerHTML=
+      '<div style="min-height:80vh;display:flex;align-items:center;justify-content:center;padding:20px">'+
+      '<div style="background:#1f2937;border-radius:16px;padding:32px 24px;width:100%;max-width:380px;border:1px solid #374151">'+
+      '<div style="text-align:center;margin-bottom:24px">'+
+      '<div style="font-size:44px">🚖</div>'+
+      '<div style="font-size:20px;font-weight:bold;color:#fbbf24;margin-top:8px;letter-spacing:2px">TROLLHÄTTAN CAB</div>'+
+      '<div style="color:#6b7280;font-size:13px;margin-top:4px">Central Dispatch</div></div>'+
+      '<label class="flabel">E-postadress</label>'+
+      '<input class="finput" id="lEmail" type="email" placeholder="din@trollhattancab.com"/>'+
+      '<label class="flabel">Lösenord</label>'+
+      '<input class="finput" id="lPwd" type="password" placeholder="••••••••" onkeydown="if(event.key===\'Enter\')doLogin()"/>'+
+      '<div class="ib ib-r" id="lErr" style="display:none"></div>'+
+      '<button class="btn btnP" style="width:100%;padding:14px;background:#fbbf24;color:#0d1b3e" id="lBtn" onclick="doLogin()">Logga in →</button>'+
+      '</div></div>';
+  }
 }
 
 async function doLogin(){
@@ -588,19 +594,34 @@ function logout(){
   staffUser=null;staffToken=null;
   if(refreshTimer)clearInterval(refreshTimer);
   if(socket)socket.disconnect();
+  var ap=document.getElementById('appShell');if(ap)ap.style.display='none';
   showLogin();
 }
 
 function updateNav(){
   if(!staffUser)return;
-  document.getElementById('navName').textContent=staffUser.name;
-  var labels={superadmin:'Super Admin',admin:'Admin',dispatcher:'Dispatcher'};
-  var classes={superadmin:'r1',admin:'r2',dispatcher:'r3'};
+  // Original nav elements (may not exist in new shell - safe fallback)
+  var nn=document.getElementById('navName'); if(nn)nn.textContent=staffUser.name;
+  var labels={superadmin:'Super Admin',admin:'Admin',dispatcher:'Dispatcher',akeri:'Åkeri'};
+  var classes={superadmin:'r1',admin:'r2',dispatcher:'r3',akeri:'r4'};
   var roleEl=document.getElementById('navRole');
-  roleEl.textContent=labels[staffUser.role]||staffUser.role;
-  roleEl.className='nav-role '+(classes[staffUser.role]||'r3');
-  var t5=document.getElementById('tab5');
-  if(t5)t5.style.display=(staffUser.level<=2)?'':'none';
+  if(roleEl){roleEl.textContent=labels[staffUser.role]||staffUser.role;roleEl.className='nav-role '+(classes[staffUser.role]||'r3');}
+  var t5=document.getElementById('tab5'); if(t5)t5.style.display=(staffUser.level<=2)?'':'none';
+  // Populate new sidebar elements
+  var name=staffUser.name||staffUser.email;
+  var roleLabel=staffUser.role==='superadmin'?'👑 Super Admin':staffUser.role==='admin'?'🔑 Admin':staffUser.role==='akeri'?'🏢 Åkeri':'🎧 Dispatcher';
+  var sbn=document.getElementById('sidebarName'); if(sbn)sbn.textContent=name;
+  var sbr=document.getElementById('sidebarRole'); if(sbr)sbr.textContent=roleLabel;
+  var sba=document.getElementById('sidebarAv'); if(sba)sba.textContent=name.charAt(0).toUpperCase();
+  var tbu=document.getElementById('topbarUser'); if(tbu)tbu.textContent=name;
+  // Show app shell, hide login page
+  var lp=document.getElementById('loginPage'); if(lp)lp.style.display='none';
+  var ap=document.getElementById('appShell'); if(ap)ap.style.display='block';
+  // Redirect åkeri to portal
+  if(staffUser.role==='akeri'){
+    alert('Åkeriägare loggar in via portal.trollhattancab.com');
+    logout(); return;
+  }
 }
 
 window.onload=function(){if(checkAuth())init();};
@@ -1720,102 +1741,7 @@ function closeSidebar(){
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebarOverlay').classList.remove('open');
 }
-function navTo(i){
-  showTab(i);
-  closeSidebar();
-}
-
-// ── OVERRIDE showTab to use new sidebar nav ──
-var _origShowTab = showTab;
-showTab = function(i){
-  curTab = i;
-  document.querySelectorAll('.nav-item').forEach(function(t){
-    t.classList.toggle('active', parseInt(t.dataset.tab||'-1') === i);
-  });
-  var m = document.getElementById('main');
-  if(i===0){m.innerHTML=tabBookings();}
-  else if(i===1){m.innerHTML=tabMap();if(window.L){var av=allDrivers.filter(function(d){return d.status!=='offline';});initLeafletMap(av);}}
-  else if(i===2){m.innerHTML=tabDrivers();}
-  else if(i===3){m.innerHTML=tabCustomers();}
-  else if(i===4){m.innerHTML=tabChat();}
-  else if(i===5){m.innerHTML=tabStaff();}
-  else if(i===6){m.innerHTML=tabCompanies();}
-  else if(i===7){m.innerHTML='<div class="page"><div class="card" style="text-align:center;padding:30px;color:#94a3b8">Laddar fordon...</div></div>';loadCarsTab();}
-};
-
-// ── OVERRIDE enterApp to use new shell ──
-var _origEnterApp = (typeof enterApp === 'function') ? enterApp : null;
-
-function enterApp(){
-  document.getElementById('loginPage').style.display = 'none';
-  document.getElementById('appShell').style.display = 'block';
-  // Set sidebar user info
-  var name = staffUser.name || staffUser.email;
-  var role = staffUser.role === 'superadmin' ? '👑 Super Admin' :
-             staffUser.role === 'admin' ? '🔑 Admin' :
-             staffUser.role === 'akeri' ? '🏢 Åkeri' : '🎧 Dispatcher';
-  document.getElementById('sidebarName').textContent = name;
-  document.getElementById('sidebarRole').textContent = role;
-  document.getElementById('sidebarAv').textContent = name.charAt(0).toUpperCase();
-  document.getElementById('topbarUser').textContent = name;
-  // Hide admin nav for åkeri
-  if(isAkeri()){
-    var adminNav = document.getElementById('adminNav');
-    if(adminNav) adminNav.style.display = 'none';
-  }
-  loadData().then(function(){ showTab(0); startAutoRefresh(); });
-}
-
-// ── OVERRIDE showLogin to use new login page ──
-function showLogin(){
-  document.getElementById('loginPage').style.display = 'block';
-  document.getElementById('appShell').style.display = 'none';
-  setTimeout(function(){
-    var p = document.getElementById('lPwd');
-    if(p) p.addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(); });
-  }, 100);
-}
-
-// ── OVERRIDE logout ──
-var _origLogout = logout;
-logout = function(){
-  localStorage.removeItem('thtcab_cen_staff');
-  localStorage.removeItem('thtcab_cen_token');
-  staffUser = null; staffToken = null;
-  document.getElementById('loginPage').style.display = 'block';
-  document.getElementById('appShell').style.display = 'none';
-  if(typeof stopAutoRefresh === 'function') stopAutoRefresh();
-};
-
-// ── STATUS BAR UPDATE ──
-var _origLoadData = loadData;
-loadData = async function(){
-  await _origLoadData();
-  updateStatusBar();
-};
-
-function updateStatusBar(){
-  var online = allDrivers.filter(function(d){return d.status!=='offline';}).length;
-  var pending = allBookings.filter(function(b){return b.status==='pending'||b.status==='assigned';}).length;
-  document.getElementById('statusDrivers').textContent = online;
-  document.getElementById('statusPending').textContent = pending;
-  document.getElementById('liveStatus').textContent = 'Live · ' + new Date().toLocaleTimeString('sv-SE',{timeStyle:'short'});
-  // Update booking badge
-  var badge = document.getElementById('navBadge0');
-  if(badge){ if(pending>0){badge.textContent=pending;badge.style.display='';}else{badge.style.display='none';} }
-}
-
-// ── INIT ──
-window.onload = function(){
-  var sv = localStorage.getItem('thtcab_cen_staff');
-  var st = localStorage.getItem('thtcab_cen_token');
-  if(sv && st){
-    try{staffUser=JSON.parse(sv);staffToken=st;enterApp();}
-    catch(e){showLogin();}
-  } else { showLogin(); }
-};
-
-// Keyboard: Escape closes sidebar
+function navTo(i){ showTab(i); closeSidebar(); }
 document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeSidebar(); });
 </script>
 
