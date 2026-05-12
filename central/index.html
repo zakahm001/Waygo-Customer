@@ -710,7 +710,26 @@ async function openDriverProfile(id){
       '<input class="finput" id="eDrvTaxi" value="'+(d.taxi_nr||'')+'" placeholder="Taxinummer"/>'+
       '<input class="finput" id="eDrvCity" value="'+(d.city||'')+'" placeholder="Stad"/>'+
       '<input class="finput" id="eDrvPwd" type="password" placeholder="Nytt lösenord (lämna tomt = behåll)"/>'+
-      '<button class="btn btnP" onclick="updateDriver('+d.id+')">Spara ändringar</button></div>';
+      '<button class="btn btnP" style="width:100%" onclick="updateDriver('+d.id+')">Spara →</button></div>';
+
+    // SUPERADMIN ONLY SECTION
+    if(staffUser&&staffUser.level===1){
+      h+='<div class="card" style="border:2px solid #7c3aed">'+
+        '<div class="stitle" style="color:#7c3aed">👑 Superadmin — Känsliga uppgifter</div>'+
+        '<label class="flabel">E-post</label>'+
+        '<input class="finput" id="eDrvEmail" value="'+(d.email||'')+'" type="email" placeholder="E-post"/>'+
+        '<label class="flabel">Taxiförarlegitimation</label>'+
+        '<input class="finput" id="eDrvLicense" value="'+(d.taxi_license||'')+'" placeholder="T.ex. 173424"/>'+
+        '<div class="ib ib-blue" style="font-size:11px;margin-bottom:10px">ℹ️ PIN = sista 4 siffror i legitimationsnumret</div>'+
+        '<label class="flabel">Anställningstyp</label>'+
+        '<select class="finput" id="eDrvEmployment">'+
+        '<option value="hourly"'+(d.employment_type==="hourly"?' selected':'')+'>Timavlönad</option>'+
+        '<option value="fixed"'+(d.employment_type==="fixed"?' selected':'')+'>Fast lön</option>'+
+        '<option value="owner"'+(d.employment_type==="owner"?' selected':'')+'>Ägare</option>'+
+        '</select>'+
+        '<button class="btn btnP" style="width:100%;background:#7c3aed;color:white" onclick="updateDriverAdmin('+d.id+')">👑 Spara känsliga uppgifter →</button>'+
+        '</div>';
+    }
 
     document.getElementById('driverModContent').innerHTML=h;
   }catch(e){document.getElementById('driverModContent').innerHTML='<div class="ib ib-r">⚠️ Nätverksfel</div>';}
@@ -748,6 +767,54 @@ async function updateDriver(id){
   var pwd=document.getElementById('eDrvPwd').value.trim();
   await manageDriver(id,'update',{name:name,phone:phone,plate:plate,taxi_nr:taxi,city:city,password:pwd||undefined});
 }
+async function updateDriverAdmin(id){
+  var email=(document.getElementById('eDrvEmail')||{}).value||'';
+  var license=(document.getElementById('eDrvLicense')||{}).value||'';
+  var employment=(document.getElementById('eDrvEmployment')||{}).value||'hourly';
+  if(staffUser.level!==1){showToast('⚠️ Superadmin krävs');return;}
+  try{
+    var res=await fetch(API+'/drivers/'+id+'/manage',{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},
+      body:JSON.stringify({action:'update',email:email,taxi_license:license,employment_type:employment})
+    });
+    var data=await res.json();
+    if(data.driver){
+      allDrivers=allDrivers.map(function(d){return d.id===id?Object.assign({},d,data.driver):d;});
+      showToast('✅ Känsliga uppgifter sparade');closeMod('driverMod');
+    }else{showToast('⚠️ '+(data.error||'Fel'));}
+  }catch(e){showToast('⚠️ Nätverksfel');}
+}
+
+async function updateCustomerAdmin(id){
+  if(staffUser.level!==1){showToast('⚠️ Superadmin krävs');return;}
+  var name=(document.getElementById('eCustName')||{}).value||'';
+  var email=(document.getElementById('eCustEmail')||{}).value||'';
+  var phone=(document.getElementById('eCustPhone')||{}).value||'';
+  var type=(document.getElementById('eCustType')||{}).value||'private';
+  var org=(document.getElementById('eCustOrg')||{}).value||'';
+  var bill=(document.getElementById('eCustBill')||{}).value||'';
+  var pay=(document.getElementById('eCustPay')||{}).value||'swish';
+  var pwd=(document.getElementById('eCustPwd')||{}).value||'';
+  if(!name||!email||!phone){showToast('⚠️ Namn, e-post och telefon krävs');return;}
+  try{
+    var body={action:'update',name:name,email:email,phone:phone,
+      customer_type:type,org_number:org||null,billing_address:bill||null,preferred_payment:pay};
+    if(pwd&&pwd.length>=6)body.new_password=pwd;
+    else if(pwd&&pwd.length>0&&pwd.length<6){showToast('⚠️ Lösenord minst 6 tecken');return;}
+    var res=await fetch(API+'/customers/'+id+'/manage',{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},
+      body:JSON.stringify(body)
+    });
+    var data=await res.json();
+    if(data.customer){
+      allCustomers=allCustomers.map(function(c){return c.id===id?Object.assign({},c,data.customer):c;});
+      showToast('✅ Kundprofil uppdaterad');closeMod('customerMod');
+    }else{showToast('⚠️ '+(data.error||'Fel'));}
+  }catch(e){showToast('⚠️ Nätverksfel');}
+}
+
 
 // ── CUSTOMERS ──
 function tabCustomers(){
@@ -798,6 +865,37 @@ async function openCustomerProfile(id){
       '<button class="btn btnD" onclick="blockCustomer('+c.id+')">🔴 Blockera</button>')+
     '<button class="btn btnP" onclick="resetCustomerPwd('+c.id+')">🔑 Återställ lösenord</button>'+
     '</div></div>';
+
+  // SUPERADMIN ONLY
+  if(staffUser&&staffUser.level===1){
+    h+='<div class="card" style="border:2px solid #7c3aed">'+
+      '<div class="stitle" style="color:#7c3aed">👑 Superadmin — Redigera profil</div>'+
+      '<label class="flabel">Fullständigt namn</label>'+
+      '<input class="finput" id="eCustName" value="'+(c.name||'')+'" placeholder="Namn"/>'+
+      '<label class="flabel">E-post</label>'+
+      '<input class="finput" id="eCustEmail" value="'+(c.email||'')+'" type="email" placeholder="E-post"/>'+
+      '<label class="flabel">Telefon</label>'+
+      '<input class="finput" id="eCustPhone" value="'+(c.phone||'')+'" placeholder="Telefon"/>'+
+      '<label class="flabel">Kundtyp</label>'+
+      '<select class="finput" id="eCustType">'+
+      '<option value="private"'+(c.customer_type==="private"?' selected':'')+'>👤 Privat</option>'+
+      '<option value="business"'+(c.customer_type==="business"?' selected':'')+'>🏢 Företag</option>'+
+      '</select>'+
+      '<label class="flabel">Organisationsnummer</label>'+
+      '<input class="finput" id="eCustOrg" value="'+(c.org_number||'')+'" placeholder="556xxx-xxxx"/>'+
+      '<label class="flabel">Faktureringsadress</label>'+
+      '<input class="finput" id="eCustBill" value="'+(c.billing_address||'')+'" placeholder="Gatuadress, stad"/>'+
+      '<label class="flabel">Föredragen betalning</label>'+
+      '<select class="finput" id="eCustPay">'+
+      '<option value="swish"'+(c.preferred_payment==="swish"?' selected':'')+'>📱 Swish</option>'+
+      '<option value="card"'+(c.preferred_payment==="card"?' selected':'')+'>💳 Kort</option>'+
+      '<option value="invoice"'+(c.preferred_payment==="invoice"?' selected':'')+'>📄 Faktura</option>'+
+      '</select>'+
+      '<label class="flabel">Nytt lösenord (lämna tomt = behåll)</label>'+
+      '<input class="finput" id="eCustPwd" type="password" placeholder="Minst 6 tecken"/>'+
+      '<button class="btn btnP" style="width:100%;background:#7c3aed;color:white" onclick="updateCustomerAdmin('+c.id+')">👑 Spara alla ändringar →</button>'+
+      '</div>';
+  }
   document.getElementById('customerModContent').innerHTML=h;
 }
 
