@@ -8,30 +8,47 @@
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:Arial,sans-serif;background:#eef1f8;color:#0d1b3e;min-height:100vh}
 .navbar{background:#0d1b3e;padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
-.nav-logo{color:#fbbf24;font-size:15px;font-weight:bold;display:flex;align-items:center;gap:8px}
-.nav-user{color:#fbbf24;font-size:12px;font-weight:700}
+.nav-logo{color:#fbbf24;font-size:14px;font-weight:bold}
 .nav-logout{color:#4a6090;font-size:12px;cursor:pointer;background:none;border:none}
-.page{padding:20px;padding-bottom:60px;max-width:700px;margin:0 auto}
+.page{padding:20px;padding-bottom:80px;max-width:720px;margin:0 auto}
 .card{background:white;border-radius:14px;padding:18px;margin-bottom:14px;border:1px solid #d0d7ea}
 .stitle{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px}
 .stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
 .scard{background:white;border-radius:12px;padding:14px;border:1px solid #d0d7ea;text-align:center}
-.sval{font-size:20px;font-weight:800}.slbl{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.sval{font-size:18px;font-weight:800}
+.slbl{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
 .btn{padding:10px 16px;border-radius:8px;font-size:13px;font-weight:700;border:none;cursor:pointer}
-.btnP{background:#0d1b3e;color:#fbbf24}.btnG{background:#f1f5f9;color:#64748b}
-.flabel{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;display:block}
+.btnP{background:#0d1b3e;color:#fbbf24}
+.btnG{background:#f1f5f9;color:#64748b}
+.btnR{background:#fee2e2;color:#dc2626}
+.btnY{background:#fef3c7;color:#92400e}
+.btn-sm{padding:7px 12px;font-size:11px;font-weight:700;border-radius:6px;border:none;cursor:pointer}
+.flabel{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px;display:block;margin-top:8px}
 .finput{width:100%;padding:10px 14px;border-radius:8px;border:1px solid #d0d7ea;background:#f8fafc;color:#0d1b3e;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:10px}
-.row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f1f5f9;font-size:13px}
+.finput:focus{border-color:#1a56db;background:white}
+.row{display:flex;justify-content:space-between;align-items:flex-start;padding:12px 0;border-bottom:1px solid #f1f5f9;font-size:13px}
 .row:last-child{border-bottom:none}
 .badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700}
-.bc{background:#dcfce7;color:#15803d}.bp{background:#fef3c7;color:#d97706}.bx{background:#f1f5f9;color:#64748b}
-.err{background:#fee2e2;color:#dc2626;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:14px;display:none}
+.bc{background:#dcfce7;color:#15803d}
+.bp{background:#fef3c7;color:#d97706}
+.bx{background:#fee2e2;color:#dc2626}
+.bg{background:#f1f5f9;color:#64748b}
+.bv{background:#ede9fe;color:#7c3aed}
+.err{background:#fee2e2;color:#dc2626;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:10px;display:none}
+.ok{background:#dcfce7;color:#15803d;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:10px;display:none}
 .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
 .login-box{background:white;border-radius:16px;padding:28px 24px;width:100%;max-width:400px;border:1px solid #d0d7ea}
-.tab-row{display:flex;background:white;border-bottom:1px solid #d0d7ea;position:sticky;top:56px;z-index:50;overflow-x:auto}
-.tab{flex-shrink:0;padding:12px 14px;font-size:12px;font-weight:500;color:#64748b;cursor:pointer;border-bottom:2.5px solid transparent;background:none;border-top:none;border-left:none;border-right:none}
-.tab.on{color:#0d1b3e;font-weight:700;border-bottom-color:#0d1b3e}
-.export-btn{background:#15803d;color:white;padding:8px 14px;border-radius:8px;font-size:12px;font-weight:700;border:none;cursor:pointer;margin-left:auto}
+.etab-row{display:flex;background:white;border-bottom:1px solid #d0d7ea;position:sticky;top:56px;z-index:50;overflow-x:auto}
+.etab{flex-shrink:0;padding:12px 14px;font-size:12px;font-weight:500;color:#64748b;cursor:pointer;border-bottom:2.5px solid transparent;background:none;border-top:none;border-left:none;border-right:none}
+.etab.on{color:#0d1b3e;font-weight:700;border-bottom-color:#0d1b3e}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-bg.open{display:flex}
+.modal{background:white;border-radius:16px;padding:24px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:800;color:#0d1b3e;margin-bottom:14px}
+.section-head{font-size:13px;font-weight:700;color:#0d1b3e;margin-bottom:6px;margin-top:4px}
+.divider{border:none;border-top:1px solid #f1f5f9;margin:14px 0}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0d1b3e;color:white;padding:12px 22px;border-radius:24px;font-size:13px;font-weight:700;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
 </style>
 </head>
 <body>
@@ -39,213 +56,542 @@ body{font-family:Arial,sans-serif;background:#eef1f8;color:#0d1b3e;min-height:10
 <div class="navbar" id="navbar" style="display:none">
   <div class="nav-logo">💰 EKONOMI — TROLLHÄTTAN CAB</div>
   <div style="display:flex;align-items:center;gap:10px">
-    <span class="nav-user" id="navName"></span>
+    <span style="color:#fbbf24;font-size:12px;font-weight:700" id="navName"></span>
     <button class="nav-logout" onclick="logout()">Logga ut</button>
   </div>
 </div>
 
-<div class="tab-row" id="tabRow" style="display:none">
-  <button class="tab on" id="et0" onclick="showETab(0)">📊 Översikt</button>
-  <button class="tab" id="et1" onclick="showETab(1)">📋 Bokningar</button>
-  <button class="tab" id="et2" onclick="showETab(2)">🚖 Förare</button>
+<div class="etab-row" id="tabRow" style="display:none">
+  <button class="etab on" id="et0" onclick="showETab(0)">📊 Översikt</button>
+  <button class="etab" id="et1" onclick="showETab(1)">📋 Bokningar</button>
+  <button class="etab" id="et2" onclick="showETab(2)">🚖 Förare</button>
+  <button class="etab" id="et3" onclick="showETab(3)">💳 Betalningar</button>
 </div>
 
 <div id="main"></div>
 
-<script>
-const API='https://api.trollhattancab.com';
-let staffUser=null,staffToken=null,summary=null,bookings=[],curETab=0;
+<!-- Payment Management Modal -->
+<div class="modal-bg" id="payModal">
+  <div class="modal">
+    <div class="modal-title" id="payModalTitle">Hantera betalning</div>
+    <div style="background:#f8fafc;border-radius:10px;padding:12px;margin-bottom:4px;font-size:13px;line-height:1.7" id="payModalInfo"></div>
 
-window.onload=function(){
-  const sv=localStorage.getItem('thtcab_eco_staff');
-  const st=localStorage.getItem('thtcab_eco_token');
-  if(sv&&st){try{staffUser=JSON.parse(sv);staffToken=st;enterEco();}catch(e){showLogin();}}
-  else{showLogin();}
+    <hr class="divider">
+    <div class="section-head">✏️ Korrigera belopp</div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:8px">Använd när ett fel belopp debiterats — ersätter det ursprungliga priset.</div>
+    <label class="flabel">Nytt belopp inkl. moms (kr)</label>
+    <input class="finput" id="newAmount" type="number" min="0" step="1" placeholder="t.ex. 250"/>
+    <label class="flabel">Anledning *</label>
+    <input class="finput" id="correctReason" placeholder="t.ex. Fel taxa, pris rättades"/>
+    <button class="btn btnP btn-sm" onclick="submitCorrection()" style="width:100%;padding:11px;margin-bottom:4px">Spara korrigering →</button>
+
+    <hr class="divider">
+    <div class="section-head">➕ Extrakostnad</div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:8px">Lägg till ett extra belopp ovanpå ordinarie pris.</div>
+    <label class="flabel">Extrabelopp (kr)</label>
+    <input class="finput" id="extraAmount" type="number" min="1" step="1" placeholder="t.ex. 50"/>
+    <label class="flabel">Beskrivning *</label>
+    <input class="finput" id="extraDesc" placeholder="t.ex. Bagagehantering, väntetid, trängsel"/>
+    <button class="btn btn-sm" onclick="submitExtra()" style="width:100%;padding:11px;background:#fef3c7;color:#92400e;font-weight:700;margin-bottom:4px">Lägg till extrakostnad →</button>
+
+    <hr class="divider">
+    <div class="section-head" style="color:#dc2626">🔄 Återbetalning</div>
+    <div style="font-size:12px;color:#64748b;margin-bottom:8px">Registrera en återbetalning till kunden.</div>
+    <label class="flabel">Återbetalningsbelopp (kr)</label>
+    <input class="finput" id="refundAmount" type="number" min="1" step="1" placeholder="t.ex. 150"/>
+    <label class="flabel">Anledning *</label>
+    <input class="finput" id="refundReason" placeholder="t.ex. Försenat, klagomål, fel route"/>
+    <button class="btn btnR btn-sm" onclick="submitRefund()" style="width:100%;padding:11px;margin-bottom:4px">Registrera återbetalning →</button>
+
+    <div class="err" id="payErr"></div>
+    <div class="ok" id="payOk"></div>
+    <hr class="divider">
+    <button class="btn btnG btn-sm" onclick="closePayModal()" style="width:100%;padding:11px">Stäng</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var API = 'https://api.trollhattancab.com';
+var staffUser = null, staffToken = null, summary = null;
+var bookings = [], curETab = 0;
+var activeBookingId = null, activeBookingRef = null, activeBookingFare = 0;
+
+window.onload = function() {
+  var sv = localStorage.getItem('thtcab_eco_staff');
+  var st = localStorage.getItem('thtcab_eco_token');
+  if (sv && st) {
+    try { staffUser = JSON.parse(sv); staffToken = st; enterEco(); }
+    catch(e) { showLogin(); }
+  } else { showLogin(); }
 };
 
-function showLogin(){
-  document.getElementById('main').innerHTML=
-    '<div class="login-wrap"><div class="login-box">'+
-    '<div style="text-align:center;margin-bottom:24px"><div style="font-size:40px">💰</div>'+
-    '<div style="font-size:18px;font-weight:bold;color:#0d1b3e;margin-top:8px">Ekonomiportalen</div>'+
-    '<div style="color:#64748b;font-size:13px;margin-top:4px">Trollhättan Cab AB</div></div>'+
-    '<label class="flabel">E-post</label><input class="finput" id="lEmail" type="email" placeholder="din@trollhattancab.com"/>'+
-    '<label class="flabel">Lösenord</label><input class="finput" id="lPwd" type="password" placeholder="••••••••" onkeydown="if(event.key===\'Enter\')doLogin()"/>'+
-    '<div class="err" id="lErr"></div>'+
-    '<button class="btn btnP" style="width:100%;padding:14px" onclick="doLogin()">Logga in →</button>'+
+function showToast(msg, color) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = color || '#0d1b3e';
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3000);
+}
+
+function showLogin() {
+  document.getElementById('main').innerHTML =
+    '<div class="login-wrap"><div class="login-box">' +
+    '<div style="text-align:center;margin-bottom:24px">' +
+    '<div style="font-size:40px">💰</div>' +
+    '<div style="font-size:18px;font-weight:bold;margin-top:8px">Ekonomiportalen</div>' +
+    '<div style="color:#64748b;font-size:13px;margin-top:4px">Trollhättan Cab AB</div></div>' +
+    '<label class="flabel">E-post</label>' +
+    '<input class="finput" id="lEmail" type="email" placeholder="din@trollhattancab.com"/>' +
+    '<label class="flabel">Lösenord</label>' +
+    '<input class="finput" id="lPwd" type="password" placeholder="••••••••"/>' +
+    '<div class="err" id="lErr"></div>' +
+    '<button class="btn btnP" style="width:100%;padding:14px" onclick="doLogin()">Logga in →</button>' +
     '</div></div>';
+  setTimeout(function() {
+    var p = document.getElementById('lPwd');
+    if (p) p.addEventListener('keydown', function(e) { if (e.key === 'Enter') doLogin(); });
+  }, 100);
 }
 
-async function doLogin(){
-  const email=document.getElementById('lEmail').value.trim();
-  const pwd=document.getElementById('lPwd').value.trim();
-  const err=document.getElementById('lErr');
-  if(!email||!pwd){err.textContent='⚠️ Fyll i e-post och lösenord';err.style.display='';return;}
-  try{
-    const res=await fetch(API+'/staff/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pwd})});
-    const data=await res.json();
-    if(data.token){
-      staffUser=data.staff;staffToken=data.token;
-      localStorage.setItem('thtcab_eco_staff',JSON.stringify(staffUser));
-      localStorage.setItem('thtcab_eco_token',staffToken);
+async function doLogin() {
+  var email = ((document.getElementById('lEmail') || {}).value || '').trim();
+  var pwd = (document.getElementById('lPwd') || {}).value || '';
+  var err = document.getElementById('lErr');
+  if (!email || !pwd) { err.textContent = 'Fyll i e-post och lösenord'; err.style.display = ''; return; }
+  try {
+    var res = await fetch(API + '/staff/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: pwd })
+    });
+    var data = await res.json();
+    if (data.token) {
+      staffUser = data.staff; staffToken = data.token;
+      localStorage.setItem('thtcab_eco_staff', JSON.stringify(staffUser));
+      localStorage.setItem('thtcab_eco_token', staffToken);
       enterEco();
-    }else{err.textContent='⚠️ '+(data.error||'Fel uppgifter');err.style.display='';}
-  }catch(e){err.textContent='⚠️ Anslutningsfel';err.style.display='';}
+    } else { err.textContent = data.error || 'Fel uppgifter'; err.style.display = ''; }
+  } catch(e) { err.textContent = 'Anslutningsfel — kontrollera internet'; err.style.display = ''; }
 }
 
-function logout(){
-  localStorage.removeItem('thtcab_eco_staff');localStorage.removeItem('thtcab_eco_token');
-  document.getElementById('navbar').style.display='none';
-  document.getElementById('tabRow').style.display='none';
+function logout() {
+  localStorage.removeItem('thtcab_eco_staff');
+  localStorage.removeItem('thtcab_eco_token');
+  document.getElementById('navbar').style.display = 'none';
+  document.getElementById('tabRow').style.display = 'none';
   showLogin();
 }
 
-async function enterEco(){
-  document.getElementById('navbar').style.display='flex';
-  document.getElementById('tabRow').style.display='flex';
-  document.getElementById('navName').textContent=staffUser.name;
+async function enterEco() {
+  document.getElementById('navbar').style.display = 'flex';
+  document.getElementById('tabRow').style.display = 'flex';
+  document.getElementById('navName').textContent = staffUser.name;
   await loadSummary();
   showETab(0);
 }
 
-async function loadSummary(){
-  try{
-    const res=await fetch(API+'/economy/summary',{headers:{'Authorization':'Bearer '+staffToken}});
-    summary=await res.json();
-  }catch(e){console.log('Summary error:',e);}
+async function loadSummary() {
+  try {
+    var res = await fetch(API + '/economy/summary', { headers: { 'Authorization': 'Bearer ' + staffToken } });
+    summary = await res.json();
+  } catch(e) { console.log('Summary error:', e); }
 }
 
-async function loadBookings(from,to,status){
-  try{
-    let url=API+'/economy/bookings?';
-    if(from)url+='from='+from+'&';
-    if(to)url+='to='+to+'&';
-    if(status)url+='status='+status;
-    const res=await fetch(url,{headers:{'Authorization':'Bearer '+staffToken}});
-    const data=await res.json();
-    bookings=data.bookings||[];
-  }catch(e){bookings=[];}
+async function loadBookings(from, to, status) {
+  try {
+    var url = API + '/economy/bookings?limit=300&';
+    if (from) url += 'from=' + from + '&';
+    if (to) url += 'to=' + to + '&';
+    if (status) url += 'status=' + status;
+    var res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + staffToken } });
+    var data = await res.json();
+    bookings = data.bookings || [];
+  } catch(e) { bookings = []; }
 }
 
-function showETab(i){
-  curETab=i;
-  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('on',i===j));
-  const m=document.getElementById('main');
-  if(i===0)m.innerHTML=tabOverview();
-  else if(i===1){m.innerHTML=tabBookingsUI();loadAndShowBookings();}
-  else if(i===2)m.innerHTML=tabDrivers();
+function showETab(i) {
+  curETab = i;
+  document.querySelectorAll('.etab').forEach(function(t) {
+    var n = parseInt((t.id || '').replace('et', ''));
+    t.classList.toggle('on', n === i);
+  });
+  var m = document.getElementById('main');
+  if (i === 0) m.innerHTML = tabOverview();
+  else if (i === 1) { m.innerHTML = tabBookingsUI(); loadAndShowBookings(); }
+  else if (i === 2) m.innerHTML = tabDriversUI();
+  else if (i === 3) { m.innerHTML = tabPaymentsUI(); loadAndShowPayments(); }
 }
 
-function tabOverview(){
-  if(!summary)return '<div class="page"><div class="card">Laddar...</div></div>';
-  const t=summary.today,w=summary.week,mo=summary.month;
-  return '<div class="page">'+
-    '<div class="stitle">Idag</div>'+
-    '<div class="stats">'+
-    '<div class="scard"><div class="sval" style="color:#15803d">'+(t.revenue||0)+' kr</div><div class="slbl">Intäkter</div></div>'+
-    '<div class="scard"><div class="sval" style="color:#1a56db">'+(t.bookings||0)+'</div><div class="slbl">Bokningar</div></div>'+
-    '<div class="scard"><div class="sval" style="color:#7c3aed">'+Math.round((t.revenue||0)/25*100)/100+' kr</div><div class="slbl">Moms 25%</div></div>'+
-    '</div>'+
-    '<div class="stitle">Senaste 7 dagarna</div>'+
-    '<div class="stats">'+
-    '<div class="scard"><div class="sval" style="color:#15803d">'+(w.revenue||0)+' kr</div><div class="slbl">Intäkter</div></div>'+
-    '<div class="scard"><div class="sval" style="color:#1a56db">'+(w.bookings||0)+'</div><div class="slbl">Bokningar</div></div>'+
-    '<div class="scard"><div class="sval" style="color:#d97706">'+Math.round((w.revenue||0)/1.25/25*100)/100+' kr</div><div class="slbl">Netto</div></div>'+
-    '</div>'+
-    '<div class="stitle">Senaste 30 dagarna</div>'+
-    '<div class="stats">'+
-    '<div class="scard"><div class="sval" style="color:#15803d">'+(mo.revenue||0)+' kr</div><div class="slbl">Intäkter</div></div>'+
-    '<div class="scard"><div class="sval" style="color:#1a56db">'+(mo.bookings||0)+'</div><div class="slbl">Bokningar</div></div>'+
-    '<div class="scard"><div class="sval" style="color:#d97706">'+Math.round((mo.revenue||0)*0.8)+' kr</div><div class="slbl">Exkl. moms</div></div>'+
-    '</div>'+
-    '<button class="btn btnP" onclick="showETab(1)">📋 Visa alla bokningar →</button>'+
+// ── TAB 0: OVERVIEW ──
+function sc(val, lbl, color) {
+  return '<div class="scard"><div class="sval" style="color:' + color + '">' + val + '</div><div class="slbl">' + lbl + '</div></div>';
+}
+
+function tabOverview() {
+  if (!summary) return '<div class="page"><div class="card" style="text-align:center;padding:30px;color:#94a3b8">Laddar...</div></div>';
+  var t = summary.today || {}, w = summary.week || {}, mo = summary.month || {};
+  var tVat = Math.round((t.revenue || 0) / 1.25 * 0.25);
+  var tNet = Math.round((t.revenue || 0) / 1.25);
+  var wVat = Math.round((w.revenue || 0) / 1.25 * 0.25);
+  var wNet = Math.round((w.revenue || 0) / 1.25);
+  var moNet = Math.round((mo.revenue || 0) / 1.25);
+  var moVat = Math.round((mo.revenue || 0) / 1.25 * 0.25);
+
+  return '<div class="page">' +
+    '<div class="stitle">Idag — ' + new Date().toLocaleDateString('sv-SE') + '</div>' +
+    '<div class="stats">' + sc((t.revenue || 0) + ' kr', 'Brutto', '#15803d') + sc(t.bookings || 0, 'Bokningar', '#1a56db') + sc(tVat + ' kr', 'Moms 25%', '#7c3aed') + '</div>' +
+    '<div class="card" style="margin-bottom:16px">' +
+    '<div class="stitle">Skatteuppdelning idag</div>' +
+    '<div class="row"><span>Bruttointäkt</span><strong>' + (t.revenue || 0) + ' kr</strong></div>' +
+    '<div class="row"><span style="color:#dc2626">Moms (25%)</span><span style="color:#dc2626;font-weight:700">- ' + tVat + ' kr</span></div>' +
+    '<div class="row"><span style="font-weight:700">Netto (exkl. moms)</span><strong style="color:#15803d">' + tNet + ' kr</strong></div>' +
+    '</div>' +
+    '<div class="stitle">Senaste 7 dagarna</div>' +
+    '<div class="stats">' + sc((w.revenue || 0) + ' kr', 'Brutto', '#15803d') + sc(w.bookings || 0, 'Bokningar', '#1a56db') + sc(wNet + ' kr', 'Netto', '#d97706') + '</div>' +
+    '<div class="stitle">Senaste 30 dagarna</div>' +
+    '<div class="stats">' + sc((mo.revenue || 0) + ' kr', 'Brutto', '#15803d') + sc(mo.bookings || 0, 'Bokningar', '#1a56db') + sc(moNet + ' kr', 'Netto', '#d97706') + '</div>' +
+    '<div class="card">' +
+    '<div class="stitle">30 dagars momsredovisning</div>' +
+    '<div class="row"><span>Brutto 30 dagar</span><strong>' + (mo.revenue || 0) + ' kr</strong></div>' +
+    '<div class="row"><span>Moms att redovisa</span><strong style="color:#dc2626">' + moVat + ' kr</strong></div>' +
+    '<div class="row"><span>Netto att deklarera</span><strong style="color:#15803d">' + moNet + ' kr</strong></div>' +
+    '</div>' +
+    '<div style="display:flex;gap:10px;flex-wrap:wrap">' +
+    '<button class="btn btnP" onclick="showETab(1)">📋 Bokningar →</button>' +
+    '<button class="btn btnG" onclick="showETab(3)">💳 Betalningar →</button>' +
+    '</div></div>';
+}
+
+// ── TAB 1: BOOKINGS ──
+function tabBookingsUI() {
+  var today = new Date().toISOString().split('T')[0];
+  var monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  return '<div class="page">' +
+    '<div class="card">' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">' +
+    '<div><label class="flabel" style="margin-top:0">Från</label><input class="finput" id="fFrom" type="date" value="' + monthAgo + '" style="margin-bottom:0;width:138px"/></div>' +
+    '<div><label class="flabel" style="margin-top:0">Till</label><input class="finput" id="fTo" type="date" value="' + today + '" style="margin-bottom:0;width:138px"/></div>' +
+    '<div><label class="flabel" style="margin-top:0">Status</label>' +
+    '<select class="finput" id="fStatus" style="margin-bottom:0;width:120px">' +
+    '<option value="">Alla</option>' +
+    '<option value="completed">Avslutade</option>' +
+    '<option value="pending">Pågående</option>' +
+    '<option value="cancelled">Avbokade</option>' +
+    '</select></div>' +
+    '<button class="btn btnP btn-sm" onclick="loadAndShowBookings()">Sök</button>' +
+    '<button class="btn btn-sm" style="background:#15803d;color:white" onclick="exportCSV()">⬇ CSV</button>' +
+    '</div></div>' +
+    '<div id="bookingsList"><div class="card" style="text-align:center;padding:30px;color:#94a3b8">Laddar...</div></div>' +
     '</div>';
 }
 
-function tabBookingsUI(){
-  const today=new Date().toISOString().split('T')[0];
-  const monthAgo=new Date(Date.now()-30*24*60*60*1000).toISOString().split('T')[0];
-  return '<div class="page">'+
-    '<div class="card">'+
-    '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">'+
-    '<div><label class="flabel">Från</label><input class="finput" id="fFrom" type="date" value="'+monthAgo+'" style="margin-bottom:0;width:140px"/></div>'+
-    '<div><label class="flabel">Till</label><input class="finput" id="fTo" type="date" value="'+today+'" style="margin-bottom:0;width:140px"/></div>'+
-    '<div><label class="flabel">Status</label><select class="finput" id="fStatus" style="margin-bottom:0;width:130px">'+
-    '<option value="">Alla</option><option value="completed">Avslutade</option>'+
-    '<option value="pending">Väntar</option><option value="cancelled">Avbokade</option>'+
-    '</select></div>'+
-    '<button class="btn btnP" onclick="loadAndShowBookings()">Sök</button>'+
-    '<button class="export-btn" onclick="exportCSV()">⬇ Exportera CSV</button>'+
-    '</div></div>'+
-    '<div id="bookingsList"><div class="card">Laddar...</div></div>'+
-    '</div>';
+async function loadAndShowBookings() {
+  var from = (document.getElementById('fFrom') || {}).value;
+  var to = (document.getElementById('fTo') || {}).value;
+  var status = (document.getElementById('fStatus') || {}).value;
+  await loadBookings(from, to, status);
+  renderBookings();
 }
 
-async function loadAndShowBookings(){
-  const from=document.getElementById('fFrom')?.value;
-  const to=document.getElementById('fTo')?.value;
-  const status=document.getElementById('fStatus')?.value;
-  await loadBookings(from,to,status);
-  const el=document.getElementById('bookingsList');
-  if(!el)return;
-  const total=bookings.reduce((s,b)=>s+(b.fare_sek||0),0);
-  let h='<div class="card"><div style="display:flex;justify-content:space-between;margin-bottom:10px">'+
-    '<span style="font-size:13px;font-weight:700;color:#0d1b3e">'+bookings.length+' bokningar</span>'+
-    '<span style="font-size:13px;font-weight:800;color:#15803d">Totalt: '+total+' kr</span></div>';
-  bookings.forEach(b=>{
-    const st=b.status==='completed'?'bc':b.status==='pending'?'bp':'bx';
-    const stTxt=b.status==='completed'?'Avslutad':b.status==='pending'?'Väntar':'Avbokad';
-    h+='<div class="row">'+
-      '<div><div style="font-weight:700;color:#1a56db">'+b.booking_ref+'</div>'+
-      '<div style="color:#64748b;font-size:12px">'+b.customer_name+' · '+(b.driver_name||'Ej tilldelad')+'</div>'+
-      '<div style="color:#94a3b8;font-size:11px">'+new Date(b.created_at).toLocaleString('sv-SE',{dateStyle:'short',timeStyle:'short'})+'</div></div>'+
-      '<div style="text-align:right">'+
-      '<div style="font-weight:800;color:#15803d">'+(b.fare_sek||0)+' kr</div>'+
-      '<span class="badge '+st+'">'+stTxt+'</span>'+
+function renderBookings() {
+  var el = document.getElementById('bookingsList');
+  if (!el) return;
+  var canManage = staffUser && staffUser.level <= 2;
+  var totalOrig = bookings.reduce(function(s, b) { return s + (b.fare_sek || 0); }, 0);
+  var totalAdj = bookings.reduce(function(s, b) { return s + (b.adjusted_fare || b.fare_sek || 0); }, 0);
+  var totalRefunds = bookings.reduce(function(s, b) { return s + (b.refund_amount || 0); }, 0);
+  var net = totalAdj - totalRefunds;
+
+  var h = '<div class="card">' +
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">' +
+    '<span style="font-size:13px;font-weight:700;color:#0d1b3e">' + bookings.length + ' bokningar</span>' +
+    '<div style="text-align:right">' +
+    '<div style="font-size:14px;font-weight:800;color:#15803d">Netto: ' + net + ' kr</div>' +
+    (totalRefunds > 0 ? '<div style="font-size:11px;color:#dc2626">Återbet: -' + totalRefunds + ' kr</div>' : '') +
+    (totalAdj !== totalOrig ? '<div style="font-size:11px;color:#94a3b8;text-decoration:line-through">' + totalOrig + ' kr urspr.</div>' : '') +
+    '</div></div>';
+
+  if (!bookings.length) {
+    h += '<div style="text-align:center;padding:30px;color:#94a3b8">Inga bokningar hittades</div>';
+  }
+
+  bookings.forEach(function(b) {
+    var hasCorrected = b.adjusted_fare && b.adjusted_fare !== b.fare_sek;
+    var hasExtra = b.extra_charge && b.extra_charge > 0;
+    var hasRefund = b.refund_amount && b.refund_amount > 0;
+    var displayFare = b.adjusted_fare || b.fare_sek || 0;
+    var finalFare = displayFare - (b.refund_amount || 0);
+    var statusBadge = b.status === 'completed' ? 'bc' : b.status === 'pending' ? 'bp' : 'bx';
+    var statusTxt = b.status === 'completed' ? 'Avslutad' : b.status === 'pending' ? 'Pågående' : 'Avbokad';
+
+    h += '<div class="row">' +
+      '<div style="flex:1;min-width:0">' +
+      '<div style="font-weight:700;color:#1a56db;font-size:13px">' + (b.booking_ref || '') + '</div>' +
+      '<div style="color:#64748b;font-size:12px;margin-top:2px">' + (b.customer_name || '') + ' · ' + (b.driver_name || 'Ej tilldelad') + '</div>' +
+      '<div style="color:#94a3b8;font-size:11px;margin-top:2px">' + new Date(b.created_at).toLocaleString('sv-SE', { dateStyle: 'short', timeStyle: 'short' }) + ' · ' + (b.payment_method || '') + '</div>' +
+      '</div>' +
+      '<div style="text-align:right;flex-shrink:0;padding-left:12px">' +
+      '<div style="font-weight:800;color:#15803d;font-size:14px">' + finalFare + ' kr</div>' +
+      (hasCorrected ? '<div style="font-size:10px;color:#94a3b8;text-decoration:line-through">' + b.fare_sek + ' kr</div>' : '') +
+      (hasExtra ? '<div style="font-size:10px;color:#1a56db">+' + b.extra_charge + ' kr extra</div>' : '') +
+      (hasRefund ? '<div style="font-size:10px;color:#dc2626">-' + b.refund_amount + ' kr åb.</div>' : '') +
+      '<div style="margin-top:4px;display:flex;gap:4px;justify-content:flex-end;flex-wrap:wrap">' +
+      '<span class="badge ' + statusBadge + '">' + statusTxt + '</span>' +
+      (hasRefund ? '<span class="badge bv">Återbet.</span>' : '') +
+      (hasCorrected && !hasRefund ? '<span class="badge bp">Korr.</span>' : '') +
+      (hasExtra ? '<span class="badge" style="background:#dbeafe;color:#1a56db">Extra</span>' : '') +
+      '</div>' +
+      (canManage ? '<button class="btn btn-sm btnP" style="margin-top:6px;font-size:10px;padding:5px 10px" onclick="openPayModal(' + b.id + ',' + JSON.stringify(b.booking_ref) + ',' + displayFare + ')">⚙️ Hantera</button>' : '') +
       '</div></div>';
   });
-  if(!bookings.length)h+='<div style="text-align:center;padding:20px;color:#94a3b8">Inga bokningar hittades</div>';
-  h+='</div>';
-  el.innerHTML=h;
+
+  h += '</div>';
+  el.innerHTML = h;
 }
 
-function exportCSV(){
-  if(!bookings.length){alert('Inga bokningar att exportera');return;}
-  const headers=['Ref','Kund','Telefon','Från','Till','Förare','Belopp','Betalning','Status','Datum'];
-  const rows=bookings.map(b=>[
-    b.booking_ref,b.customer_name,b.customer_phone||'',
-    b.from_address,b.to_address,b.driver_name||'',
-    b.fare_sek||0,b.payment_method,b.status,
-    new Date(b.created_at).toLocaleString('sv-SE')
-  ]);
-  const csv=[headers,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
-  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;
-  a.download='trollhattancab-bokningar-'+new Date().toISOString().split('T')[0]+'.csv';
-  a.click();URL.revokeObjectURL(url);
+// ── PAYMENT MODAL ──
+function openPayModal(bookingId, ref, currentFare) {
+  activeBookingId = bookingId;
+  activeBookingRef = ref;
+  activeBookingFare = currentFare;
+  document.getElementById('payModalTitle').textContent = 'Hantera — ' + ref;
+  document.getElementById('payModalInfo').innerHTML =
+    '<strong>Ref:</strong> ' + ref +
+    ' &nbsp;|&nbsp; <strong>Belopp:</strong> <span style="color:#15803d;font-weight:800">' + currentFare + ' kr</span>' +
+    '<br><strong>Moms (25%):</strong> ' + Math.round(currentFare / 1.25 * 0.25) + ' kr' +
+    ' &nbsp;|&nbsp; <strong>Netto:</strong> ' + Math.round(currentFare / 1.25) + ' kr';
+  document.getElementById('newAmount').value = currentFare;
+  document.getElementById('correctReason').value = '';
+  document.getElementById('extraAmount').value = '';
+  document.getElementById('extraDesc').value = '';
+  document.getElementById('refundAmount').value = '';
+  document.getElementById('refundReason').value = '';
+  document.getElementById('payErr').style.display = 'none';
+  document.getElementById('payOk').style.display = 'none';
+  document.getElementById('payModal').classList.add('open');
 }
 
-function tabDrivers(){
-  if(!summary||!summary.drivers)return '<div class="page"><div class="card">Laddar...</div></div>';
-  let h='<div class="page"><div class="stitle">Förarstatistik — senaste 30 dagarna</div>';
-  summary.drivers.forEach(d=>{
-    const payout=d.is_owner?Math.round(d.earnings*(d.owner_share/100)):Math.round(d.earnings*0.8);
-    h+='<div class="card">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
-      '<div><div style="font-size:14px;font-weight:700;color:#0d1b3e">'+d.name+'</div>'+
-      '<div style="font-size:12px;color:#64748b">'+d.plate+(d.is_owner?' · 👑 Ägare '+d.owner_share+'%':'')+'</div></div>'+
-      '<div style="text-align:right">'+
-      '<div style="font-size:18px;font-weight:800;color:#15803d">'+(d.earnings||0)+' kr</div>'+
-      '<div style="font-size:11px;color:#64748b">'+d.trips+' resor</div></div></div>'+
-      '<div style="background:#f8fafc;border-radius:8px;padding:8px 12px;font-size:12px;color:#0d1b3e">'+
-      '💰 Utbetalning: <strong>'+payout+' kr</strong> · '+
-      'Trollhättan Cab andel: <strong>'+(d.earnings-payout)+' kr</strong></div>'+
-      '</div>';
+function closePayModal() {
+  document.getElementById('payModal').classList.remove('open');
+  activeBookingId = null;
+}
+
+async function payAction(type, body) {
+  var err = document.getElementById('payErr');
+  var ok = document.getElementById('payOk');
+  err.style.display = 'none'; ok.style.display = 'none';
+  try {
+    var res = await fetch(API + '/bookings/' + activeBookingId + '/adjust-payment', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + staffToken },
+      body: JSON.stringify(Object.assign({ type: type }, body))
+    });
+    var data = await res.json();
+    return { ok: res.ok || data.success || data.booking, data: data };
+  } catch(e) { return { ok: false, error: 'Nätverksfel' }; }
+}
+
+async function submitCorrection() {
+  var amount = parseInt(document.getElementById('newAmount').value);
+  var reason = document.getElementById('correctReason').value.trim();
+  var err = document.getElementById('payErr');
+  var ok = document.getElementById('payOk');
+  if (!amount || amount < 0) { err.textContent = 'Ange ett giltigt belopp'; err.style.display = ''; return; }
+  if (!reason) { err.textContent = 'Anledning krävs'; err.style.display = ''; return; }
+  var r = await payAction('correction', { adjusted_fare: amount, reason: reason });
+  if (r.ok) {
+    ok.textContent = 'Belopp korrigerat till ' + amount + ' kr'; ok.style.display = '';
+    showToast('Belopp korrigerat: ' + amount + ' kr', '#15803d');
+    bookings = bookings.map(function(b) { return b.id === activeBookingId ? Object.assign({}, b, { adjusted_fare: amount }) : b; });
+    setTimeout(function() { closePayModal(); renderBookings(); }, 1500);
+  } else { err.textContent = r.error || (r.data && r.data.error) || 'Fel'; err.style.display = ''; }
+}
+
+async function submitExtra() {
+  var amount = parseInt(document.getElementById('extraAmount').value);
+  var desc = document.getElementById('extraDesc').value.trim();
+  var err = document.getElementById('payErr');
+  var ok = document.getElementById('payOk');
+  if (!amount || amount <= 0) { err.textContent = 'Ange ett extrabelopp'; err.style.display = ''; return; }
+  if (!desc) { err.textContent = 'Beskrivning krävs'; err.style.display = ''; return; }
+  var r = await payAction('extra', { extra_charge: amount, extra_description: desc });
+  if (r.ok) {
+    ok.textContent = 'Extra ' + amount + ' kr tillagd'; ok.style.display = '';
+    showToast('Extra ' + amount + ' kr tillagd', '#1a56db');
+    bookings = bookings.map(function(b) {
+      if (b.id !== activeBookingId) return b;
+      var newAdj = (b.adjusted_fare || b.fare_sek || 0) + amount;
+      return Object.assign({}, b, { extra_charge: (b.extra_charge || 0) + amount, adjusted_fare: newAdj });
+    });
+    setTimeout(function() { closePayModal(); renderBookings(); }, 1500);
+  } else { err.textContent = r.error || (r.data && r.data.error) || 'Fel'; err.style.display = ''; }
+}
+
+async function submitRefund() {
+  var amount = parseInt(document.getElementById('refundAmount').value);
+  var reason = document.getElementById('refundReason').value.trim();
+  var err = document.getElementById('payErr');
+  var ok = document.getElementById('payOk');
+  if (!amount || amount <= 0) { err.textContent = 'Ange återbetalningsbelopp'; err.style.display = ''; return; }
+  if (!reason) { err.textContent = 'Anledning krävs'; err.style.display = ''; return; }
+  if (amount > activeBookingFare) { err.textContent = 'Kan inte överstiga ' + activeBookingFare + ' kr'; err.style.display = ''; return; }
+  var r = await payAction('refund', { refund_amount: amount, refund_reason: reason });
+  if (r.ok) {
+    ok.textContent = 'Återbetalning ' + amount + ' kr registrerad'; ok.style.display = '';
+    showToast('Återbetalning ' + amount + ' kr', '#dc2626');
+    bookings = bookings.map(function(b) { return b.id === activeBookingId ? Object.assign({}, b, { refund_amount: amount, payment_status: 'refunded' }) : b; });
+    setTimeout(function() { closePayModal(); renderBookings(); }, 1500);
+  } else { err.textContent = r.error || (r.data && r.data.error) || 'Fel'; err.style.display = ''; }
+}
+
+// ── TAB 2: DRIVERS ──
+function tabDriversUI() {
+  if (!summary || !summary.drivers) return '<div class="page"><div class="card" style="text-align:center;padding:30px;color:#94a3b8">Laddar förardata...</div></div>';
+  var drivers = summary.drivers || [];
+  var h = '<div class="page"><div class="stitle">Förarstatistik — senaste 30 dagarna</div>';
+  if (!drivers.length) { h += '<div class="card" style="text-align:center;color:#94a3b8;padding:30px">Inga förare</div>'; }
+  drivers.forEach(function(d) {
+    var payout = d.is_owner ? Math.round((d.earnings || 0) * (d.owner_share / 100)) : Math.round((d.earnings || 0) * 0.8);
+    var share = (d.earnings || 0) - payout;
+    var avgTrip = d.trips ? Math.round((d.earnings || 0) / d.trips) : 0;
+    h += '<div class="card">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">' +
+      '<div><div style="font-size:15px;font-weight:800">' + d.name + '</div>' +
+      '<div style="font-size:12px;color:#64748b">' + (d.plate || '') + (d.taxi_nr ? ' · ' + d.taxi_nr : '') + (d.is_owner ? ' · 👑 Ägare ' + d.owner_share + '%' : '') + '</div></div>' +
+      '<div style="text-align:right"><div style="font-size:20px;font-weight:800;color:#15803d">' + (d.earnings || 0) + ' kr</div>' +
+      '<div style="font-size:11px;color:#64748b">' + (d.trips || 0) + ' resor · Ø ' + avgTrip + ' kr</div></div></div>' +
+      '<div style="background:#f8fafc;border-radius:10px;padding:10px 14px;font-size:12px">' +
+      '<div class="row" style="padding:5px 0"><span>Brutto</span><strong>' + (d.earnings || 0) + ' kr</strong></div>' +
+      '<div class="row" style="padding:5px 0"><span>Förare får (' + (d.is_owner ? d.owner_share + '%' : '80%') + ')</span><strong style="color:#15803d">' + payout + ' kr</strong></div>' +
+      '<div class="row" style="padding:5px 0"><span>Trollhättan Cab</span><strong style="color:#1a56db">' + share + ' kr</strong></div>' +
+      '</div></div>';
   });
-  if(!summary.drivers.length)h+='<div class="card" style="text-align:center;color:#94a3b8">Inga förare</div>';
-  h+='</div>';
+  h += '</div>';
   return h;
+}
+
+// ── TAB 3: PAYMENTS ──
+function tabPaymentsUI() {
+  return '<div class="page">' +
+    '<div class="card">' +
+    '<div class="stitle">Betalningsöversikt — 30 dagar</div>' +
+    '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
+    '<select class="finput" id="pFilter" style="margin-bottom:0;width:170px" onchange="loadAndShowPayments()">' +
+    '<option value="">Alla</option>' +
+    '<option value="refunded">Med återbetalning</option>' +
+    '<option value="corrected">Korrigerade</option>' +
+    '<option value="extra">Med extrakostnad</option>' +
+    '</select>' +
+    '<button class="btn btn-sm" style="background:#15803d;color:white" onclick="exportPaymentsCSV()">⬇ CSV</button>' +
+    '</div></div>' +
+    '<div id="paymentsList"><div class="card" style="text-align:center;padding:20px;color:#94a3b8">Laddar...</div></div>' +
+    '</div>';
+}
+
+async function loadAndShowPayments() {
+  var from = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  var to = new Date().toISOString().split('T')[0];
+  await loadBookings(from, to, '');
+  renderPayments();
+}
+
+function renderPayments() {
+  var el = document.getElementById('paymentsList');
+  if (!el) return;
+  var filter = (document.getElementById('pFilter') || {}).value || '';
+  var list = bookings.filter(function(b) {
+    if (filter === 'refunded') return (b.refund_amount || 0) > 0;
+    if (filter === 'corrected') return b.adjusted_fare && b.adjusted_fare !== b.fare_sek;
+    if (filter === 'extra') return (b.extra_charge || 0) > 0;
+    return true;
+  });
+
+  var totalGross = list.reduce(function(s, b) { return s + (b.adjusted_fare || b.fare_sek || 0); }, 0);
+  var totalRefunds = list.reduce(function(s, b) { return s + (b.refund_amount || 0); }, 0);
+  var totalExtra = list.reduce(function(s, b) { return s + (b.extra_charge || 0); }, 0);
+  var totalNet = totalGross - totalRefunds;
+
+  var h = '<div class="stats" style="margin-bottom:14px">' +
+    sc(totalGross + ' kr', 'Brutto', '#15803d') +
+    sc(totalRefunds + ' kr', 'Återbetalt', '#dc2626') +
+    sc(totalNet + ' kr', 'Netto', '#1a56db') +
+    '</div>' +
+    '<div class="card">' +
+    '<div style="display:flex;justify-content:space-between;margin-bottom:12px">' +
+    '<span style="font-size:13px;font-weight:700">' + list.length + ' poster</span>' +
+    (totalExtra > 0 ? '<span style="font-size:12px;color:#1a56db;font-weight:700">+' + totalExtra + ' kr extrakostnader</span>' : '') +
+    '</div>';
+
+  if (!list.length) { h += '<div style="text-align:center;padding:30px;color:#94a3b8">Inga poster</div>'; }
+
+  var canManage = staffUser && staffUser.level <= 2;
+  list.forEach(function(b) {
+    var hasCorrected = b.adjusted_fare && b.adjusted_fare !== b.fare_sek;
+    var hasRefund = (b.refund_amount || 0) > 0;
+    var hasExtra = (b.extra_charge || 0) > 0;
+    var displayFare = b.adjusted_fare || b.fare_sek || 0;
+    var finalAmount = displayFare - (b.refund_amount || 0);
+    var pmColor = b.payment_method === 'swish' ? '#22c55e' : b.payment_method === 'card' ? '#1a56db' : b.payment_method === 'invoice' ? '#7c3aed' : '#64748b';
+    h += '<div class="row">' +
+      '<div style="flex:1;min-width:0">' +
+      '<div style="font-weight:700;font-size:13px">' + (b.booking_ref || '') + '</div>' +
+      '<div style="font-size:12px;color:#64748b;margin-top:2px">' + (b.customer_name || '') + '</div>' +
+      '<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap">' +
+      '<span style="background:' + pmColor + '20;color:' + pmColor + ';padding:2px 8px;border-radius:10px;font-weight:700;font-size:10px">' + (b.payment_method || 'okänd').toUpperCase() + '</span>' +
+      (hasRefund ? '<span class="badge bv" style="font-size:10px">Återbet.</span>' : '') +
+      (hasCorrected ? '<span class="badge bp" style="font-size:10px">Korr.</span>' : '') +
+      (hasExtra ? '<span class="badge" style="background:#dbeafe;color:#1a56db;font-size:10px">Extra</span>' : '') +
+      '</div></div>' +
+      '<div style="text-align:right;flex-shrink:0;padding-left:12px">' +
+      '<div style="font-weight:800;color:#15803d;font-size:14px">' + finalAmount + ' kr</div>' +
+      (hasCorrected ? '<div style="font-size:10px;color:#94a3b8;text-decoration:line-through">' + b.fare_sek + ' kr</div>' : '') +
+      (hasExtra ? '<div style="font-size:10px;color:#1a56db">+' + b.extra_charge + ' kr</div>' : '') +
+      (hasRefund ? '<div style="font-size:10px;color:#dc2626">-' + b.refund_amount + ' kr</div>' : '') +
+      (canManage ? '<button class="btn btn-sm btnP" style="margin-top:6px;font-size:10px;padding:5px 10px" onclick="openPayModal(' + b.id + ',' + JSON.stringify(b.booking_ref) + ',' + displayFare + ')">⚙️</button>' : '') +
+      '</div></div>';
+  });
+  h += '</div>';
+  el.innerHTML = h;
+}
+
+// ── EXPORT ──
+function exportCSV() {
+  if (!bookings.length) { showToast('Inga bokningar'); return; }
+  var headers = ['Ref','Kund','Telefon','Från','Till','Förare','Urspr.belopp','Just.belopp','Extra','Återbet.','Netto','Betalning','Status','Datum'];
+  var rows = bookings.map(function(b) {
+    var adj = b.adjusted_fare || b.fare_sek || 0;
+    var net = adj - (b.refund_amount || 0);
+    return [b.booking_ref, b.customer_name, b.customer_phone || '', b.from_address || '', b.to_address || '',
+      b.driver_name || '', b.fare_sek || 0, adj, b.extra_charge || 0, b.refund_amount || 0, net,
+      b.payment_method || '', b.status, new Date(b.created_at).toLocaleString('sv-SE')];
+  });
+  downloadCSV(headers, rows, 'bokningar');
+}
+
+function exportPaymentsCSV() {
+  var list = bookings.filter(function(b) { return (b.fare_sek || 0) > 0; });
+  if (!list.length) { showToast('Inga betalningar'); return; }
+  var headers = ['Ref','Kund','Urspr.belopp','Just.belopp','Extra','Återbet.','Netto','Betalning','Datum'];
+  var rows = list.map(function(b) {
+    var adj = b.adjusted_fare || b.fare_sek || 0;
+    return [b.booking_ref, b.customer_name, b.fare_sek || 0, adj,
+      b.extra_charge || 0, b.refund_amount || 0, adj - (b.refund_amount || 0),
+      b.payment_method || '', new Date(b.created_at).toLocaleString('sv-SE')];
+  });
+  downloadCSV(headers, rows, 'betalningar');
+}
+
+function downloadCSV(headers, rows, name) {
+  var csv = [headers].concat(rows).map(function(r) {
+    return r.map(function(v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(',');
+  }).join('\n');
+  var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a'); a.href = url;
+  a.download = 'trollhattancab-' + name + '-' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('CSV nedladdad');
 }
 </script>
 </body>
