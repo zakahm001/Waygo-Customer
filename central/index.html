@@ -548,38 +548,119 @@ function bcard(b){
 // ── MAP ──
 function tabMap(){
   var avail=allDrivers.filter(function(d){return d.status!=='offline';});
-  var h='<div class="page"><div class="mmap" id="liveMap">'+
-    '<div class="mmapbg"></div>'+
-    '<div class="mrdh" style="top:30%"></div><div class="mrdh" style="top:55%"></div><div class="mrdh" style="top:75%"></div>'+
-    '<div class="mrdv" style="left:25%"></div><div class="mrdv" style="left:50%"></div><div class="mrdv" style="left:75%"></div>'+
-    '<div class="mlive">🔴 Live · '+avail.length+' fordon</div>';
-  avail.forEach(function(d,i){
-    var pos=driverPositions[d.id];
-    var x=pos?Math.min(85,Math.max(15,((pos.lng-17.8)/(18.2-17.8))*80+10)):(20+i*25);
-    var y=pos?Math.min(85,Math.max(15,((59.5-pos.lat)/(59.5-59.2))*80+10)):(30+i*20);
-    var color=d.status==='available'?'#22c55e':d.status==='busy'?'#f97316':'#64748b';
-    h+='<div class="dmarker" id="dmarker-'+d.id+'" style="left:'+x+'%;top:'+y+'%;border-color:'+color+'">🚖</div>'+
-      '<div class="dlabel" id="dlabel-'+d.id+'" style="left:'+x+'%;top:calc('+y+'% + 22px)">'+d.name.split(' ')[0]+'</div>';
-  });
-  h+='</div><div class="stitle">'+avail.length+' aktiva fordon</div>';
+  var h='<div style="height:calc(100vh - 120px);display:flex;flex-direction:column">'+
+    '<div id="leafletMap" style="flex:1;width:100%;min-height:300px;z-index:1"></div>'+
+    '<div style="background:white;padding:12px 16px;border-top:1px solid #d0d7ea;overflow-x:auto;white-space:nowrap">'+
+    '<span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px">'+avail.length+' AKTIVA FORDON &nbsp;</span>';
   avail.forEach(function(d){
     var color=d.status==='available'?'#22c55e':d.status==='busy'?'#f97316':'#64748b';
-    var st=d.status==='available'?'Ledig':d.status==='busy'?'På uppdrag':'Offline';
-    h+='<div class="dcard" style="align-items:center"><div class="davatar">'+d.name.charAt(0)+'</div>'+
-      '<div style="flex:1"><div style="font-size:14px;font-weight:700">'+d.name+'</div>'+
-      '<div style="font-size:12px;color:#64748b">'+d.plate+'</div></div>'+
-      '<div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:50%;background:'+color+'"></div>'+
-      '<span style="font-size:12px;color:#64748b">'+st+'</span></div></div>';
+    var pos=driverPositions[d.id];
+    var hasGps=pos&&pos.lat&&pos.lng;
+    h+='<span style="display:inline-flex;align-items:center;gap:5px;background:#f8fafc;border-radius:20px;padding:4px 10px;margin-right:6px;font-size:12px;font-weight:600">'+
+      '<span style="width:8px;height:8px;border-radius:50%;background:'+color+';flex-shrink:0"></span>'+
+      d.name.split(' ')[0]+' '+d.plate+
+      (hasGps?' 📍':'<span style="color:#dc2626"> ⚠️nogps</span>')+
+      '</span>';
   });
-  h+='<div style="height:80px"></div></div>';
-  return h;
+  h+='</div></div>';
+
+  var m=document.getElementById('main');
+  m.innerHTML=h;
+
+  // Load Leaflet if not loaded
+  if(!window.L){
+    var link=document.createElement('link');
+    link.rel='stylesheet';link.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(link);
+    var script=document.createElement('script');
+    script.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    script.onload=function(){initLeafletMap(avail);};
+    document.head.appendChild(script);
+  } else {
+    initLeafletMap(avail);
+  }
+}
+
+var leafletMapInstance=null;
+var leafletMarkers={};
+
+function initLeafletMap(drivers){
+  // Center on Trollhättan
+  var centerLat=58.2835, centerLng=12.2887;
+  if(leafletMapInstance){
+    leafletMapInstance.remove();
+    leafletMapInstance=null;
+    leafletMarkers={};
+  }
+  var map=L.map('leafletMap',{zoomControl:true,attributionControl:true}).setView([centerLat,centerLng],13);
+  leafletMapInstance=map;
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+    maxZoom:19
+  }).addTo(map);
+
+  // Add driver markers
+  drivers.forEach(function(d){
+    var pos=driverPositions[d.id];
+    var lat=pos&&pos.lat?pos.lat:null;
+    var lng=pos&&pos.lng?pos.lng:null;
+
+    if(!lat||!lng){
+      // No GPS yet — show notice
+      console.log('No GPS for driver: '+d.name);
+      return;
+    }
+    addLeafletMarker(map, d, lat, lng);
+  });
+
+  // If no drivers have GPS, show message
+  var withGps=drivers.filter(function(d){
+    var p=driverPositions[d.id];return p&&p.lat&&p.lng;
+  });
+  if(withGps.length===0&&drivers.length>0){
+    L.popup().setLatLng([centerLat,centerLng])
+      .setContent('<b>'+drivers.length+' förare online</b><br>Väntar på GPS-position...<br><small>Förarna behöver tillåta GPS i sin webbläsare</small>')
+      .openOn(map);
+  }
+}
+
+function addLeafletMarker(map, driver, lat, lng){
+  var color=driver.status==='available'?'#22c55e':driver.status==='busy'?'#f97316':'#64748b';
+  var icon=L.divIcon({
+    html:'<div style="background:'+color+';color:white;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3);font-weight:bold">🚖</div>',
+    className:'',iconSize:[36,36],iconAnchor:[18,18],popupAnchor:[0,-20]
+  });
+  var statusTxt=driver.status==='available'?'🟢 Ledig':driver.status==='busy'?'🟠 På uppdrag':'⚫ Offline';
+  var marker=L.marker([lat,lng],{icon:icon}).addTo(map);
+  marker.bindPopup(
+    '<div style="font-size:13px;min-width:140px">'+
+    '<strong>'+driver.name+'</strong><br>'+
+    '<span style="color:#64748b">'+driver.plate+(driver.taxi_nr?' · '+driver.taxi_nr:'')+'</span><br>'+
+    statusTxt+
+    '</div>'
+  );
+  // Label
+  L.marker([lat,lng],{
+    icon:L.divIcon({
+      html:'<div style="font-size:11px;font-weight:700;color:#0d1b3e;white-space:nowrap;margin-top:2px;text-shadow:0 1px 2px white">'+driver.name.split(' ')[0]+'</div>',
+      className:'',iconSize:[60,16],iconAnchor:[30,-18]
+    }),interactive:false
+  }).addTo(map);
+  leafletMarkers[driver.id]=marker;
+  return marker;
 }
 
 function updateMarker(id,lat,lng){
-  var m=document.getElementById('dmarker-'+id);var l=document.getElementById('dlabel-'+id);if(!m)return;
-  var x=Math.min(85,Math.max(15,((lng-17.8)/(18.2-17.8))*80+10));
-  var y=Math.min(85,Math.max(15,((59.5-lat)/(59.5-59.2))*80+10));
-  m.style.left=x+'%';m.style.top=y+'%';if(l){l.style.left=x+'%';l.style.top='calc('+y+'% + 22px)';}
+  // Update driverPositions
+  driverPositions[id]={lat:lat,lng:lng};
+  if(leafletMapInstance&&leafletMarkers[id]){
+    leafletMarkers[id].setLatLng([lat,lng]);
+  } else if(leafletMapInstance){
+    // New driver came online with GPS — add marker
+    var d=allDrivers.find(function(x){return x.id===id;});
+    if(d)addLeafletMarker(leafletMapInstance,d,lat,lng);
+  }
 }
 
 // ── DRIVERS ──
