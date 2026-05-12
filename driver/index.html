@@ -512,6 +512,7 @@ function startWorkTimer(){
     localStorage.setItem('thtcab_online_seconds',onlineSeconds);
     updateWorkTimer();
   },1000);
+  startLocationTracking();
 }
 
 function updateWorkTimer(){
@@ -649,7 +650,18 @@ function showPopup(booking){
   // Set all text content safely
   var setEl=function(id,val){var el=document.getElementById(id);if(el)el.textContent=val;};
   setEl('popupRef',booking.booking_ref||'');
-  setEl('popupRoute','📍 '+(booking.from_address||'')+'  →  🏁 '+(booking.to_address||''));
+  var popupEl=document.getElementById('popupRoute');
+  if(popupEl){
+    popupEl.innerHTML=
+      '<div style="margin-bottom:8px">'+
+      '<button onclick="navTo('+JSON.stringify(booking.from_address||'')+',\'Upphämtning\')" style="width:100%;background:#dcfce7;color:#15803d;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px">'+
+      '<span style="font-size:18px">📍</span><div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Upphämtning — tryck för navigation</div>'+
+      '<div>'+(booking.from_address||'Okänd adress')+'</div></div></button></div>'+
+      '<div>'+
+      '<button onclick="navTo('+JSON.stringify(booking.to_address||'')+',\'Avlämning\')" style="width:100%;background:#dbeafe;color:#1a56db;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px">'+
+      '<span style="font-size:18px">🏁</span><div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Avlämning — tryck för navigation</div>'+
+      '<div>'+(booking.to_address||'Okänd adress')+'</div></div></button></div>';
+  }
   setEl('popupDetail','👤 '+(booking.customer_name||'')+' · '+(booking.customer_phone||''));
   // Driver note
   var noteEl=document.getElementById('popupNote');
@@ -850,7 +862,11 @@ function tabHome(){
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
       '<span style="font-size:13px;font-weight:700;color:#1a56db">'+activeBooking.booking_ref+'</span>'+
       '<span class="badge b-green">Pågår</span></div>'+
-      '<div style="font-size:13px;font-weight:600;color:#0d1b3e;margin-bottom:6px">📍 '+activeBooking.from_address+'<br>🏁 '+activeBooking.to_address+'</div>'+
+      '<div style="margin-bottom:10px">'+
+      '<button onclick="navTo('+JSON.stringify(activeBooking.from_address||'')+')" style="width:100%;background:#dcfce7;color:#15803d;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;text-align:left;margin-bottom:6px">'+
+      '📍 Upphämtning: '+activeBooking.from_address+'</button>'+
+      '<button onclick="navTo('+JSON.stringify(activeBooking.to_address||'')+')" style="width:100%;background:#dbeafe;color:#1a56db;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;text-align:left">'+
+      '🏁 Avlämning: '+activeBooking.to_address+'</button></div>'+
       '<div style="font-size:12px;color:#64748b;margin-bottom:10px">👤 '+activeBooking.customer_name+' · '+(activeBooking.customer_phone||'')+'<br>💰 '+activeBooking.fare_sek+' kr · '+activeBooking.payment_method+'</div>'+
       (activeBooking.passengers&&activeBooking.passengers>1?'<div style="background:#dbeafe;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;color:#1a56db;margin-bottom:8px">👥 '+activeBooking.passengers+' passagerare</div>':'')+
       (activeBooking.child_seat?'<div style="background:#fee2e2;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:800;color:#dc2626;margin-bottom:8px">🧒 BARNSTOL KRÄVS'+(activeBooking.child_age?' — Ålder: '+activeBooking.child_age:'')+'</div>':'')+
@@ -933,6 +949,7 @@ function tabProfile(){
     '<div class="driver-avatar">'+(driver.name?.charAt(0)||'?')+'</div>'+
     '<div><div style="font-size:18px;font-weight:bold;color:white">'+driver.name+'</div>'+
     '<div style="color:#6b82b8;font-size:13px;margin-top:2px">'+(driver.email||'')+'</div>'+
+    '<div id="gpsStatus" style="font-size:11px;color:#22c55e;margin-top:4px;font-weight:600">📍 GPS: hämtar position...</div>'+
     '<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">'+
     '<span class="badge b-blue">'+(driver.taxi_nr||'')+'</span>'+
     '<span class="badge b-gray">'+(driver.plate||'')+'</span>'+
@@ -1055,6 +1072,7 @@ function logout(){
   localStorage.removeItem('thtcab_active_booking');localStorage.removeItem('thtcab_online_seconds');
   localStorage.removeItem('thtcab_paused_at');localStorage.removeItem('thtcab_block_until');
   driver=null;token=null;activeBooking=null;onlineSeconds=0;
+  stopLocationTracking();
   showScreen('sLogin');
 }
 // Register Service Worker for push notifications
@@ -1084,6 +1102,69 @@ var isIOSD=/iphone|ipad|ipod/i.test(navigator.userAgent);
 var isStandaloneD=window.navigator.standalone===true;
 if(isIOSD&&!isStandaloneD&&!localStorage.getItem('drvBannerDismissed')){
   setTimeout(function(){document.getElementById('iosBannerD').style.display='flex';},3000);
+}
+
+// ── NAVIGATION ──
+function navTo(address, label) {
+  if (!address) return;
+  var encoded = encodeURIComponent(address);
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  var url = isIOS
+    ? 'maps://maps.apple.com/?daddr=' + encoded + '&dirflg=d'
+    : 'https://www.google.com/maps/dir/?api=1&destination=' + encoded + '&travelmode=driving';
+  window.open(url, '_blank');
+}
+
+// ── GPS TRACKING ──
+var locationInterval = null;
+var locationWatcher = null;
+var lastLat = null, lastLng = null;
+
+function startLocationTracking() {
+  if (!navigator.geolocation) {
+    console.log('Geolocation not supported');
+    updateGpsStatus('⚠️ GPS ej stödd', '#d97706');
+    return;
+  }
+  updateGpsStatus('🔄 Hämtar GPS...', '#d97706');
+  // Get position immediately
+  navigator.geolocation.getCurrentPosition(
+    function(pos) { sendLocation(pos.coords.latitude, pos.coords.longitude); },
+    function(err) { updateGpsStatus('⚠️ GPS nekad', '#dc2626'); },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+  // Then every 15 seconds
+  if (locationInterval) clearInterval(locationInterval);
+  locationInterval = setInterval(function() {
+    navigator.geolocation.getCurrentPosition(
+      function(pos) { sendLocation(pos.coords.latitude, pos.coords.longitude); },
+      function(err) { console.log('GPS err:', err.message); },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 }
+    );
+  }, 15000);
+}
+
+function stopLocationTracking() {
+  if (locationInterval) { clearInterval(locationInterval); locationInterval = null; }
+  updateGpsStatus('⚫ GPS av', '#64748b');
+}
+
+async function sendLocation(lat, lng) {
+  lastLat = lat; lastLng = lng;
+  updateGpsStatus('📍 GPS aktiv', '#22c55e');
+  if (!driver || !token) return;
+  try {
+    await fetch(API + '/drivers/' + driver.id + '/location', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ lat: lat, lng: lng })
+    });
+  } catch(e) { console.log('Location send failed:', e.message); }
+}
+
+function updateGpsStatus(text, color) {
+  var el = document.getElementById('gpsStatus');
+  if (el) { el.textContent = text; el.style.color = color; }
 }
 
 </script>
