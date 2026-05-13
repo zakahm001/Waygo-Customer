@@ -7,6 +7,7 @@
 <link rel="manifest" href="/manifest-central.json">
 <link rel="apple-touch-icon" href="/icon-192.png">
 <meta name="theme-color" content="#0d1b3e">
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#eef1f8;color:#0d1b3e;min-height:100vh}
@@ -677,7 +678,7 @@ function tabMap(){
       '</span>';
   });
   // Return HTML only — do NOT set innerHTML here
-  return '<div style="height:calc(100vh - 100px);display:flex;flex-direction:column;padding:0">'+
+  return '<div style="height:calc(100vh - 100px);display:flex;flex-direction:column">'+
     '<div id="leafletMap" style="flex:1;width:100%;min-height:300px;z-index:1;background:#e2e8f0"></div>'+
     '<div style="background:white;padding:10px 14px;border-top:1px solid #d0d7ea;overflow-x:auto;white-space:nowrap;flex-shrink:0">'+
     '<span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px">'+avail.length+' AKTIVA FORDON &nbsp;</span>'+
@@ -718,7 +719,10 @@ var leafletMarkers={};
 
 function initLeafletMap(drivers){
   // Center on Trollhättan
-  var centerLat=58.2835, centerLng=12.2887;
+  // Center on drivers if any have GPS, otherwise Trollhättan
+var centerLat=58.2835, centerLng=12.2887;
+var driverCoords=Object.values(driverPositions).filter(function(p){return p&&p.lat&&p.lng;});
+if(driverCoords.length){centerLat=driverCoords[0].lat;centerLng=driverCoords[0].lng;}
   if(leafletMapInstance){
     leafletMapInstance.remove();
     leafletMapInstance=null;
