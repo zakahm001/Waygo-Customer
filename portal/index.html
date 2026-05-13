@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>Trollhättan Cab — Åkeriportal</title>
 <meta name="theme-color" content="#0d1b3e">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -469,7 +470,13 @@ function tabDrivers(filter) {
     {key:'offline',  label:'⚫ Offline',    color:'#64748b', bg:'#f1f5f9'},
   ];
   var filtered = myDrivers.filter(function(d) {
-    return filter === 'all' || d.status === filter;
+    if (filter === 'all')      return true;
+    if (filter === 'blocked')  return d.blocked === true;
+    if (filter === 'offline')  return d.status === 'offline'  && !d.blocked;
+    if (filter === 'available')return d.status === 'available' && !d.blocked;
+    if (filter === 'busy')     return d.status === 'busy'      && !d.blocked;
+    if (filter === 'paused')   return d.status === 'paused'    && !d.blocked;
+    return d.status === filter && !d.blocked;
   });
 
   var h = '<div class="page">';
@@ -477,7 +484,9 @@ function tabDrivers(filter) {
   h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">';
   filters.forEach(function(f) {
     var active = filter === f.key;
-    var count = f.key === 'all' ? myDrivers.length : myDrivers.filter(function(d){ return d.status===f.key; }).length;
+    var count = f.key === 'all' ? myDrivers.length :
+                f.key === 'blocked' ? myDrivers.filter(function(d){ return d.blocked; }).length :
+                myDrivers.filter(function(d){ return d.status===f.key && !d.blocked; }).length;
     h += '<button onclick="renderTab(1,\''+f.key+'\')" style="padding:7px 14px;border-radius:20px;border:2px solid '+(active?f.color:'#e2e8f0')+';background:'+(active?f.bg:'white')+';color:'+(active?f.color:'#64748b')+';font-size:12px;font-weight:'+(active?'700':'500')+';cursor:pointer">'+
       f.label+' <strong>'+count+'</strong></button>';
   });
@@ -487,20 +496,52 @@ function tabDrivers(filter) {
     h += '<div class="empty">🚖<br>Inga förare med denna status</div>';
   }
   filtered.forEach(function(d) {
-    var online = d.status !== 'offline';
     var stColor = d.status === 'available' ? '#22c55e' : d.status === 'busy' ? '#f97316' : d.status === 'paused' ? '#d97706' : '#94a3b8';
-    var stLabel = d.status === 'available' ? 'Ledig' : d.status === 'busy' ? 'På uppdrag' : d.status === 'paused' ? 'Paus' : 'Offline';
-    h += '<div class="dcard">' +
-      '<div class="davatar">' + d.name.charAt(0) + '</div>' +
+    var stLabel = d.status === 'available' ? '🟢 Ledig' : d.status === 'busy' ? '🟠 På uppdrag' : d.status === 'paused' ? '🟡 Paus' : '⚫ Offline';
+    var code = d.taxi_license || d.forare_id || ('FRK-'+d.id);
+    var driverBookings = myBookings.filter(function(b){ return b.driver_id === d.id && b.status === 'completed'; });
+    var totalEarned = driverBookings.reduce(function(s,b){ return s+(b.fare_sek||0); },0);
+    h += '<div style="background:white;border-radius:12px;border:1px solid #e2e8f0;margin-bottom:10px;overflow:hidden">' +
+      // ── DEFAULT ROW: förare kod only ──
+      '<div onclick="toggleDriverLog('+d.id+')" style="display:flex;align-items:center;gap:14px;padding:14px;cursor:pointer">' +
+      '<div style="background:#0d1b3e;color:#fbbf24;border-radius:10px;padding:8px 14px;font-size:16px;font-weight:900;letter-spacing:1px;flex-shrink:0">' + code + '</div>' +
       '<div style="flex:1">' +
-      '<div style="font-weight:700">' + d.name + '</div>' +
-      '<div style="font-size:12px;color:#64748b;margin-top:2px">' + (d.plate || '') + (d.taxi_nr ? ' · ' + d.taxi_nr : '') + '</div>' +
-      '<div style="font-size:11px;color:#94a3b8;margin-top:2px">Leg: ' + (d.taxi_license || '—') + '</div>' +
+      '<div style="font-size:12px;color:#64748b">' + (d.plate || '') + (d.taxi_nr ? ' · ' + d.taxi_nr : '') + '</div>' +
+      '<div style="font-size:11px;color:#94a3b8;margin-top:2px">' + (d.trips_today||0) + ' resor idag · ' + (d.earnings_today||0) + ' kr</div>' +
       '</div>' +
       '<div style="text-align:right">' +
-      '<span style="font-size:12px;font-weight:700;color:' + stColor + '">' + stLabel + '</span>' +
-      '<div style="font-size:11px;color:#64748b;margin-top:4px">' + (d.trips_today || 0) + ' resor idag</div>' +
-      '<div style="font-size:11px;font-weight:700;color:#15803d">' + (d.earnings_today || 0) + ' kr</div>' +
+      '<span style="font-size:13px;font-weight:700;color:'+stColor+'">' + stLabel + '</span>' +
+      '<div style="font-size:11px;color:#94a3b8;margin-top:2px">▼ Se detaljer</div>' +
+      '</div></div>' +
+      // ── EXPANDED: full info + logs ──
+      '<div id="dlog-'+d.id+'" style="display:none;border-top:1px solid #f1f5f9;padding:14px">' +
+      '<div style="display:flex;gap:10px;align-items:center;margin-bottom:12px">' +
+      '<div style="width:44px;height:44px;border-radius:50%;background:#0d1b3e;color:#fbbf24;font-weight:900;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+d.name.charAt(0)+'</div>' +
+      '<div><div style="font-size:16px;font-weight:800">' + d.name + '</div>' +
+      '<div style="font-size:12px;color:#64748b">📋 Legitimationsnr: <strong>' + (d.taxi_license||'—') + '</strong></div>' +
+      '<div style="font-size:12px;color:#64748b">📱 ' + (d.phone||'—') + '</div></div>' +
+      '</div>' +
+      // Stats row
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">' +
+      '<div style="background:#f8fafc;border-radius:10px;padding:10px;text-align:center"><div style="font-size:16px;font-weight:800;color:#1a56db">' + driverBookings.length + '</div><div style="font-size:10px;color:#64748b">Totala resor</div></div>' +
+      '<div style="background:#f8fafc;border-radius:10px;padding:10px;text-align:center"><div style="font-size:16px;font-weight:800;color:#15803d">' + totalEarned + ' kr</div><div style="font-size:10px;color:#64748b">Totalt intjänat</div></div>' +
+      '<div style="background:#f8fafc;border-radius:10px;padding:10px;text-align:center"><div style="font-size:16px;font-weight:800;color:#d97706">' + (driverBookings.length ? Math.round(totalEarned/driverBookings.length) : 0) + ' kr</div><div style="font-size:10px;color:#64748b">Snitt/resa</div></div>' +
+      '</div>' +
+      // Recent trips log
+      '<div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Senaste resor</div>' +
+      (driverBookings.length === 0 ? '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:10px">Inga avslutade resor</div>' :
+        driverBookings.slice().sort(function(a,b){return new Date(b.created_at)-new Date(a.created_at);}).slice(0,8).map(function(b){
+          return '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f8fafc;font-size:12px">' +
+            '<div><div style="font-weight:700;color:#1a56db">' + b.booking_ref + '</div>' +
+            '<div style="color:#64748b;font-size:11px">' + new Date(b.created_at).toLocaleString('sv-SE',{dateStyle:'short',timeStyle:'short'}) + '</div>' +
+            '<div style="color:#94a3b8;font-size:11px">📍 '+(b.from_address||'').substring(0,30)+'...</div></div>' +
+            '<div style="font-weight:800;color:#15803d">' + (b.fare_sek||0) + ' kr</div></div>';
+        }).join('')) +
+      // Car log
+      '<div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-top:12px;margin-bottom:8px">Fordon kopplat</div>' +
+      '<div style="background:#f8fafc;border-radius:8px;padding:10px;font-size:13px">' +
+      '🚗 <strong>' + (d.plate||'—') + '</strong>' + (d.taxi_nr ? ' · Taxinr: '+d.taxi_nr : '') +
+      (d.model ? ' · '+d.model : '') + '</div>' +
       '</div></div>';
   });
   h += '</div>';
@@ -574,43 +615,148 @@ function tabEconomy() {
   var total = completed.reduce(function(s, b) { return s + (b.fare_sek || 0); }, 0);
   var vat = Math.round(total / 1.25 * 0.25);
   var net = Math.round(total / 1.25);
-  var payout = Math.round(net * 0.8); // 80% to åkeri
 
   var today = new Date().toDateString();
   var todayBooks = completed.filter(function(b) { return new Date(b.created_at).toDateString() === today; });
   var todayRev = todayBooks.reduce(function(s, b) { return s + (b.fare_sek || 0); }, 0);
 
-  var h = '<div class="page">' +
-    '<div class="stitle">Totalt (alla bokningar)</div>' +
-    '<div class="stats">' +
+  // Last 7 days data for line chart
+  var last7 = [];
+  for (var i = 6; i >= 0; i--) {
+    var d = new Date(); d.setDate(d.getDate() - i);
+    var dStr = d.toDateString();
+    var dBooks = completed.filter(function(b) { return new Date(b.created_at).toDateString() === dStr; });
+    var dRev = dBooks.reduce(function(s, b) { return s + (b.fare_sek || 0); }, 0);
+    last7.push({ label: d.toLocaleDateString('sv-SE', {weekday:'short', day:'numeric'}), rev: dRev, trips: dBooks.length });
+  }
+
+  // Per-driver stats
+  var driverStats = myDrivers.map(function(d) {
+    var dBooks = completed.filter(function(b) { return b.driver_id === d.id; });
+    var dRev = dBooks.reduce(function(s, b) { return s + (b.fare_sek || 0); }, 0);
+    return { name: d.name.split(' ')[0], plate: d.plate || '', trips: dBooks.length, rev: dRev,
+             avgTrip: dBooks.length ? Math.round(dRev / dBooks.length) : 0 };
+  }).sort(function(a,b) { return b.rev - a.rev; });
+
+  var h = '<div class="page">';
+
+  // ── TOP STATS ──
+  h += '<div class="stitle">Totalt intjänat</div>';
+  h += '<div class="stats">' +
     sc(total + ' kr', 'Brutto', '#15803d') +
     sc(vat + ' kr', 'Moms 25%', '#7c3aed') +
     sc(net + ' kr', 'Netto', '#d97706') +
-    '</div>' +
-    '<div class="card">' +
-    '<div class="stitle">Idag</div>' +
-    '<div class="row"><span>Avslutade resor</span><strong>' + todayBooks.length + ' st</strong></div>' +
-    '<div class="row"><span>Bruttointäkt</span><strong style="color:#15803d">' + todayRev + ' kr</strong></div>' +
-    '<div class="row"><span>Moms (25%)</span><span style="color:#dc2626">- ' + Math.round(todayRev / 1.25 * 0.25) + ' kr</span></div>' +
-    '<div class="row"><span>Netto</span><strong>' + Math.round(todayRev / 1.25) + ' kr</strong></div>' +
-    '</div>' +
-    '<div class="card">' +
-    '<div class="stitle">Förarstatistik</div>';
-
-  myDrivers.forEach(function(d) {
-    var dBooks = completed.filter(function(b) { return b.driver_id === d.id; });
-    var dRev = dBooks.reduce(function(s, b) { return s + (b.fare_sek || 0); }, 0);
-    h += '<div class="row">' +
-      '<div><div style="font-weight:600">' + d.name + '</div>' +
-      '<div style="font-size:11px;color:#94a3b8">' + dBooks.length + ' resor</div></div>' +
-      '<strong style="color:#15803d">' + dRev + ' kr</strong>' +
-      '</div>';
-  });
-  if (!myDrivers.length) h += '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:20px">Inga förare</div>';
-  h += '</div>' +
-    '<button class="btn btnP" onclick="exportCSV()" style="width:100%">⬇ Exportera CSV</button>' +
     '</div>';
+
+  // ── TODAY ──
+  h += '<div class="card"><div class="stitle">Idag — ' + new Date().toLocaleDateString('sv-SE') + '</div>' +
+    '<div class="stats">' +
+    sc(todayRev + ' kr', 'Brutto', '#15803d') +
+    sc(todayBooks.length + ' st', 'Resor', '#1a56db') +
+    sc(todayBooks.length ? Math.round(todayRev/todayBooks.length) + ' kr' : '—', 'Snitt/resa', '#d97706') +
+    '</div></div>';
+
+  // ── 7-DAY LINE CHART ──
+  h += '<div class="card"><div class="stitle">Intäkter senaste 7 dagarna</div>' +
+    '<canvas id="revenueChart" height="180"></canvas></div>';
+
+  // ── DRIVER BAR CHART ──
+  h += '<div class="card"><div class="stitle">Intäkt per förare</div>' +
+    '<canvas id="driverChart" height="200"></canvas></div>';
+
+  // ── DRIVER TABLE ──
+  h += '<div class="card"><div class="stitle">Förarstatistik</div>';
+  driverStats.forEach(function(d) {
+    var pct = total > 0 ? Math.round(d.rev / total * 100) : 0;
+    h += '<div style="margin-bottom:14px">' +
+      '<div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
+      '<div><div style="font-weight:700;font-size:14px">' + d.name + '</div>' +
+      '<div style="font-size:11px;color:#64748b">' + d.plate + ' · ' + d.trips + ' resor · Ø ' + d.avgTrip + ' kr/resa</div></div>' +
+      '<div style="text-align:right"><div style="font-weight:800;color:#15803d">' + d.rev + ' kr</div>' +
+      '<div style="font-size:11px;color:#94a3b8">' + pct + '% av total</div></div></div>' +
+      '<div style="background:#f1f5f9;border-radius:20px;height:8px;overflow:hidden">' +
+      '<div style="background:linear-gradient(90deg,#22c55e,#15803d);height:100%;width:' + pct + '%;border-radius:20px;transition:width .5s"></div>' +
+      '</div></div>';
+  });
+  if (!driverStats.length) h += '<div style="text-align:center;color:#94a3b8;padding:20px">Inga avslutade resor</div>';
+  h += '</div>';
+
+  // ── EXPORT ──
+  h += '<button class="btn btnP" onclick="exportCSV()" style="width:100%;margin-bottom:40px">⬇ Exportera CSV</button>';
+  h += '</div>';
+
+  // Draw charts after render
+  setTimeout(function() { drawEconomyCharts(last7, driverStats); }, 100);
   return h;
+}
+
+function drawEconomyCharts(last7, driverStats) {
+  // Revenue line chart
+  var ctx1 = document.getElementById('revenueChart');
+  if (ctx1 && window.Chart) {
+    new Chart(ctx1, {
+      type: 'line',
+      data: {
+        labels: last7.map(function(d) { return d.label; }),
+        datasets: [{
+          label: 'Intäkt (kr)',
+          data: last7.map(function(d) { return d.rev; }),
+          borderColor: '#15803d',
+          backgroundColor: 'rgba(21,128,61,.1)',
+          borderWidth: 2.5,
+          pointBackgroundColor: '#15803d',
+          pointRadius: 4,
+          fill: true,
+          tension: 0.3
+        }, {
+          label: 'Resor',
+          data: last7.map(function(d) { return d.trips; }),
+          borderColor: '#1a56db',
+          backgroundColor: 'transparent',
+          borderWidth: 2,
+          pointBackgroundColor: '#1a56db',
+          pointRadius: 3,
+          yAxisID: 'trips',
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: true, position: 'bottom' } },
+        scales: {
+          y: { beginAtZero: true, ticks: { callback: function(v) { return v + ' kr'; } } },
+          trips: { position: 'right', beginAtZero: true, grid: { drawOnChartArea: false } }
+        }
+      }
+    });
+  }
+
+  // Driver bar chart
+  var ctx2 = document.getElementById('driverChart');
+  if (ctx2 && window.Chart && driverStats.length) {
+    var colors = ['#15803d','#1a56db','#7c3aed','#d97706','#dc2626','#0d9488'];
+    new Chart(ctx2, {
+      type: 'bar',
+      data: {
+        labels: driverStats.map(function(d) { return d.name + ' (' + d.plate + ')'; }),
+        datasets: [{
+          label: 'Intäkt (kr)',
+          data: driverStats.map(function(d) { return d.rev; }),
+          backgroundColor: driverStats.map(function(d, i) { return colors[i % colors.length] + 'cc'; }),
+          borderColor: driverStats.map(function(d, i) { return colors[i % colors.length]; }),
+          borderWidth: 2,
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { callback: function(v) { return v + ' kr'; } } }
+        }
+      }
+    });
+  }
 }
 
 function sc(val, lbl, color) {
@@ -736,6 +882,20 @@ function buildAkeriMap() {
 async function refreshMap() {
   await loadAllData();
   if (akeriMapInstance) { buildAkeriMap(); }
+}
+
+// ── DRIVER LOG TOGGLE ──
+function toggleDriverLog(driverId) {
+  var el = document.getElementById('dlog-' + driverId);
+  if (!el) return;
+  var isOpen = el.style.display !== 'none';
+  // Close all others
+  myDrivers.forEach(function(d) {
+    var other = document.getElementById('dlog-' + d.id);
+    if (other) other.style.display = 'none';
+  });
+  // Toggle this one
+  el.style.display = isOpen ? 'none' : 'block';
 }
 
 </script>
