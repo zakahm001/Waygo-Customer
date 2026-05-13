@@ -1063,7 +1063,16 @@ function confirmLogout(){
   logout();
 }
 
-function logout(){
+async function logout(){
+  // Tell server driver is offline BEFORE clearing token
+  if(driver && token){
+    try{
+      await fetch(API+'/drivers/'+driver.id+'/go-offline',{
+        method:'PATCH',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+token}
+      });
+    }catch(e){ console.log('Offline status failed:',e.message); }
+  }
   if(onlineTimer)clearInterval(onlineTimer);
   if(pauseTimer)clearInterval(pauseTimer);
   if(blockTimer)clearInterval(blockTimer);
@@ -1075,6 +1084,25 @@ function logout(){
   stopLocationTracking();
   showScreen('sLogin');
 }
+
+// Set driver offline when browser/tab closes or app goes to background
+window.addEventListener('beforeunload', function() {
+  if(driver && token){
+    // Use sendBeacon for reliable delivery on page close
+    var data = JSON.stringify({action:'status', status:'offline'});
+    navigator.sendBeacon(API+'/drivers/'+driver.id+'/manage-beacon', data);
+  }
+});
+
+document.addEventListener('visibilitychange', function() {
+  if(document.visibilityState === 'hidden'){
+    if(driver && token && driverStatus !== 'offline'){
+      // App backgrounded - pause polling but keep status
+      // Don't set offline here as user may come back
+    }
+  }
+});
+
 // Register Service Worker for push notifications
 if('serviceWorker' in navigator){
   navigator.serviceWorker.register('/sw.js').then(function(reg){
