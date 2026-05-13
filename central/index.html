@@ -941,6 +941,7 @@ async function openDriverProfile(id){
         '<button class="btn btnS" onclick="manageDriver('+d.id+',\'unblock\')">✅ Avblockera</button>':
         '<button class="btn btnD" onclick="manageDriver('+d.id+',\'block\')">🔴 Blockera</button>')+
       '<button class="btn btnP" onclick="openSuspend('+d.id+')">⏸ Stäng av</button>'+
+      (staffUser&&staffUser.level===1?'<button class="btn btnD" style="grid-column:span 2" onclick="deleteDriver('+d.id+','+JSON.stringify(d.name)+')">🗑️ Ta bort förare</button>':'')+
       (isSusp&&!isBlocked?'<button class="btn btnS" style="grid-column:span 2" onclick="manageDriver('+d.id+',\'unblock\')">✅ Ta bort avstängning</button>':'')+
       '</div>'+
       '<div style="margin-top:10px;display:flex;gap:8px">'+
@@ -1020,6 +1021,20 @@ async function openSuspend(id){
   await manageDriver(id,'suspend',{suspend_until:until+'T23:59:00',reason:reason});
 }
 
+
+async function deleteDriver(id, name) {
+  if (!confirm('Ta bort ' + name + '?')) return;
+  try {
+    var res = await fetch(API+'/drivers/'+id, {method:'DELETE', headers:{'Authorization':'Bearer '+staffToken}});
+    var d = await res.json();
+    if (d.ok) {
+      allDrivers = allDrivers.filter(function(x){ return x.id !== id; });
+      showToast('Borttagen: ' + name);
+      closeMod('driverMod');
+      showTab(2);
+    } else { showToast(d.error || 'Fel'); }
+  } catch(e) { showToast('Natverksfel'); }
+}
 
 async function updateDriverAkeri(id) {
   var companyId = (document.getElementById('drvCompany')||{}).value||'';
