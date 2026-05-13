@@ -1189,10 +1189,18 @@ function tabStaff(){
     '<input class="finput" id="sEmail" type="email" placeholder="E-post *"/>'+
     '<input class="finput" id="sPwd" type="password" placeholder="Lösenord *"/>'+
     '<label class="flabel">Roll</label>'+
-    '<select class="finput" id="sRole">'+
+    '<select class="finput" id="sRole" onchange="toggleAkeriFields()">'+
     '<option value="dispatcher">Dispatcher — kan hantera bokningar</option>'+
     (canAddAdmin?'<option value="admin">Admin — kan hantera förare och kunder</option>':'')+
+    (staffUser&&staffUser.level===1?'<option value="akeri">🏢 Åkeri — åkeriportal-åtkomst</option>':'')+
     '</select>'+
+    '<div id="akeriFields" style="display:none">'+
+    '<label class="flabel">Koppla till företag</label>'+
+    '<select class="finput" id="sCompanyId">'+
+    '<option value="">Välj åkeri...</option>'+
+    allCompanies.map(function(c){return '<option value="'+c.id+'">'+c.name+'</option>';}).join('')+
+    '</select>'+
+    '</div>'+
     '<div class="ib ib-r" id="sErr" style="display:none"></div>'+
     '<button class="btn btnP" id="addStaffBtn" onclick="addStaff()">Lägg till →</button></div>';
 
@@ -1217,19 +1225,35 @@ function tabStaff(){
   return h;
 }
 
+
+function toggleAkeriFields() {
+  var role = (document.getElementById('sRole')||{}).value;
+  var fields = document.getElementById('akeriFields');
+  if (fields) fields.style.display = role === 'akeri' ? '' : 'none';
+}
+
 async function addStaff(){
   var name=document.getElementById('sName').value.trim();
   var email=document.getElementById('sEmail').value.trim();
   var pwd=document.getElementById('sPwd').value.trim();
   var role=document.getElementById('sRole').value;
+  var companyId=document.getElementById('sCompanyId')?(document.getElementById('sCompanyId').value||''):'';
   var err=document.getElementById('sErr');var btn=document.getElementById('addStaffBtn');
   if(!name||!email||!pwd){err.textContent='⚠️ Fyll i alla fält';err.style.display='';return;}
+  if(role==='akeri'&&!companyId){err.textContent='⚠️ Välj ett åkeri';err.style.display='';return;}
   btn.textContent='Lägger till...';btn.disabled=true;err.style.display='none';
   try{
-    var res=await fetch(API+'/staff/add',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify({name:name,email:email,password:pwd,role:role})});
+    var isAkeriRole = role==='akeri';
+    var endpoint = isAkeriRole ? '/staff/create-portal-access' : '/staff/add';
+    var body = isAkeriRole
+      ? {email:email,password:pwd,company_id:parseInt(companyId),company_name:name}
+      : {name:name,email:email,password:pwd,role:role};
+    var res=await fetch(API+endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify(body)});
     var data=await res.json();
-    if(data.staff){allStaff.push(data.staff);showToast('✅ '+name+' tillagd!');showTab(5);}
-    else{err.textContent='⚠️ '+(data.error||'Fel');err.style.display='';}
+    if(data.staff||data.success){
+      showToast('✅ '+(isAkeriRole?'Åkeri-åtkomst skapad':''+name+' tillagd!'));
+      showTab(5);
+    } else {err.textContent='⚠️ '+(data.error||'Fel');err.style.display='';}
   }catch(e){err.textContent='⚠️ Nätverksfel';err.style.display='';}
   btn.textContent='Lägg till →';btn.disabled=false;
 }
