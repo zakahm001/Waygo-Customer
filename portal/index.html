@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Trollhättan Cab — Åkeriportal</title>
+<meta name="theme-color" content="#0d1b3e">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --accent:#fbbf24;
+  --dark:#0d1b3e;
+  --bg:#f1f5f9;
+  --card:#fff;
+  --sidebar-bg:#111827;
+  --sidebar-text:#9ca3af;
+  --sidebar-w:220px;
+  --topbar-h:52px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--dark);min-height:100vh}
+
+/* LOGIN */
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#111827;padding:20px}
+.login-box{background:#1f2937;border-radius:16px;padding:32px 28px;width:100%;max-width:380px;border:1px solid #374151}
+.login-logo{text-align:center;margin-bottom:24px}
+.login-logo-icon{font-size:40px;display:block;margin-bottom:10px}
+.login-title{color:var(--accent);font-size:20px;font-weight:800;letter-spacing:2px}
+.login-sub{color:#6b7280;font-size:13px;margin-top:4px}
+.login-label{font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;display:block;margin-top:10px}
+.login-input{width:100%;padding:12px 14px;border-radius:8px;border:1px solid #374151;background:#111827;color:white;font-size:14px;outline:none;box-sizing:border-box}
+.login-input:focus{border-color:var(--accent)}
+.login-btn{width:100%;padding:13px;background:var(--accent);color:#0d1b3e;font-size:14px;font-weight:800;border:none;border-radius:8px;cursor:pointer;margin-top:14px}
+.login-btn:hover{background:#f59e0b}
+.login-err{background:#7f1d1d;color:#fca5a5;border-radius:8px;padding:9px 13px;font-size:12px;margin-top:10px;display:none}
+
+/* TOPBAR */
+.topbar{position:fixed;top:0;left:0;right:0;height:var(--topbar-h);background:var(--sidebar-bg);display:flex;align-items:center;padding:0 16px;gap:12px;z-index:300;box-shadow:0 1px 8px rgba(0,0,0,.3)}
+.topbar-logo{color:var(--accent);font-size:13px;font-weight:800;letter-spacing:1.5px;flex:1}
+.topbar-company{color:white;font-size:12px;font-weight:600;background:rgba(251,191,36,.15);padding:4px 10px;border-radius:20px;border:1px solid rgba(251,191,36,.3)}
+.hamburger{background:none;border:none;color:#9ca3af;cursor:pointer;padding:6px;font-size:20px;flex-shrink:0}
+
+/* SIDEBAR */
+.sidebar{position:fixed;top:0;left:0;width:var(--sidebar-w);height:100vh;background:var(--sidebar-bg);display:flex;flex-direction:column;z-index:400;transform:translateX(-100%);transition:transform .25s ease;overflow-y:auto}
+.sidebar.open{transform:translateX(0)}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:350}
+.sidebar-overlay.open{display:block}
+.sidebar-header{padding:18px 16px 14px;border-bottom:1px solid #1f2937}
+.sidebar-brand{color:var(--accent);font-size:14px;font-weight:800;letter-spacing:1px}
+.sidebar-company{color:#9ca3af;font-size:11px;margin-top:4px}
+.sidebar-section{padding:10px 0;border-bottom:1px solid #1f2937}
+.sidebar-section-lbl{font-size:9px;font-weight:700;color:#4b5563;text-transform:uppercase;letter-spacing:2px;padding:4px 16px 8px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 16px;color:var(--sidebar-text);cursor:pointer;font-size:13px;font-weight:500;border:none;background:none;width:100%;text-align:left;transition:background .15s,color .15s;border-left:3px solid transparent}
+.nav-item:hover{background:#1f2937;color:white}
+.nav-item.active{background:rgba(251,191,36,.08);color:var(--accent);border-left-color:var(--accent);font-weight:700}
+.nav-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.sidebar-footer{margin-top:auto;padding:14px 16px;border-top:1px solid #1f2937}
+.sidebar-user-name{color:white;font-size:13px;font-weight:600}
+.sidebar-user-role{color:#6b7280;font-size:11px;margin-top:1px}
+.sidebar-logout{background:none;border:none;color:#6b7280;font-size:11px;cursor:pointer;padding:0;margin-top:8px}
+.sidebar-logout:hover{color:#dc2626}
+
+/* MAIN */
+.main-wrap{margin-top:var(--topbar-h);padding-bottom:40px;min-height:calc(100vh - var(--topbar-h))}
+.page{padding:16px;max-width:720px;margin:0 auto}
+
+/* CARDS */
+.card{background:white;border-radius:12px;padding:16px;margin-bottom:12px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.stitle{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.scard{background:white;border-radius:10px;padding:14px;border:1px solid #e2e8f0;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.sval{font-size:20px;font-weight:800}
+.slbl{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+
+/* ROWS */
+.row{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid #f8fafc;font-size:13px}
+.row:last-child{border-bottom:none}
+
+/* BADGES */
+.badge{padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;display:inline-block}
+.bc{background:#dcfce7;color:#15803d}
+.bp{background:#fef3c7;color:#d97706}
+.bx{background:#fee2e2;color:#dc2626}
+.bg{background:#f1f5f9;color:#64748b}
+
+/* DRIVER CARDS */
+.dcard{background:white;border-radius:12px;padding:14px;margin-bottom:8px;display:flex;gap:12px;align-items:center;border:1px solid #e2e8f0}
+.davatar{width:40px;height:40px;border-radius:50%;background:#0d1b3e;color:#fbbf24;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* BUTTONS */
+.btn{padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;border:none;cursor:pointer}
+.btnP{background:#0d1b3e;color:#fbbf24}
+.btnG{background:#f1f5f9;color:#64748b}
+.btn-sm{padding:5px 11px;font-size:11px;font-weight:700;border-radius:6px;border:none;cursor:pointer}
+
+/* INPUTS */
+.flabel{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;display:block;margin-top:8px}
+.finput{width:100%;padding:9px 13px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;color:#0d1b3e;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:8px}
+
+/* BOOKING CARDS */
+.bcard{background:white;border-radius:12px;padding:14px;margin-bottom:8px;border-left:4px solid #e2e8f0;border-top:1px solid #e2e8f0;border-right:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0}
+.bcard.b-pend{border-left-color:#f97316}
+.bcard.b-assi{border-left-color:#1a56db}
+.bcard.b-comp{border-left-color:#22c55e}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0d1b3e;color:white;padding:11px 20px;border-radius:22px;font-size:13px;font-weight:700;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+.toast.show{opacity:1}
+.empty{text-align:center;padding:40px;color:#94a3b8;font-size:14px;line-height:2}
+
+@media(min-width:700px){
+  .topbar{left:var(--sidebar-w)}
+  .hamburger{display:none}
+  .sidebar{transform:translateX(0)}
+  .sidebar-overlay{display:none !important}
+  .main-wrap{margin-left:var(--sidebar-w)}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginPage">
+  <div class="login-page">
+    <div class="login-box">
+      <div class="login-logo">
+        <span class="login-logo-icon">🏢</span>
+        <div class="login-title">ÅKERIPORTAL</div>
+        <div class="login-sub">Trollhättan Cab AB</div>
+      </div>
+      <label class="login-label">E-post</label>
+      <input class="login-input" id="lEmail" type="email" placeholder="kontakt@dittakeri.se"/>
+      <label class="login-label">Lösenord</label>
+      <input class="login-input" id="lPwd" type="password" placeholder="••••••••"/>
+      <div id="lErr" class="login-err"></div>
+      <button class="login-btn" onclick="doLogin()">Logga in →</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appShell" style="display:none">
+
+  <div class="topbar">
+    <button class="hamburger" onclick="toggleSidebar()">☰</button>
+    <div class="topbar-logo">🚖 TROLLHÄTTAN CAB</div>
+    <div class="topbar-company" id="topbarCompany">—</div>
+  </div>
+
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">🏢 ÅKERIPORTAL</div>
+      <div class="sidebar-company" id="sidebarCompanyName">—</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-lbl">Översikt</div>
+      <button class="nav-item active" id="nav0" onclick="navTo(0)"><span class="nav-icon">📊</span>Dashboard</button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-lbl">Hantera</div>
+      <button class="nav-item" id="nav1" onclick="navTo(1)"><span class="nav-icon">🚖</span>Mina förare</button>
+      <button class="nav-item" id="nav2" onclick="navTo(2)"><span class="nav-icon">📋</span>Bokningar</button>
+      <button class="nav-item" id="nav3" onclick="navTo(3)"><span class="nav-icon">🚗</span>Fordon</button>
+      <button class="nav-item" id="nav4" onclick="navTo(4)"><span class="nav-icon">💰</span>Ekonomi</button>
+      <button class="nav-item" id="nav5" onclick="navTo(5)"><span class="nav-icon">🗺️</span>Livekarta</button>
+    </div>
+    <div class="sidebar-footer">
+      <div class="sidebar-user-name" id="sidebarUserName">—</div>
+      <div class="sidebar-user-role">🏢 Åkeriägare</div>
+      <button class="sidebar-logout" onclick="doLogout()">↩ Logga ut</button>
+    </div>
+  </nav>
+
+  <div class="main-wrap">
+    <div id="main"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var API = 'https://api.trollhattancab.com';
+var portalUser = null, portalToken = null, portalCompany = null;
+var myDrivers = [], myBookings = [], myCars = [];
+var curTab = 0, refreshTimer = null;
+
+// ── INIT ──
+window.onload = function() {
+  var saved = localStorage.getItem('thtcab_portal_user');
+  var tok = localStorage.getItem('thtcab_portal_token');
+  if (saved && tok) {
+    try { portalUser = JSON.parse(saved); portalToken = tok; enterPortal(); }
+    catch(e) { showLogin(); }
+  } else { showLogin(); }
+  document.getElementById('lPwd').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') doLogin();
+  });
+};
+
+function showLogin() {
+  document.getElementById('loginPage').style.display = 'block';
+  document.getElementById('appShell').style.display = 'none';
+}
+
+function showToast(msg, color) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.background = color || '#0d1b3e';
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3000);
+}
+
+// ── LOGIN ──
+async function doLogin() {
+  var email = (document.getElementById('lEmail').value || '').trim();
+  var pwd = document.getElementById('lPwd').value || '';
+  var err = document.getElementById('lErr');
+  if (!email || !pwd) { err.textContent = 'Fyll i e-post och lösenord'; err.style.display = ''; return; }
+  err.style.display = 'none';
+  try {
+    // Login via staff endpoint (åkeri users are in staff table with role='akeri')
+    var res = await fetch(API + '/staff/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, password: pwd })
+    });
+    var data = await res.json();
+    if (data.token) {
+      if (data.staff.role !== 'akeri') {
+        err.textContent = 'Denna portal är endast för åkeriägare. Använd Central för admin-åtkomst.';
+        err.style.display = ''; return;
+      }
+      portalUser = data.staff;
+      portalToken = data.token;
+      localStorage.setItem('thtcab_portal_user', JSON.stringify(portalUser));
+      localStorage.setItem('thtcab_portal_token', portalToken);
+      enterPortal();
+    } else {
+      err.textContent = data.error || 'Fel e-post eller lösenord';
+      err.style.display = '';
+    }
+  } catch(e) {
+    err.textContent = 'Anslutningsfel — kontrollera internet';
+    err.style.display = '';
+  }
+}
+
+function doLogout() {
+  localStorage.removeItem('thtcab_portal_user');
+  localStorage.removeItem('thtcab_portal_token');
+  portalUser = null; portalToken = null; portalCompany = null;
+  if (refreshTimer) clearInterval(refreshTimer);
+  showLogin();
+}
+
+// ── ENTER PORTAL ──
+async function enterPortal() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('appShell').style.display = 'block';
+  await loadCompany();
+  await loadAllData();
+  navTo(0);
+  refreshTimer = setInterval(loadAllData, 30000);
+}
+
+async function loadCompany() {
+  if (!portalUser.company_id) return;
+  try {
+    var res = await fetch(API + '/companies/' + portalUser.company_id, {
+      headers: { 'Authorization': 'Bearer ' + portalToken }
+    });
+    var data = await res.json();
+    if (data.company) {
+      portalCompany = data.company;
+      var name = portalCompany.name || 'Mitt åkeri';
+      document.getElementById('topbarCompany').textContent = name;
+      document.getElementById('sidebarCompanyName').textContent = name;
+      document.getElementById('sidebarUserName').textContent = portalUser.name;
+    }
+  } catch(e) { console.log('Company load error:', e); }
+}
+
+async function loadAllData() {
+  var cid = portalUser.company_id;
+  if (!cid) return;
+  try {
+    // Load drivers for this company
+    var [drRes, bkRes, carRes] = await Promise.all([
+      fetch(API + '/drivers?company_id=' + cid, { headers: { 'Authorization': 'Bearer ' + portalToken } }),
+      fetch(API + '/bookings?akeri_id=' + cid + '&limit=100', { headers: { 'Authorization': 'Bearer ' + portalToken } }),
+      fetch(API + '/cars?company_id=' + cid, { headers: { 'Authorization': 'Bearer ' + portalToken } }),
+    ]);
+    var drData = await drRes.json();
+    var bkData = await bkRes.json();
+    var carData = await carRes.json();
+    myDrivers = (drData.drivers || []).filter(function(d) { return d.company_id === cid; });
+    myBookings = (bkData.bookings || []).filter(function(b) { return b.akeri_id === cid || b.company_id === cid; });
+    myCars = (carData.cars || []).filter(function(c) { return c.company_id === cid; });
+    // Re-render current tab
+    renderTab(curTab);
+  } catch(e) { console.log('Data load error:', e); }
+}
+
+// ── NAVIGATION ──
+function navTo(i) {
+  curTab = i;
+  document.querySelectorAll('.nav-item').forEach(function(t, j) {
+    t.classList.toggle('active', j === i);
+  });
+  renderTab(i);
+  closeSidebar();
+}
+
+function renderTab(i) {
+  var m = document.getElementById('main');
+  if (i === 0) m.innerHTML = tabDashboard();
+  else if (i === 1) m.innerHTML = tabDrivers();
+  else if (i === 2) m.innerHTML = tabBookings();
+  else if (i === 3) m.innerHTML = tabCars();
+  else if (i === 4) m.innerHTML = tabEconomy();
+  else if (i === 5) { m.innerHTML = tabMap(); setTimeout(initAkeriMap, 80); }
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+// ── TAB 0: DASHBOARD ──
+function tabDashboard() {
+  var online = myDrivers.filter(function(d) { return d.status !== 'offline'; }).length;
+  var active = myBookings.filter(function(b) { return b.status === 'assigned' || b.status === 'pending'; }).length;
+  var today = myBookings.filter(function(b) {
+    return b.status === 'completed' && new Date(b.created_at).toDateString() === new Date().toDateString();
+  }).length;
+  var todayRevenue = myBookings.filter(function(b) {
+    return b.status === 'completed' && new Date(b.created_at).toDateString() === new Date().toDateString();
+  }).reduce(function(s, b) { return s + (b.fare_sek || 0); }, 0);
+
+  var h = '<div class="page">';
+  if (portalCompany) {
+    h += '<div class="card" style="background:linear-gradient(135deg,#0d1b3e,#1e40af);color:white;border:none;margin-bottom:14px">' +
+      '<div style="font-size:18px;font-weight:800">' + (portalCompany.name || '') + '</div>' +
+      '<div style="font-size:12px;opacity:.7;margin-top:4px">Åkerinr: ' + (portalCompany.akeri_number || '—') + ' · Org: ' + (portalCompany.org_number || '—') + '</div>' +
+      '</div>';
+  }
+
+  h += '<div class="stitle">Live just nu</div>' +
+    '<div class="stats">' +
+    sc(online, 'Förare online', '#22c55e') +
+    sc(active, 'Aktiva resor', '#f97316') +
+    sc(myCars.length, 'Fordon', '#1a56db') +
+    '</div>' +
+    '<div class="stitle">Idag</div>' +
+    '<div class="stats">' +
+    sc(today, 'Avslutade resor', '#15803d') +
+    sc(todayRevenue + ' kr', 'Bruttointäkt', '#7c3aed') +
+    sc(today ? Math.round(todayRevenue / today) + ' kr' : '—', 'Snitt/resa', '#d97706') +
+    '</div>';
+
+  // Active bookings
+  var activeBooks = myBookings.filter(function(b) { return b.status === 'assigned' || b.status === 'pending'; });
+  if (activeBooks.length) {
+    h += '<div class="stitle">Pågående resor</div>';
+    activeBooks.forEach(function(b) {
+      var st = b.status === 'assigned' ? '🟠' : '🟡';
+      h += '<div class="bcard b-assi">' +
+        '<div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
+        '<span style="font-weight:700;color:#1a56db">' + b.booking_ref + '</span>' +
+        '<span style="font-size:12px;color:#64748b">' + (b.driver_name || 'Ej tilldelad') + '</span>' +
+        '</div>' +
+        '<div style="font-size:12px;color:#64748b">📍 ' + (b.from_address || '') + '</div>' +
+        '<div style="font-size:12px;color:#64748b">🏁 ' + (b.to_address || '') + '</div>' +
+        '<div style="font-size:12px;font-weight:700;color:#15803d;margin-top:4px">' + (b.fare_sek || 0) + ' kr ' + st + '</div>' +
+        '</div>';
+    });
+  }
+
+  // Online drivers
+  var onlineDrivers = myDrivers.filter(function(d) { return d.status !== 'offline'; });
+  if (onlineDrivers.length) {
+    h += '<div class="stitle">Förare online</div>';
+    onlineDrivers.forEach(function(d) {
+      var color = d.status === 'available' ? '#22c55e' : d.status === 'busy' ? '#f97316' : '#64748b';
+      var label = d.status === 'available' ? 'Ledig' : d.status === 'busy' ? 'På uppdrag' : 'Paus';
+      h += '<div class="dcard">' +
+        '<div class="davatar">' + d.name.charAt(0) + '</div>' +
+        '<div style="flex:1"><div style="font-weight:700">' + d.name + '</div>' +
+        '<div style="font-size:12px;color:#64748b">' + (d.plate || '') + ' · ' + (d.taxi_nr || '') + '</div></div>' +
+        '<span style="font-size:12px;font-weight:700;color:' + color + '">' + label + '</span>' +
+        '</div>';
+    });
+  }
+  h += '</div>';
+  return h;
+}
+
+// ── TAB 1: DRIVERS ──
+function tabDrivers() {
+  var h = '<div class="page">' +
+    '<div class="stitle">Mina förare (' + myDrivers.length + ')</div>';
+  if (!myDrivers.length) {
+    h += '<div class="empty">🚖<br>Inga förare kopplade till ditt åkeri</div>';
+  }
+  myDrivers.forEach(function(d) {
+    var online = d.status !== 'offline';
+    var stColor = d.status === 'available' ? '#22c55e' : d.status === 'busy' ? '#f97316' : d.status === 'paused' ? '#d97706' : '#94a3b8';
+    var stLabel = d.status === 'available' ? 'Ledig' : d.status === 'busy' ? 'På uppdrag' : d.status === 'paused' ? 'Paus' : 'Offline';
+    h += '<div class="dcard">' +
+      '<div class="davatar">' + d.name.charAt(0) + '</div>' +
+      '<div style="flex:1">' +
+      '<div style="font-weight:700">' + d.name + '</div>' +
+      '<div style="font-size:12px;color:#64748b;margin-top:2px">' + (d.plate || '') + (d.taxi_nr ? ' · ' + d.taxi_nr : '') + '</div>' +
+      '<div style="font-size:11px;color:#94a3b8;margin-top:2px">Leg: ' + (d.taxi_license || '—') + '</div>' +
+      '</div>' +
+      '<div style="text-align:right">' +
+      '<span style="font-size:12px;font-weight:700;color:' + stColor + '">' + stLabel + '</span>' +
+      '<div style="font-size:11px;color:#64748b;margin-top:4px">' + (d.trips_today || 0) + ' resor idag</div>' +
+      '<div style="font-size:11px;font-weight:700;color:#15803d">' + (d.earnings_today || 0) + ' kr</div>' +
+      '</div></div>';
+  });
+  h += '</div>';
+  return h;
+}
+
+// ── TAB 2: BOOKINGS ──
+function tabBookings() {
+  var today = new Date().toISOString().split('T')[0];
+  var sorted = myBookings.slice().sort(function(a, b) { return new Date(b.created_at) - new Date(a.created_at); });
+  var h = '<div class="page">' +
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">' +
+    '<div class="stitle" style="margin-bottom:0">Bokningar (' + sorted.length + ')</div>' +
+    '<button class="btn btn-sm btnG" onclick="exportCSV()">⬇ CSV</button>' +
+    '</div>';
+  if (!sorted.length) {
+    h += '<div class="empty">📋<br>Inga bokningar ännu</div>';
+  }
+  sorted.forEach(function(b) {
+    var cls = b.status === 'pending' ? 'b-pend' : b.status === 'assigned' ? 'b-assi' : b.status === 'completed' ? 'b-comp' : '';
+    var stBadge = b.status === 'completed' ? '<span class="badge bc">Avslutad</span>' :
+                  b.status === 'assigned' ? '<span class="badge" style="background:#dbeafe;color:#1a56db">Pågående</span>' :
+                  b.status === 'pending' ? '<span class="badge bp">Väntar</span>' :
+                  '<span class="badge bg">Avbokad</span>';
+    h += '<div class="bcard ' + cls + '">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">' +
+      '<span style="font-weight:700;color:#1a56db">' + b.booking_ref + '</span>' +
+      stBadge +
+      '</div>' +
+      '<div style="font-size:12px;color:#64748b">👤 ' + (b.customer_name || '') + ' · ' + (b.driver_name || 'Ej tilldelad') + '</div>' +
+      '<div style="font-size:12px;color:#64748b;margin-top:2px">📍 ' + (b.from_address || '') + '</div>' +
+      '<div style="font-size:12px;color:#64748b">🏁 ' + (b.to_address || '') + '</div>' +
+      '<div style="display:flex;justify-content:space-between;margin-top:6px">' +
+      '<span style="font-size:11px;color:#94a3b8">' + new Date(b.created_at).toLocaleString('sv-SE', { dateStyle:'short', timeStyle:'short' }) + '</span>' +
+      '<span style="font-size:13px;font-weight:800;color:#15803d">' + (b.fare_sek || 0) + ' kr</span>' +
+      '</div></div>';
+  });
+  h += '</div>';
+  return h;
+}
+
+// ── TAB 3: CARS ──
+function tabCars() {
+  var h = '<div class="page">' +
+    '<div class="stitle">Fordon (' + myCars.length + ')</div>';
+  if (!myCars.length) {
+    h += '<div class="empty">🚗<br>Inga fordon registrerade för ditt åkeri</div>';
+  }
+  myCars.forEach(function(c) {
+    var stColor = c.status === 'available' ? '#22c55e' : c.status === 'busy' ? '#f97316' : '#94a3b8';
+    var stLabel = c.status === 'available' ? 'Ledig' : c.status === 'busy' ? 'På uppdrag' : 'Offline';
+    h += '<div class="card">' +
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
+      '<div>' +
+      '<div style="font-size:16px;font-weight:800">' + (c.plate || '') + '</div>' +
+      '<div style="font-size:12px;color:#64748b;margin-top:2px">' + (c.model || '') + (c.year ? ' · ' + c.year : '') + (c.color ? ' · ' + c.color : '') + '</div>' +
+      (c.taxi_nr ? '<div style="font-size:12px;color:#64748b">Taxinr: ' + c.taxi_nr + '</div>' : '') +
+      '</div>' +
+      '<span style="font-size:12px;font-weight:700;color:' + stColor + '">' + stLabel + '</span>' +
+      '</div>' +
+      (c.current_driver_name ? '<div style="font-size:12px;color:#1a56db;margin-top:6px;font-weight:600">🚖 ' + c.current_driver_name + '</div>' : '') +
+      '</div>';
+  });
+  h += '</div>';
+  return h;
+}
+
+// ── TAB 4: ECONOMY ──
+function tabEconomy() {
+  var completed = myBookings.filter(function(b) { return b.status === 'completed'; });
+  var total = completed.reduce(function(s, b) { return s + (b.fare_sek || 0); }, 0);
+  var vat = Math.round(total / 1.25 * 0.25);
+  var net = Math.round(total / 1.25);
+  var payout = Math.round(net * 0.8); // 80% to åkeri
+
+  var today = new Date().toDateString();
+  var todayBooks = completed.filter(function(b) { return new Date(b.created_at).toDateString() === today; });
+  var todayRev = todayBooks.reduce(function(s, b) { return s + (b.fare_sek || 0); }, 0);
+
+  var h = '<div class="page">' +
+    '<div class="stitle">Totalt (alla bokningar)</div>' +
+    '<div class="stats">' +
+    sc(total + ' kr', 'Brutto', '#15803d') +
+    sc(vat + ' kr', 'Moms 25%', '#7c3aed') +
+    sc(net + ' kr', 'Netto', '#d97706') +
+    '</div>' +
+    '<div class="card">' +
+    '<div class="stitle">Idag</div>' +
+    '<div class="row"><span>Avslutade resor</span><strong>' + todayBooks.length + ' st</strong></div>' +
+    '<div class="row"><span>Bruttointäkt</span><strong style="color:#15803d">' + todayRev + ' kr</strong></div>' +
+    '<div class="row"><span>Moms (25%)</span><span style="color:#dc2626">- ' + Math.round(todayRev / 1.25 * 0.25) + ' kr</span></div>' +
+    '<div class="row"><span>Netto</span><strong>' + Math.round(todayRev / 1.25) + ' kr</strong></div>' +
+    '</div>' +
+    '<div class="card">' +
+    '<div class="stitle">Förarstatistik</div>';
+
+  myDrivers.forEach(function(d) {
+    var dBooks = completed.filter(function(b) { return b.driver_id === d.id; });
+    var dRev = dBooks.reduce(function(s, b) { return s + (b.fare_sek || 0); }, 0);
+    h += '<div class="row">' +
+      '<div><div style="font-weight:600">' + d.name + '</div>' +
+      '<div style="font-size:11px;color:#94a3b8">' + dBooks.length + ' resor</div></div>' +
+      '<strong style="color:#15803d">' + dRev + ' kr</strong>' +
+      '</div>';
+  });
+  if (!myDrivers.length) h += '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:20px">Inga förare</div>';
+  h += '</div>' +
+    '<button class="btn btnP" onclick="exportCSV()" style="width:100%">⬇ Exportera CSV</button>' +
+    '</div>';
+  return h;
+}
+
+function sc(val, lbl, color) {
+  return '<div class="scard"><div class="sval" style="color:' + color + '">' + val + '</div><div class="slbl">' + lbl + '</div></div>';
+}
+
+function exportCSV() {
+  if (!myBookings.length) { showToast('Inga bokningar att exportera'); return; }
+  var headers = ['Ref','Kund','Förare','Från','Till','Belopp','Betalning','Status','Datum'];
+  var rows = myBookings.map(function(b) {
+    return [b.booking_ref, b.customer_name, b.driver_name || '', b.from_address || '', b.to_address || '',
+      b.fare_sek || 0, b.payment_method || '', b.status, new Date(b.created_at).toLocaleString('sv-SE')];
+  });
+  var csv = [headers].concat(rows).map(function(r) {
+    return r.map(function(v) { return '"' + String(v).replace(/"/g, '""') + '"'; }).join(',');
+  }).join('\n');
+  var blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a'); a.href = url;
+  a.download = 'akeri-bokningar-' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('✅ CSV nedladdad');
+}
+
+// ── LIVE MAP ──
+var akeriMapInstance = null;
+var akeriMarkers = {};
+
+function tabMap() {
+  var online = myDrivers.filter(function(d) { return d.status !== 'offline'; });
+  var driverPills = '';
+  online.forEach(function(d) {
+    var color = d.status === 'available' ? '#22c55e' : d.status === 'busy' ? '#f97316' : '#64748b';
+    var hasGps = d.lat && d.lng;
+    driverPills += '<span style="display:inline-flex;align-items:center;gap:5px;background:#f8fafc;border-radius:20px;padding:4px 10px;margin-right:6px;font-size:12px;font-weight:600;flex-shrink:0">' +
+      '<span style="width:8px;height:8px;border-radius:50%;background:' + color + ';flex-shrink:0"></span>' +
+      d.name.split(' ')[0] + ' ' + (d.plate || '') +
+      (hasGps ? ' 📍' : '<span style="color:#dc2626"> ⚠️</span>') +
+      '</span>';
+  });
+  return '<div style="height:calc(100vh - 100px);display:flex;flex-direction:column">' +
+    '<div id="akeriMap" style="flex:1;width:100%;background:#e2e8f0;min-height:300px"></div>' +
+    '<div style="background:white;padding:10px 14px;border-top:1px solid #e2e8f0;overflow-x:auto;white-space:nowrap;flex-shrink:0">' +
+    '<span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px">' + online.length + ' ONLINE &nbsp;</span>' +
+    driverPills +
+    '<button onclick="refreshMap()" style="margin-left:10px;background:#0d1b3e;color:#fbbf24;border:none;border-radius:8px;padding:4px 12px;font-size:11px;font-weight:700;cursor:pointer">🔄 Uppdatera</button>' +
+    '</div></div>';
+}
+
+function initAkeriMap() {
+  if (!document.getElementById('akeriMap')) { setTimeout(initAkeriMap, 100); return; }
+  if (!window.L) {
+    if (!document.querySelector('link[href*="leaflet"]')) {
+      var link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(link);
+    }
+    if (!document.querySelector('script[src*="leaflet"]')) {
+      var script = document.createElement('script');
+      script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+      script.onload = function() { buildAkeriMap(); };
+      document.head.appendChild(script);
+    } else {
+      setTimeout(function() { if (window.L) buildAkeriMap(); else initAkeriMap(); }, 300);
+    }
+  } else {
+    buildAkeriMap();
+  }
+}
+
+function buildAkeriMap() {
+  if (akeriMapInstance) { akeriMapInstance.remove(); akeriMapInstance = null; akeriMarkers = {}; }
+  var map = L.map('akeriMap', { zoomControl: true }).setView([58.2835, 12.2887], 13);
+  akeriMapInstance = map;
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+    maxZoom: 19
+  }).addTo(map);
+
+  var driversWithGps = myDrivers.filter(function(d) { return d.lat && d.lng; });
+
+  if (!driversWithGps.length) {
+    L.popup().setLatLng([58.2835, 12.2887])
+      .setContent('<b>Inga GPS-positioner ännu</b><br><small>Förarna behöver aktivera GPS i sin app</small>')
+      .openOn(map);
+    return;
+  }
+
+  var bounds = [];
+  driversWithGps.forEach(function(d) {
+    var lat = parseFloat(d.lat), lng = parseFloat(d.lng);
+    var color = d.status === 'available' ? '#22c55e' : d.status === 'busy' ? '#f97316' : '#64748b';
+    var statusTxt = d.status === 'available' ? '🟢 Ledig' : d.status === 'busy' ? '🟠 På uppdrag' : '⚫ Offline';
+    var icon = L.divIcon({
+      html: '<div style="background:' + color + ';color:white;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3)">🚖</div>',
+      className: '', iconSize: [36, 36], iconAnchor: [18, 18], popupAnchor: [0, -22]
+    });
+    var marker = L.marker([lat, lng], { icon: icon }).addTo(map);
+    marker.bindPopup(
+      '<div style="font-size:13px;min-width:140px">' +
+      '<strong>' + d.name + '</strong><br>' +
+      '<span style="color:#64748b">' + (d.plate || '') + (d.taxi_nr ? ' · ' + d.taxi_nr : '') + '</span><br>' +
+      statusTxt + '<br>' +
+      '<span style="font-size:11px;color:#94a3b8">Uppdaterad: ' + new Date().toLocaleTimeString('sv-SE') + '</span>' +
+      '</div>'
+    );
+    // Name label
+    L.marker([lat, lng], {
+      icon: L.divIcon({
+        html: '<div style="font-size:11px;font-weight:700;color:#0d1b3e;white-space:nowrap;margin-top:2px;text-shadow:0 1px 2px white">' + d.name.split(' ')[0] + '</div>',
+        className: '', iconSize: [60, 16], iconAnchor: [30, -18]
+      }), interactive: false
+    }).addTo(map);
+    akeriMarkers[d.id] = marker;
+    bounds.push([lat, lng]);
+  });
+
+  if (bounds.length > 1) map.fitBounds(bounds, { padding: [40, 40] });
+  else if (bounds.length === 1) map.setView(bounds[0], 15);
+}
+
+async function refreshMap() {
+  await loadAllData();
+  if (akeriMapInstance) { buildAkeriMap(); }
+}
+
+</script>
+</body>
+</html>
