@@ -627,6 +627,14 @@ function connectSocket(){
         showTab(0);
       }
     });
+    socket.on('message:new', function(data) {
+      if (data && data.thread_key && driver && data.thread_key.indexOf('driver-'+driver.id) >= 0) {
+        if (data.sender_role !== 'driver') {
+          playChatSound();
+          showToast('💬 Nytt meddelande från Central', '#1a56db');
+        }
+      }
+    });
     socket.on('driver:unblocked',()=>{
       driverStatus='available';updateStatusBadge();
       localStorage.removeItem('thtcab_block_until');
@@ -655,11 +663,11 @@ function showPopup(booking){
   if(popupEl){
     popupEl.innerHTML=
       '<div style="margin-bottom:8px">'+
-      '<button onclick="navTo('+JSON.stringify(booking.from_address||'')+',\'Upphämtning\')" style="width:100%;background:#dcfce7;color:#15803d;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px">'+
+      '<button onclick="navToEl(this)" data-addr="'+encodeURIComponent(booking.from_address||'')+'" style="width:100%;background:#dcfce7;color:#15803d;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px">'+
       '<span style="font-size:18px">📍</span><div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Upphämtning — tryck för navigation</div>'+
       '<div>'+(booking.from_address||'Okänd adress')+'</div></div></button></div>'+
       '<div>'+
-      '<button onclick="navTo('+JSON.stringify(booking.to_address||'')+',\'Avlämning\')" style="width:100%;background:#dbeafe;color:#1a56db;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px">'+
+      '<button onclick="navToEl(this)" data-addr="'+encodeURIComponent(booking.to_address||'')+'" style="width:100%;background:#dbeafe;color:#1a56db;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px">'+
       '<span style="font-size:18px">🏁</span><div><div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Avlämning — tryck för navigation</div>'+
       '<div>'+(booking.to_address||'Okänd adress')+'</div></div></button></div>';
   }
@@ -884,11 +892,12 @@ function tabHome(){
         '📞<br><span style="font-size:11px">'+(activeBooking.customer_phone||'')+'</span></div></a>':'')+
       '</div></div>'+
 
-      // ── NAVIGATION ──
+      
+// ── NAVIGATION ──
       '<div style="margin-bottom:12px">'+
-      '<button onclick="navTo('+JSON.stringify(activeBooking.from_address||'')+')" style="width:100%;background:#dcfce7;color:#15803d;border:none;border-radius:10px;padding:12px 14px;font-size:13px;font-weight:700;cursor:pointer;text-align:left;margin-bottom:6px;display:flex;align-items:center;gap:10px">'+
+      '<button onclick="navToEl(this)" data-addr="'+encodeURIComponent(activeBooking.from_address||'')+'" style="width:100%;background:#dcfce7;color:#15803d;border:none;border-radius:10px;padding:12px 14px;font-size:13px;font-weight:700;cursor:pointer;text-align:left;margin-bottom:6px;display:flex;align-items:center;gap:10px">'+
       '<span style="font-size:20px">📍</span><div><div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;opacity:.7">Navigera till upphämtning</div>'+activeBooking.from_address+'</div></button>'+
-      '<button onclick="navTo('+JSON.stringify(activeBooking.to_address||'')+')" style="width:100%;background:#dbeafe;color:#1a56db;border:none;border-radius:10px;padding:12px 14px;font-size:13px;font-weight:700;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px">'+
+      '<button onclick="navToEl(this)" data-addr="'+encodeURIComponent(activeBooking.to_address||'')+'" style="width:100%;background:#dbeafe;color:#1a56db;border:none;border-radius:10px;padding:12px 14px;font-size:13px;font-weight:700;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px">'+
       '<span style="font-size:20px">🏁</span><div><div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;opacity:.7">Navigera till avlämning</div>'+activeBooking.to_address+'</div></button></div>'+
 
       // ── TRIP PHASE BUTTONS ──
@@ -1181,7 +1190,53 @@ if(isIOSD&&!isStandaloneD&&!localStorage.getItem('drvBannerDismissed')){
   setTimeout(function(){document.getElementById('iosBannerD').style.display='flex';},3000);
 }
 
+
+// ── CHAT SOUND NOTIFICATION ──
+function playChatSound() {
+  try {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // Two-tone chime
+    [880, 1100].forEach(function(freq, i) {
+      var o = ctx.createOscillator();
+      var g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = freq;
+      o.type = 'sine';
+      g.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.15);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.3);
+      o.start(ctx.currentTime + i * 0.15);
+      o.stop(ctx.currentTime + i * 0.15 + 0.3);
+    });
+    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+  } catch(e) {}
+}
+
 // ── NAVIGATION ──
+function navToEl(el) {
+  var addr = decodeURIComponent(el.dataset.addr || '');
+  if (addr) navTo(addr);
+}
+
+// ── CHAT SOUND NOTIFICATION ──
+function playChatSound() {
+  try {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // Two-tone chime
+    [880, 1100].forEach(function(freq, i) {
+      var o = ctx.createOscillator();
+      var g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = freq;
+      o.type = 'sine';
+      g.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.15);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.15 + 0.3);
+      o.start(ctx.currentTime + i * 0.15);
+      o.stop(ctx.currentTime + i * 0.15 + 0.3);
+    });
+    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+  } catch(e) {}
+}
+
 function navTo(address, label) {
   if (!address) return;
   var encoded = encodeURIComponent(address);
