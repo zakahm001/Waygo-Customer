@@ -618,13 +618,22 @@ function connectSocket(){
       }
     });
     socket.on('booking:cancelled',(data)=>{
-      if(activeBooking&&activeBooking.id===data.id){
+      var bookingId = data.id || data.booking_id;
+      if(activeBooking && activeBooking.id === bookingId){
         activeBooking=null;
+        tripPhase='driving';
         localStorage.removeItem('thtcab_active_booking');
+        localStorage.removeItem('thtcab_trip_phase');
         driverStatus='available';updateStatusBadge();
         if(socket)socket.emit('driver:status',{driverId:parseInt(driver.id),status:'available'});
-        showToast('⚠️ Bokning avbokad av kund eller central','#d97706','white');
+        showToast('⚠️ Bokning omtilldelad av central','#d97706');
         showTab(0);
+      }
+      // Also clear from pending popups
+      if(pendingBooking && (pendingBooking.id===bookingId || pendingBooking.id===data.booking_id)){
+        pendingBooking=null;
+        var popup=document.getElementById('bookingPopup');
+        if(popup)popup.style.display='none';
       }
     });
     socket.on('message:new', function(data) {
