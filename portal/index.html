@@ -317,10 +317,10 @@ function navTo(i) {
   closeSidebar();
 }
 
-function renderTab(i) {
+function renderTab(i, extra) {
   var m = document.getElementById('main');
   if (i === 0) m.innerHTML = tabDashboard();
-  else if (i === 1) m.innerHTML = tabDrivers();
+  else if (i === 1) m.innerHTML = tabDrivers(extra);
   else if (i === 2) m.innerHTML = tabBookings();
   else if (i === 3) m.innerHTML = tabCars();
   else if (i === 4) m.innerHTML = tabEconomy();
@@ -458,13 +458,34 @@ function tabDashboard() {
 }
 
 // ── TAB 1: DRIVERS ──
-function tabDrivers() {
-  var h = '<div class="page">' +
-    '<div class="stitle">Mina förare (' + myDrivers.length + ')</div>';
-  if (!myDrivers.length) {
-    h += '<div class="empty">🚖<br>Inga förare kopplade till ditt åkeri</div>';
+function tabDrivers(filter) {
+  filter = filter || 'all';
+  var filters = [
+    {key:'all',      label:'Alla',          color:'#0d1b3e', bg:'#e2e8f0'},
+    {key:'available',label:'🟢 Ledig',      color:'#15803d', bg:'#dcfce7'},
+    {key:'busy',     label:'🟠 På uppdrag', color:'#d97706', bg:'#fef3c7'},
+    {key:'paused',   label:'🟡 Paus',       color:'#d97706', bg:'#fef3c7'},
+    {key:'offline',  label:'⚫ Offline',    color:'#64748b', bg:'#f1f5f9'},
+  ];
+  var filtered = myDrivers.filter(function(d) {
+    return filter === 'all' || d.status === filter;
+  });
+
+  var h = '<div class="page">';
+  // Filter buttons
+  h += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">';
+  filters.forEach(function(f) {
+    var active = filter === f.key;
+    var count = f.key === 'all' ? myDrivers.length : myDrivers.filter(function(d){ return d.status===f.key; }).length;
+    h += '<button onclick="renderTab(1,\''+f.key+'\')" style="padding:7px 14px;border-radius:20px;border:2px solid '+(active?f.color:'#e2e8f0')+';background:'+(active?f.bg:'white')+';color:'+(active?f.color:'#64748b')+';font-size:12px;font-weight:'+(active?'700':'500')+';cursor:pointer">'+
+      f.label+' <strong>'+count+'</strong></button>';
+  });
+  h += '</div>';
+  h += '<div class="stitle">Mina förare (' + filtered.length + ')</div>';
+  if (!filtered.length) {
+    h += '<div class="empty">🚖<br>Inga förare med denna status</div>';
   }
-  myDrivers.forEach(function(d) {
+  filtered.forEach(function(d) {
     var online = d.status !== 'offline';
     var stColor = d.status === 'available' ? '#22c55e' : d.status === 'busy' ? '#f97316' : d.status === 'paused' ? '#d97706' : '#94a3b8';
     var stLabel = d.status === 'available' ? 'Ledig' : d.status === 'busy' ? 'På uppdrag' : d.status === 'paused' ? 'Paus' : 'Offline';
