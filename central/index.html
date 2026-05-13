@@ -509,14 +509,14 @@ function connectSocket(){
   }catch(e){console.log('Socket error:',e);}
 }
 
-function showTab(i){
+function showTab(i,extra){
   try{
     curTab=i;
     document.querySelectorAll('.tab').forEach(function(t){var n=parseInt((t.id||'').replace('tab',''));t.classList.toggle('on',n===i);});
     var m=document.getElementById('main');if(!m)return;
     if(i===0)m.innerHTML=tabBookings();
     else if(i===1){m.innerHTML=tabMap();setTimeout(initMapTab,50);}
-    else if(i===2)m.innerHTML=tabDrivers();
+    else if(i===2)m.innerHTML=tabDrivers(extra);
     else if(i===3)m.innerHTML=tabCustomers();
     else if(i===4)m.innerHTML=tabChat();
     else if(i===5)m.innerHTML=tabStaff();
@@ -723,9 +723,39 @@ function updateMarker(id,lat,lng){
 }
 
 // ── DRIVERS ──
-function tabDrivers(){
+function tabDrivers(filter){
+  filter = filter || 'all';
   var canManage=staffUser&&staffUser.level<=2;
   var h='<div class="page">';
+
+  // ── FILTER BAR ──
+  var filters=[
+    {key:'all',    label:'Alla',        color:'#0d1b3e', bg:'#e2e8f0'},
+    {key:'available', label:'🟢 Ledig', color:'#15803d', bg:'#dcfce7'},
+    {key:'busy',   label:'🟠 På uppdrag',color:'#d97706',bg:'#fef3c7'},
+    {key:'paused', label:'🟡 Paus',     color:'#d97706', bg:'#fef3c7'},
+    {key:'offline',label:'⚫ Offline',  color:'#64748b', bg:'#f1f5f9'},
+    {key:'blocked',label:'🔴 Blockerad',color:'#dc2626', bg:'#fee2e2'},
+  ];
+  h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;padding:4px 0">';
+  filters.forEach(function(f){
+    var active = filter===f.key;
+    var count = f.key==='all' ? allDrivers.length :
+                f.key==='blocked' ? allDrivers.filter(function(d){return d.blocked;}).length :
+                allDrivers.filter(function(d){return d.status===f.key&&!d.blocked;}).length;
+    h+='<button onclick="showTab(2,\''+f.key+'\')" style="padding:7px 14px;border-radius:20px;border:2px solid '+(active?f.color:'#e2e8f0')+';background:'+(active?f.bg:'white')+';color:'+(active?f.color:'#64748b')+';font-size:12px;font-weight:'+(active?'700':'500')+';cursor:pointer">'+
+      f.label+' <span style="font-weight:800">'+count+'</span></button>';
+  });
+  h+='</div>';
+
+  // ── FILTER DRIVERS ──
+  var filtered = allDrivers.filter(function(d){
+    if(filter==='all') return true;
+    if(filter==='blocked') return d.blocked;
+    if(filter==='offline') return d.status==='offline'&&!d.blocked;
+    return d.status===filter&&!d.blocked;
+  });
+
   if(canManage){
     h+='<div class="card"><div class="stitle">➕ Lägg till ny förare</div>'+
       '<input class="finput" id="dnName" placeholder="Fullständigt namn *"/>'+
@@ -740,8 +770,8 @@ function tabDrivers(){
       '<div class="ib ib-r" id="dnErr" style="display:none"></div>'+
       '<button class="btn btnP" id="addDrvBtn" onclick="addDriver()">Lägg till förare →</button></div>';
   }
-  h+='<div class="stitle">Alla förare ('+allDrivers.length+')</div>';
-  allDrivers.forEach(function(d){
+  h+='<div class="stitle">'+(filter==='all'?'Alla förare':'Filtrerat')+' ('+filtered.length+')</div>';
+  filtered.forEach(function(d){
     var isBlocked=d.blocked;
     var isSusp=d.suspended_until&&new Date(d.suspended_until)>new Date();
     var isOwner=d.is_owner;
