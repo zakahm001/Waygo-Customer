@@ -236,6 +236,34 @@ var driverPositions = {};
 function closeMod(id){try{document.getElementById(id).classList.remove('open');}catch(e){}}
 function closeMIfOut(e,id){if(e.target===document.getElementById(id))closeMod(id);}
 
+
+// ── CHAT SOUND ──
+var chatUnread = 0;
+function playChatAlert() {
+  try {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [880, 1100].forEach(function(freq, i) {
+      var o = ctx.createOscillator();
+      var g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = freq;
+      o.type = 'sine';
+      g.gain.setValueAtTime(0.25, ctx.currentTime + i*0.15);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i*0.15 + 0.3);
+      o.start(ctx.currentTime + i*0.15);
+      o.stop(ctx.currentTime + i*0.15 + 0.3);
+    });
+  } catch(e) {}
+}
+
+function updateChatBadge(count) {
+  chatUnread = count;
+  var badge = document.getElementById('navBadge4');
+  if (!badge) return;
+  if (count > 0) { badge.textContent = count; badge.style.display = ''; }
+  else { badge.style.display = 'none'; }
+}
+
 function playDeclineAlert(){
   try{
     const ctx=new(window.AudioContext||window.webkitAudioContext)();
@@ -424,7 +452,15 @@ function connectSocket(){
     });
 
     // Auto-dispatch status updates
-    socket.on('dispatch:status',function(data){
+    socket.on('message:new', function(data) {
+    if (data && data.sender_role !== 'staff') {
+      playChatAlert();
+      chatUnread++;
+      updateChatBadge(chatUnread);
+      showToast('💬 ' + (data.sender_name||'Förare') + ': ' + (data.content||'').substring(0,40));
+    }
+  });
+  socket.on('dispatch:status',function(data){
       // Update or create dispatch status banner for this booking
       var key='dispatch-'+data.booking_id;
       var existing=document.getElementById(key);
@@ -440,7 +476,15 @@ function connectSocket(){
         else{container.insertAdjacentHTML('afterbegin',html);}
       }
       // Play sound on failure
-      if(data.status==='failed'){playDeclineAlert();}
+      if(data.status==='failed'){
+      playDeclineAlert();
+      if(data.is_two_car){
+        showToast('⚠️ 2-bil bokning behöver manuell tilldelning! '+data.booking_ref,'#dc2626');
+        // Flash booking tab
+        var t0=document.getElementById('tab0');
+        if(t0){t0.style.background='#fee2e2';setTimeout(function(){t0.style.background='';},3000);}
+      }
+    }
       if(curTab===0)showTab(0);
     });
     socket.on('dispatch:failed',function(data){
@@ -525,6 +569,7 @@ function bcard(b){
   }else if(b.status==='assigned'){
     actions='<button class="btn btnB btn-sm" onclick="openChat(\'central-driver-'+b.driver_id+'\',\'Förare: '+(b.driver_name||'')+'\')">💬 Förare</button>'+
       '<button class="btn btnT btn-sm" onclick="openChat(\'customer-central-'+b.id+'\',\'Kund: '+b.customer_name+'\')">💬 Kund</button>'+
+      (staffUser&&staffUser.level<=2?'<button class="btn btnY btn-sm" onclick="openReassignById('+b.id+')">🔄 Tilldela om</button>':'')+
       '<button class="btn btnD btn-sm" onclick="openCancel('+b.id+',\''+b.booking_ref+'\')">Avboka</button>';
   }else if(b.status==='completed'){
     actions='<button class="btn btnG btn-sm" onclick="showToast(\'📄 '+b.booking_ref+' · '+(b.fare_sek||0)+' kr\')">📄 Kvitto</button>';
@@ -1519,6 +1564,64 @@ if(isIOSC && !isStandaloneC && !localStorage.getItem('cntBannerDismissed')) {
 
 // sidebar removed - using tab bar
 
+// ── REASSIGN BOOKING ──
+var reassignBookingId = null;
+
+function openReassignById(bookingId) {
+  var b = allBookings.find(function(x){ return x.id === bookingId; });
+  openReassign(bookingId, b ? b.booking_ref : '', b ? (b.driver_name||'') : '');
+}
+
+function openReassign(bookingId, ref, currentDriver) {
+  reassignBookingId = bookingId;
+  document.getElementById('reassignRef').textContent = ref;
+  document.getElementById('reassignErr').style.display = 'none';
+  var list = document.getElementById('reassignList');
+  var availDrivers = allDrivers.filter(function(d) {
+    return d.status !== 'offline' && d.name !== currentDriver;
+  });
+  if (!availDrivers.length) {
+    list.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8">Inga tillgängliga förare</div>';
+  } else {
+    list.innerHTML = availDrivers.map(function(d) {
+      var stColor = d.status === 'available' ? '#22c55e' : '#f97316';
+      var stLabel = d.status === 'available' ? 'Ledig' : 'På uppdrag';
+      return '<div class="dcard" style="cursor:pointer;margin-bottom:8px;align-items:center" onclick="doReassign('+d.id+')">'+
+        '<div class="davatar">'+d.name.charAt(0)+'</div>'+
+        '<div style="flex:1"><div style="font-weight:700">'+d.name+'</div>'+
+        '<div style="font-size:12px;color:#64748b">'+d.plate+(d.taxi_nr?' · '+d.taxi_nr:'')+'</div></div>'+
+        '<span style="font-size:12px;font-weight:700;color:'+stColor+'">'+stLabel+'</span>'+
+        '</div>';
+    }).join('');
+  }
+  document.getElementById('reassignMod').classList.add('open');
+}
+
+async function doReassign(newDriverId) {
+  var err = document.getElementById('reassignErr');
+  err.style.display = 'none';
+  try {
+    var res = await fetch(API + '/bookings/' + reassignBookingId + '/reassign', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + staffToken },
+      body: JSON.stringify({ new_driver_id: newDriverId })
+    });
+    var data = await res.json();
+    if (data.ok || data.booking) {
+      showToast('✅ Bokning omtilldelad', '#15803d');
+      closeMod('reassignMod');
+      await loadData();
+      showTab(curTab);
+    } else {
+      err.textContent = data.error || 'Fel vid omtilldelning';
+      err.style.display = '';
+    }
+  } catch(e) {
+    err.textContent = 'Nätverksfel';
+    err.style.display = '';
+  }
+}
+
 </script>
 
 <div id="iosBannerC" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#0d1b3e;color:white;padding:14px 16px;z-index:999;align-items:center;gap:12px;box-shadow:0 -4px 20px rgba(0,0,0,.3)">
@@ -1532,5 +1635,17 @@ if(isIOSC && !isStandaloneC && !localStorage.getItem('cntBannerDismissed')) {
   <button onclick="installAppC()" style="background:#fbbf24;color:#0d1b3e;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0">Installera</button>
   <button onclick="document.getElementById('installBannerC').style.display='none'" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer">✕</button>
 </div>
+
+<!-- REASSIGN MODAL -->
+<div class="moverlay" id="reassignMod">
+  <div class="mbox">
+    <div class="mtitle">🔄 Tilldela om bokning <span id="reassignRef" style="color:#1a56db"></span></div>
+    <div style="font-size:13px;color:#64748b;margin-bottom:12px">Välj den förare du vill tilldela bokningen till:</div>
+    <div id="reassignList" style="max-height:300px;overflow-y:auto"></div>
+    <div class="ib ib-r" id="reassignErr" style="display:none;margin-top:10px"></div>
+    <button class="btn btnG" style="width:100%;margin-top:12px" onclick="closeMod('reassignMod')">Avbryt</button>
+  </div>
+</div>
+
 </body>
 </html>
