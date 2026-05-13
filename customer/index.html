@@ -681,8 +681,9 @@ function tabBook(){
     '<div class="fareamt" id="fareAmt">— kr</div>'+
     '<div id="fareDetail" style="display:none;font-size:11px;color:#94a3b8;margin-top:2px"></div>'+
     '</div>'+
-    (!customer?'<div class="ib ib-b" style="margin-bottom:14px">ℹ️ '+(lang==='sv'?'Logga in för att slutföra bokningen.':'Log in to complete your booking.')+'</div>':'')+
-    '<button class="btn btn-primary" id="bookBtn" onclick="tryBook()">'+(customer?t('bookbtn'):t('contbtn'))+'</button>'+
+    '<button class="btn btn-primary" id="bookBtn" onclick="tryBook()">'+t('bookbtn')+'</button>'+
+    (!customer?'<div style="text-align:center;margin-top:10px;font-size:12px;color:#94a3b8">'+(lang==="sv"?'Har du ett konto? ':'Have an account? ')+'<span style="color:#1a56db;cursor:pointer;text-decoration:underline" onclick="openAuth(null)">Logga in</span></div>':'')+
+    '<!--bookExtras-->'+
     '</div>'+
     '<div style="text-align:center;padding:16px;font-size:12px;color:#94a3b8">'+
     '<a href="privacy.html" style="color:#1a56db;margin-right:16px">Integritetspolicy</a>'+
@@ -718,7 +719,7 @@ function tryBook(){
   localStorage.removeItem('thtcab_prefill_to');
   const fareEl=document.getElementById('fareAmt');
   const fare=fareEl?(parseInt(fareEl.textContent)||150):150;
-  if(!customer){openAuth({from,to,pay:selPay,fare,pl:selPay==='swish'?t('swish'):selPay==='card'?t('card'):t('invoice'),mode:bookMode,date:preDate,time:preTime});return;}
+  if(!customer){openGuestSheet({from,to,fare,pay:selPay,pl:selPay==='swish'?t('swish'):selPay==='card'?t('card'):t('invoice'),mode:bookMode,date:preDate,time:preTime});return;}
   if(selPay==='invoice'&&!isBiz()){showToast(t('inv_priv'));selPay='swish';showTab(0);return;}
   // 5+ passengers — show choice modal
   if(selPassengers>=5){
@@ -1428,6 +1429,113 @@ function calcFare() {
 }
 
 
+// ── GUEST BOOKING ──
+var guestPending = null;
+
+function openGuestSheet(pending) {
+  guestPending = pending;
+  var ds = pending.mode === 'pre' && pending.date ? '\n📅 ' + pending.date + ' kl. ' + pending.time : '';
+  var el = document.getElementById('guestBookSummary');
+  if (el) el.innerHTML =
+    '<strong>📍 ' + pending.from + '</strong><br>' +
+    '<strong>🏁 ' + pending.to + '</strong><br>' +
+    '💳 ' + pending.pl + ' · <strong>' + pending.fare + ' kr</strong>' + (ds ? '<br>' + ds : '');
+  var err = document.getElementById('guestErr');
+  if (err) err.style.display = 'none';
+  var btn = document.getElementById('guestBookBtn');
+  if (btn) { btn.textContent = 'Bekräfta bokning →'; btn.disabled = false; }
+  document.getElementById('guestModal').style.display = 'flex';
+}
+
+async function confirmGuestBook() {
+  var name = (document.getElementById('guestName').value || '').trim();
+  var phone = (document.getElementById('guestPhone').value || '').trim();
+  var email = (document.getElementById('guestEmail').value || '').trim();
+  var promo = document.getElementById('guestPromo').checked;
+  var err = document.getElementById('guestErr');
+  var btn = document.getElementById('guestBookBtn');
+
+  // Validate
+  if (!name) { err.textContent = 'Ange ditt namn'; err.style.display = ''; return; }
+  if (!phone || phone.length < 7) { err.textContent = 'Ange ett giltigt mobilnummer'; err.style.display = ''; return; }
+  if (!email || !email.includes('@')) { err.textContent = 'Ange en giltig e-postadress'; err.style.display = ''; return; }
+  err.style.display = 'none';
+
+  btn.textContent = '⏳ Bokar...'; btn.disabled = true;
+
+  var p = guestPending;
+  var driverNoteEl = document.getElementById('driverNote');
+  var driverNote = driverNoteEl ? driverNoteEl.value.trim() : '';
+
+  try {
+    var body = {
+      customer_name: name,
+      customer_phone: phone,
+      customer_email: email,
+      guest_promo_accepted: promo,
+      from_address: p.from,
+      to_address: p.to,
+      payment_method: p.pay,
+      fare_sek: p.fare,
+      passengers: selPassengers,
+      child_seat: selChildSeat,
+      driver_note: driverNote || null,
+      booking_type: p.mode === 'pre' ? 'pre' : 'now',
+      is_guest: true
+    };
+    if (p.mode === 'pre' && p.date && p.time) {
+      body.scheduled_at = p.date + 'T' + p.time + ':00';
+    }
+
+    var res = await fetch(API + '/bookings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    var data = await res.json();
+
+    if (data.booking) {
+      document.getElementById('guestModal').style.display = 'none';
+      showToast('✅ Bokning bekräftad! ' + data.booking.booking_ref);
+      // Show confirmation
+      showGuestConfirmation(data.booking, email, phone);
+    } else {
+      err.textContent = data.error || 'Bokning misslyckades — försök igen';
+      err.style.display = '';
+      btn.textContent = 'Bekräfta bokning →'; btn.disabled = false;
+    }
+  } catch(e) {
+    err.textContent = 'Anslutningsfel — kontrollera internet';
+    err.style.display = '';
+    btn.textContent = 'Bekräfta bokning →'; btn.disabled = false;
+  }
+}
+
+function showGuestConfirmation(booking, email, phone) {
+  var m = document.getElementById('main');
+  if (!m) return;
+  m.innerHTML =
+    '<div style="min-height:60vh;display:flex;align-items:center;justify-content:center;padding:20px">' +
+    '<div style="text-align:center;max-width:360px;width:100%">' +
+    '<div style="font-size:64px;margin-bottom:16px">🎉</div>' +
+    '<div style="font-size:22px;font-weight:800;color:#0d1b3e;margin-bottom:8px">Bokning bekräftad!</div>' +
+    '<div style="font-size:28px;font-weight:900;color:#1a56db;margin-bottom:16px;letter-spacing:2px">' + booking.booking_ref + '</div>' +
+    '<div style="background:#f8fafc;border-radius:14px;padding:16px;margin-bottom:16px;text-align:left;font-size:13px;line-height:2">' +
+    '📍 ' + booking.from_address + '<br>' +
+    '🏁 ' + booking.to_address + '<br>' +
+    '💳 ' + (booking.payment_method || '') + ' · ' + booking.fare_sek + ' kr' +
+    '</div>' +
+    '<div style="background:#dcfce7;border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;color:#15803d;font-weight:600">' +
+    '✉️ Bekräftelse skickas till<br>' + email + '<br>' +
+    '📱 SMS till ' + phone +
+    '</div>' +
+    '<div style="font-size:12px;color:#94a3b8;margin-bottom:20px">En förare är på väg. Du får ett SMS när bilen är tilldelad.</div>' +
+    '<button onclick="showTab(0)" style="width:100%;padding:14px;background:#0d1b3e;color:#fbbf24;font-size:14px;font-weight:800;border:none;border-radius:10px;cursor:pointer">Boka ny resa →</button>' +
+    '</div></div>';
+  // Scroll to top
+  window.scrollTo(0, 0);
+}
+
 </script>
 <script async src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
@@ -1451,5 +1559,39 @@ function calcFare() {
   </div>
   <button class="ios-banner-close" onclick="document.getElementById('iosBanner').classList.remove('show');localStorage.setItem('iosBannerDismissed','1')">✕</button>
 </div>
+
+<!-- GUEST CONTACT SHEET -->
+<div class="modal-overlay" id="guestModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;align-items:flex-end;justify-content:center">
+  <div style="background:white;border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto">
+    <div style="font-size:17px;font-weight:800;color:#0d1b3e;margin-bottom:4px">📋 Kontaktuppgifter</div>
+    <div style="font-size:13px;color:#64748b;margin-bottom:16px" id="guestSummary"></div>
+
+    <div style="background:#f8fafc;border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px" id="guestBookSummary"></div>
+
+    <label style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px">Namn *</label>
+    <input id="guestName" style="width:100%;padding:11px 14px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:10px" placeholder="Ditt fullständiga namn"/>
+
+    <label style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px">Mobilnummer *</label>
+    <input id="guestPhone" type="tel" style="width:100%;padding:11px 14px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:10px" placeholder="+46 70 123 45 67"/>
+
+    <label style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;display:block;margin-bottom:4px">E-post * (för bokningsbekräftelse)</label>
+    <input id="guestEmail" type="email" style="width:100%;padding:11px 14px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;font-size:14px;outline:none;box-sizing:border-box;margin-bottom:14px" placeholder="din@email.com"/>
+
+    <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;margin-bottom:16px;font-size:13px;color:#0d1b3e;line-height:1.4">
+      <input type="checkbox" id="guestPromo" style="width:18px;height:18px;margin-top:1px;accent-color:#0d1b3e;flex-shrink:0"/>
+      <span>Ja, jag vill ta emot erbjudanden och kampanjer från Trollhättan Cab via SMS och e-post.</span>
+    </label>
+
+    <div style="background:#fee2e2;color:#dc2626;border-radius:8px;padding:10px 14px;font-size:13px;margin-bottom:12px;display:none" id="guestErr"></div>
+
+    <button onclick="confirmGuestBook()" style="width:100%;padding:14px;background:#0d1b3e;color:#fbbf24;font-size:15px;font-weight:800;border:none;border-radius:10px;cursor:pointer;margin-bottom:8px" id="guestBookBtn">Bekräfta bokning →</button>
+    <button onclick="document.getElementById('guestModal').style.display='none'" style="width:100%;padding:11px;background:#f1f5f9;color:#64748b;font-size:13px;font-weight:700;border:none;border-radius:10px;cursor:pointer">Avbryt</button>
+
+    <div style="text-align:center;margin-top:14px;font-size:12px;color:#94a3b8">
+      Har du ett konto? <span style="color:#1a56db;cursor:pointer;text-decoration:underline" onclick="document.getElementById('guestModal').style.display='none';openAuth(null)">Logga in</span>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
