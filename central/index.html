@@ -105,7 +105,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;ba
   <button class="tab" id="tab1" onclick="showTab(1)">🗺️ Karta</button>
   <button class="tab" id="tab2" onclick="showTab(2)">🚖 Förare</button>
   <button class="tab" id="tab3" onclick="showTab(3)">👤 Kunder</button>
-  <button class="tab" id="tab4" onclick="showTab(4)">💬 Chatt</button>
+  <button class="tab" id="tab4" onclick="showTab(4)">💬 Chatt <span id="navBadge4" style="display:none;background:#dc2626;color:white;border-radius:10px;padding:1px 7px;font-size:10px;font-weight:700"></span></button>
   <button class="tab" id="tab5" onclick="showTab(5)" style="display:none">👥 Personal</button>
   <button class="tab" id="tab6" onclick="showTab(6)">🏢 Företag</button>
   <button class="tab" id="tab7" onclick="showTab(7)">🚗 Fordon</button>
@@ -248,12 +248,32 @@ function closeMod(id){try{document.getElementById(id).classList.remove('open');}
 function closeMIfOut(e,id){if(e.target===document.getElementById(id))closeMod(id);}
 
 
+
+// ── AUDIO CONTEXT UNLOCK ──
+var _sharedAudioCtx = null;
+document.addEventListener('click', function() {
+  if (!_sharedAudioCtx) {
+    try { _sharedAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e) {}
+  } else if (_sharedAudioCtx.state === 'suspended') {
+    _sharedAudioCtx.resume();
+  }
+}, { passive: true });
+
+function getAudioCtx() {
+  if (!_sharedAudioCtx) {
+    try { _sharedAudioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e) { return null; }
+  }
+  if (_sharedAudioCtx.state === 'suspended') _sharedAudioCtx.resume();
+  return _sharedAudioCtx;
+}
+
 // ── CHAT SOUND ──
 var chatUnread = 0;
 function playNewBookingAlert() {
   try {
-    var ctx = new (window.AudioContext || window.webkitAudioContext)();
-    // Urgent triple beep
+    var ctx = getAudioCtx(); if(!ctx)return;
     [523, 659, 784].forEach(function(freq, i) {
       var o = ctx.createOscillator();
       var g = ctx.createGain();
@@ -295,7 +315,7 @@ function updateChatBadge(count) {
 
 function playDeclineAlert(){
   try{
-    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    const ctx=getAudioCtx();if(!ctx)return;
     const beep=(freq,start,dur)=>{
       const osc=ctx.createOscillator();const gain=ctx.createGain();
       osc.connect(gain);gain.connect(ctx.destination);
@@ -599,6 +619,7 @@ function bcard(b){
   }else if(b.status==='assigned'){
     actions='<button class="btn btnB btn-sm" onclick="openChat(\'central-driver-'+b.driver_id+'\',\'Förare: '+(b.driver_name||'')+'\')">💬 Förare</button>'+
       '<button class="btn btnT btn-sm" onclick="openChat(\'customer-central-'+b.id+'\',\'Kund: '+b.customer_name+'\')">💬 Kund</button>'+
+      (b.customer_phone?'<a href="tel:'+b.customer_phone+'" style="text-decoration:none"><button class="btn btn-sm" style="background:#dcfce7;color:#15803d">📞 Ring</button></a>':'')+
       (staffUser&&staffUser.level<=2?'<button class="btn btnY btn-sm" onclick="openReassignById('+b.id+')">🔄 Tilldela om</button>':'')+
       '<button class="btn btnD btn-sm" onclick="openCancel('+b.id+',\''+b.booking_ref+'\')">Avboka</button>';
   }else if(b.status==='completed'){
