@@ -756,13 +756,13 @@ async function bookTwoCars(from,to,fare){
   var modal=document.getElementById('twoCarsModal');
   if(modal)modal.remove();
   showToast('📋 Skapar två bokningar...');
-  // Book car 1
-  await doBook(from,to,fare,false,'Bil 1 av 2');
-  // Book car 2 with slight delay
-  setTimeout(async function(){
-    await doBook(from,to,fare,false,'Bil 2 av 2');
-    showToast('✅ Två bilar bokade!');
-  },500);
+  // Generate shared group ID
+  var groupId = 'GRP-' + Date.now().toString().slice(-6);
+  // Book car 1 first — Car 2 dispatches automatically after Car 1 is accepted
+  await doBook(from,to,fare,false,'Bil 1 av 2',{car_number:1,car_total:2,booking_group:groupId});
+  // Book car 2 — will stay pending until Car 1 accepted
+  await doBook(from,to,fare,true,'Bil 2 av 2',{car_number:2,car_total:2,booking_group:groupId,hold_dispatch:true});
+  showToast('✅ Två bilar bokade! Förare för bil 2 tilldelas när bil 1 bekräftats.');
 }
 
 async function doBook(from,to,fare,silent,note){
@@ -771,7 +771,8 @@ async function doBook(from,to,fare,silent,note){
   try{
     const driverNoteEl=document.getElementById('driverNote');
     const driverNote=driverNoteEl?driverNoteEl.value.trim():'';
-    const body={customer_name:customer.name+(note?' ('+note+')':''),customer_phone:customer.phone,from_address:from,to_address:to,payment_method:selPay,fare_sek:fare,customer_id:customer.id,passengers:selPassengers,child_seat:selChildSeat,child_age:selChildSeat?(document.getElementById('childAge')?document.getElementById('childAge').value.trim():null):null,driver_note:driverNote||null};
+    var extra=arguments[5]||{};
+    const body=Object.assign({customer_name:customer.name+(note?' ('+note+')':''),customer_phone:customer.phone,from_address:from,to_address:to,payment_method:selPay,fare_sek:fare,customer_id:customer.id,passengers:selPassengers,child_seat:selChildSeat,child_age:selChildSeat?(document.getElementById('childAge')?document.getElementById('childAge').value.trim():null):null,driver_note:driverNote||null},extra);
     if(bookMode==='pre'&&preDate&&preTime){body.scheduled_at=preDate+'T'+preTime+':00';body.booking_type='pre';}
     const res=await fetch(API+'/bookings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     const data=await res.json();
