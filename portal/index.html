@@ -181,11 +181,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;ba
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script>
 var API = 'https://api.trollhattancab.com';
 var portalUser = null, portalToken = null, portalCompany = null;
 var myDrivers = [], myBookings = [], myCars = [];
-var curTab = 0, refreshTimer = null;
+var curTab = 0, refreshTimer = null, akeriSocket = null;
 
 // ── INIT ──
 window.onload = function() {
@@ -253,6 +254,7 @@ function doLogout() {
   localStorage.removeItem('thtcab_portal_token');
   portalUser = null; portalToken = null; portalCompany = null;
   if (refreshTimer) clearInterval(refreshTimer);
+  if (akeriSocket) { akeriSocket.disconnect(); akeriSocket = null; }
   showLogin();
 }
 
@@ -263,7 +265,8 @@ async function enterPortal() {
   await loadCompany();
   await loadAllData();
   navTo(0);
-  refreshTimer = setInterval(loadAllData, 30000);
+  refreshTimer = setInterval(loadAllData, 10000);
+  connectAkeriSocket();
 }
 
 async function loadCompany() {
@@ -331,6 +334,58 @@ function toggleSidebar() {
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
   document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+
+// ── SOCKET CONNECTION ──
+function connectAkeriSocket() {
+  if (akeriSocket) akeriSocket.disconnect();
+  akeriSocket = io('https://api.trollhattancab.com', { transports: ['websocket','polling'] });
+
+  akeriSocket.on('connect', function() {
+    console.log('Portal socket connected');
+  });
+
+  // Driver goes offline → update immediately
+  akeriSocket.on('driver:status', function(data) {
+    var did = data.driverId || data.driver_id;
+    var status = data.status;
+    // Only update if it's our driver
+    var d = myDrivers.find(function(x) { return x.id === did; });
+    if (!d) return;
+    d.status = status;
+    // Re-render current tab if showing drivers or dashboard or map
+    if (curTab === 0 || curTab === 1 || curTab === 5) renderTab(curTab);
+    // Update map marker if map is open
+    if (curTab === 5 && akeriMapInstance && akeriMarkers[did]) {
+      var color = status === 'available' ? '#22c55e' : status === 'busy' ? '#f97316' : '#64748b';
+      akeriMarkers[did].getElement().querySelector('div').style.background = color;
+    }
+  });
+
+  // Driver GPS update → update map marker
+  akeriSocket.on('driver:location', function(data) {
+    var did = data.driver_id || data.driverId;
+    var d = myDrivers.find(function(x) { return x.id === did; });
+    if (!d) return;
+    d.lat = data.lat; d.lng = data.lng;
+    if (curTab === 5 && akeriMapInstance) {
+      if (akeriMarkers[did]) {
+        akeriMarkers[did].setLatLng([data.lat, data.lng]);
+      } else {
+        buildAkeriMap(); // new driver got GPS — rebuild map
+      }
+    }
+  });
+
+  // New/updated booking → refresh data
+  akeriSocket.on('booking:new', function() { loadAllData(); });
+  akeriSocket.on('booking:assigned', function() { loadAllData(); });
+  akeriSocket.on('booking:completed', function() { loadAllData(); });
+
+  akeriSocket.on('disconnect', function() {
+    console.log('Portal socket disconnected - will reconnect');
+  });
 }
 
 // ── TAB 0: DASHBOARD ──
