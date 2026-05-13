@@ -247,6 +247,7 @@ const API = 'https://api.trollhattancab.com';
 let driver = null;
 let token = null;
 let activeBooking = null;
+let tripPhase = 'driving'; // driving → arrived → customer_in → done
 let myTrips = [];
 let curTab = 0;
 let socket = null;
@@ -724,6 +725,7 @@ async function acceptBooking(){
     if(data.success){
       activeBooking=data.booking||{...pendingBooking,driver_id:parseInt(driver.id)};
       localStorage.setItem('thtcab_active_booking',JSON.stringify(activeBooking));
+      tripPhase = localStorage.getItem('thtcab_trip_phase') || 'driving';
       pendingBooking=null;driverStatus='busy';updateStatusBadge();
       if(socket)socket.emit('driver:status',{driverId:parseInt(driver.id),status:'busy'});
       showToast('✅ Bokning accepterad!','#15803d','white');showTab(1);
@@ -857,37 +859,54 @@ function tabHome(){
     '<div class="my-marker" id="myMarker" style="left:50%;top:50%">🚖</div>'+
     '<div class="map-gps">🔴 GPS Live</div></div>'+
     (activeBooking?
-      '<div class="stitle">🚖 Aktivt uppdrag</div>'+
+      '<div class="stitle">🚖 AKTIVT UPPDRAG</div>'+
       '<div class="trip-card trip-active">'+
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
-      '<span style="font-size:13px;font-weight:700;color:#1a56db">'+activeBooking.booking_ref+'</span>'+
-      '<span class="badge b-green">Pågår</span></div>'+
-      '<div style="margin-bottom:10px">'+
-      '<button onclick="navTo('+JSON.stringify(activeBooking.from_address||'')+')" style="width:100%;background:#dcfce7;color:#15803d;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;text-align:left;margin-bottom:6px">'+
-      '📍 Upphämtning: '+activeBooking.from_address+'</button>'+
-      '<button onclick="navTo('+JSON.stringify(activeBooking.to_address||'')+')" style="width:100%;background:#dbeafe;color:#1a56db;border:none;border-radius:10px;padding:10px 14px;font-size:13px;font-weight:700;cursor:pointer;text-align:left">'+
-      '🏁 Avlämning: '+activeBooking.to_address+'</button></div>'+
-      '<div style="font-size:12px;color:#64748b;margin-bottom:10px">👤 '+activeBooking.customer_name+' · '+(activeBooking.customer_phone||'')+'<br>💰 '+activeBooking.fare_sek+' kr · '+activeBooking.payment_method+'</div>'+
-      (activeBooking.passengers&&activeBooking.passengers>1?'<div style="background:#dbeafe;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;color:#1a56db;margin-bottom:8px">👥 '+activeBooking.passengers+' passagerare</div>':'')+
-      (activeBooking.child_seat?'<div style="background:#fee2e2;border-radius:8px;padding:8px 12px;font-size:13px;font-weight:800;color:#dc2626;margin-bottom:8px">🧒 BARNSTOL KRÄVS'+(activeBooking.child_age?' — Ålder: '+activeBooking.child_age:'')+'</div>':'')+
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">'+
-      '<a href="tel:'+(activeBooking.customer_phone||'')+'" style="text-decoration:none"><button class="btn btn-success btn-sm">📞 Ring kund</button></a>'+
-        '<button class="btn btn-primary btn-sm" onclick="openChatEl(this)" data-key="central-driver-'+driver.id+'" data-name="Central">📡 Central</button></div>'+
-      '<div style="margin-bottom:10px">'+
-      '<select id="callbackSel" class="finput" style="margin-bottom:6px">'+
-      '<option value="">📱 Skicka SMS till kund...</option>'+
-      '<option value="framme_nu">✅ Framme nu</option>'+
-      '<option value="framme_5">🕐 Framme om 5 minuter</option>'+
-      '<option value="framme_10">🕐 Framme om 10 minuter</option>'+
-      '<option value="framme_15">🕐 Framme om 15 minuter</option>'+
-      '<option value="framme_20">🕐 Framme om 20 minuter</option>'+
-      '<option value="forsen_5">⚠️ Kommer försent ca 5 min</option>'+
-      '<option value="forsen_10">⚠️ Kommer försent ca 10 min</option>'+
-      '<option value="forsen_15">⚠️ Kommer försent ca 15 min</option>'+
-      '</select>'+
-      '<button class="btn btn-blue btn-sm" onclick="sendCallback()">Skicka →</button>'+
+
+      // ── BOOKING REF + STATUS ──
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">'+
+      '<span style="font-size:14px;font-weight:800;color:#1a56db;letter-spacing:1px">'+activeBooking.booking_ref+'</span>'+
+      '<span style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:'+(tripPhase==='driving'?'#dbeafe':tripPhase==='arrived'?'#fef3c7':'#dcfce7')+';color:'+(tripPhase==='driving'?'#1a56db':tripPhase==='arrived'?'#d97706':'#15803d')+'">'+
+      (tripPhase==='driving'?'🚗 På väg':tripPhase==='arrived'?'📍 Framme':'👤 Kund i bil')+
+      '</span></div>'+
+
+      // ── CUSTOMER INFO ──
+      '<div style="background:#f8fafc;border-radius:10px;padding:12px;margin-bottom:12px">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center">'+
+      '<div>'+
+      '<div style="font-size:15px;font-weight:800;color:#0d1b3e">👤 '+activeBooking.customer_name+'</div>'+
+      '<div style="font-size:13px;color:#64748b;margin-top:2px">💰 '+activeBooking.fare_sek+' kr · '+(activeBooking.payment_method||'')+'</div>'+
+      (activeBooking.passengers&&activeBooking.passengers>1?'<div style="font-size:12px;color:#1a56db;font-weight:700;margin-top:2px">👥 '+activeBooking.passengers+' passagerare</div>':'')+
+      (activeBooking.child_seat?'<div style="font-size:12px;color:#dc2626;font-weight:700;margin-top:2px">🧒 BARNSTOL'+(activeBooking.child_age?' ('+activeBooking.child_age+' år)':'')+'</div>':'')+
       '</div>'+
-      '<button class="btn btn-success" onclick="completeTrip()">✓ Slutför resa</button></div>':
+      (activeBooking.customer_phone?
+        '<a href="tel:'+activeBooking.customer_phone+'" style="text-decoration:none">'+
+        '<div style="background:#0d1b3e;color:#fbbf24;border-radius:10px;padding:10px 14px;text-align:center;font-size:13px;font-weight:700">'+
+        '📞<br><span style="font-size:11px">'+(activeBooking.customer_phone||'')+'</span></div></a>':'')+
+      '</div></div>'+
+
+      // ── NAVIGATION ──
+      '<div style="margin-bottom:12px">'+
+      '<button onclick="navTo('+JSON.stringify(activeBooking.from_address||'')+')" style="width:100%;background:#dcfce7;color:#15803d;border:none;border-radius:10px;padding:12px 14px;font-size:13px;font-weight:700;cursor:pointer;text-align:left;margin-bottom:6px;display:flex;align-items:center;gap:10px">'+
+      '<span style="font-size:20px">📍</span><div><div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;opacity:.7">Navigera till upphämtning</div>'+activeBooking.from_address+'</div></button>'+
+      '<button onclick="navTo('+JSON.stringify(activeBooking.to_address||'')+')" style="width:100%;background:#dbeafe;color:#1a56db;border:none;border-radius:10px;padding:12px 14px;font-size:13px;font-weight:700;cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px">'+
+      '<span style="font-size:20px">🏁</span><div><div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;opacity:.7">Navigera till avlämning</div>'+activeBooking.to_address+'</div></button></div>'+
+
+      // ── TRIP PHASE BUTTONS ──
+      (tripPhase==='driving'?
+        '<button onclick="markArrived()" style="width:100%;padding:16px;background:#f97316;color:white;font-size:16px;font-weight:800;border:none;border-radius:12px;cursor:pointer;margin-bottom:8px">📍 Framme vid upphämtning</button>'
+      :tripPhase==='arrived'?
+        '<div style="background:#fef3c7;border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:12px;color:#d97706;font-weight:600">✅ Markerad framme — väntar på kunden</div>'+
+        '<button onclick="markCustomerIn()" style="width:100%;padding:16px;background:#15803d;color:white;font-size:16px;font-weight:800;border:none;border-radius:12px;cursor:pointer;margin-bottom:8px">👤 Kund i bilen</button>'
+      :
+        '<div style="background:#dcfce7;border-radius:10px;padding:10px 14px;margin-bottom:8px;font-size:12px;color:#15803d;font-weight:600">👤 Kund i bilen — resan pågår</div>'+
+        '<button onclick="completeTrip()" style="width:100%;padding:16px;background:#0d1b3e;color:#fbbf24;font-size:16px;font-weight:800;border:none;border-radius:12px;cursor:pointer;margin-bottom:8px">✅ Slutför resa</button>'
+      )+
+
+      // ── SECONDARY ACTIONS ──
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+      '<button class="btn btn-primary btn-sm" onclick="openChatEl(this)" data-key="central-driver-'+driver.id+'" data-name="Central">📡 Central</button>'+
+      '</div>'+
+      '</div>':
       '<div style="text-align:center;padding:24px;background:white;border-radius:14px;border:1px solid #d0d7ea;margin-bottom:14px">'+
       '<div style="font-size:40px;margin-bottom:10px">🚖</div>'+
       '<div style="font-size:15px;font-weight:700;color:#0d1b3e;margin-bottom:4px">Ledig — väntar på bokningar</div>'+
@@ -966,6 +985,36 @@ function tabProfile(){
     '<div class="ib ib-y" style="margin-bottom:14px">⚠️ Du kan inte logga ut under ett aktivt uppdrag</div>')+
     '<div style="text-align:center;font-size:11px;color:#94a3b8;margin-bottom:20px">Trollhättan Cab AB · Org.nr 559312-7128<br>trollhattancab.com</div>'+
     '<div style="height:80px"></div></div>';
+}
+
+
+// ── TRIP PHASE FUNCTIONS ──
+async function markArrived() {
+  tripPhase = 'arrived';
+  localStorage.setItem('thtcab_trip_phase', 'arrived');
+  // Update server
+  try {
+    await fetch(API + '/bookings/' + activeBooking.id + '/arrived', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ driver_id: driver.id })
+    });
+  } catch(e) { console.log('arrived update failed:', e.message); }
+  showToast('✅ Markerad framme — SMS skickat till kunden', '#f97316');
+  showTab(0);
+}
+
+async function markCustomerIn() {
+  tripPhase = 'customer_in';
+  localStorage.setItem('thtcab_trip_phase', 'customer_in');
+  try {
+    await fetch(API + '/bookings/' + activeBooking.id + '/customer-in', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }
+    });
+  } catch(e) { console.log('customer-in update failed:', e.message); }
+  showToast('👤 Kund i bilen — kör säkert!', '#15803d');
+  showTab(0);
 }
 
 async function completeTrip(){
