@@ -1497,8 +1497,7 @@ async function confirmGuestBook() {
     if (data.booking) {
       document.getElementById('guestModal').style.display = 'none';
       showToast('✅ Bokning bekräftad! ' + data.booking.booking_ref);
-      // Show confirmation
-      showGuestConfirmation(data.booking, email, phone);
+      showGuestConfirmation(data.booking, email, phone, data.customer_linked);
     } else {
       err.textContent = data.error || 'Bokning misslyckades — försök igen';
       err.style.display = '';
@@ -1511,7 +1510,7 @@ async function confirmGuestBook() {
   }
 }
 
-function showGuestConfirmation(booking, email, phone) {
+function showGuestConfirmation(booking, email, phone, customerLinked) {
   var m = document.getElementById('main');
   if (!m) return;
   m.innerHTML =
@@ -1529,7 +1528,8 @@ function showGuestConfirmation(booking, email, phone) {
     '✉️ Bekräftelse skickas till<br>' + email + '<br>' +
     '📱 SMS till ' + phone +
     '</div>' +
-    '<div style="font-size:12px;color:#94a3b8;margin-bottom:20px">En förare är på väg. Du får ett SMS när bilen är tilldelad.</div>' +
+    '<div style="font-size:12px;color:#94a3b8;margin-bottom:16px">En förare är på väg. Du får ett SMS när bilen är tilldelad.</div>' +
+    (customerLinked ? '<div style="background:#dbeafe;border-radius:12px;padding:14px;margin-bottom:16px;font-size:13px;color:#1a56db;font-weight:600">✅ Vi hittade ett konto med din e-post! Logga in för att följa resan och se din bokningshistorik.</div><button onclick="openAuth(null)" style="width:100%;padding:13px;background:#1a56db;color:white;font-size:14px;font-weight:800;border:none;border-radius:10px;cursor:pointer;margin-bottom:10px">Logga in på ditt konto →</button>' : '') +
     '<button onclick="showTab(0)" style="width:100%;padding:14px;background:#0d1b3e;color:#fbbf24;font-size:14px;font-weight:800;border:none;border-radius:10px;cursor:pointer">Boka ny resa →</button>' +
     '</div></div>';
   // Scroll to top
