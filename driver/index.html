@@ -652,6 +652,10 @@ function connectSocket(){
         showDriverMessagePopup(data.sender_name||"Central", data.content||"");
       }
     });
+    socket.on('central:question', function(data) {
+      if (data.driver_id && parseInt(data.driver_id) !== parseInt(driver.id)) return;
+      showCentralQuestion(data.from || 'Central', data.message || '', data.type || 'question');
+    });
     socket.on('driver:unblocked',()=>{
       driverStatus='available';updateStatusBadge();
       localStorage.removeItem('thtcab_block_until');
@@ -1351,6 +1355,79 @@ function showDriverMessagePopup(sender, message) {
   document.body.appendChild(popup);
   if (navigator.vibrate) navigator.vibrate([200,100,200]);
   setTimeout(function(){ var p=document.getElementById('driverMsgPopup'); if(p)p.remove(); }, 10000);
+}
+
+// ── CENTRAL QUESTION POPUP ──
+function showCentralQuestion(from, message, type) {
+  var existing = document.getElementById('centralQuestionPopup');
+  if (existing) existing.remove();
+
+  var overlay = document.createElement('div');
+  overlay.id = 'centralQuestionPopup';
+  overlay.setAttribute('style',
+    'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9998;display:flex;align-items:center;justify-content:center;padding:20px'
+  );
+
+  var box = document.createElement('div');
+  box.setAttribute('style',
+    'background:white;border-radius:20px;padding:24px;width:100%;max-width:340px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)'
+  );
+
+  var header = document.createElement('div');
+  header.setAttribute('style','font-size:11px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px');
+  header.textContent = '📨 Meddelande från ' + from;
+
+  var msg = document.createElement('div');
+  msg.setAttribute('style','font-size:17px;font-weight:700;color:#0d1b3e;line-height:1.5;margin-bottom:24px');
+  msg.textContent = message;
+
+  var btnRow = document.createElement('div');
+  btnRow.setAttribute('style','display:flex;gap:10px;justify-content:center');
+
+  function respond(response) {
+    overlay.remove();
+    // Send response back via socket
+    if (socket && socket.connected) {
+      socket.emit('driver:question_response', {
+        driver_id: driver ? driver.id : null,
+        driver_name: driver ? driver.name : 'Förare',
+        response: response
+      });
+    }
+    var labels = {yes:'✅ JA skickat', no:'❌ NEJ skickat', ok:'👍 OK skickat'};
+    showToast(labels[response] || 'Svar skickat', '#7c3aed');
+  }
+
+  if (type === 'question') {
+    var yesBtn = document.createElement('button');
+    yesBtn.textContent = '✅ JA';
+    yesBtn.setAttribute('style','flex:1;padding:14px;background:#dcfce7;color:#15803d;border:2px solid #22c55e;border-radius:12px;font-size:16px;font-weight:800;cursor:pointer');
+    yesBtn.onclick = function(){ respond('yes'); };
+
+    var noBtn = document.createElement('button');
+    noBtn.textContent = '❌ NEJ';
+    noBtn.setAttribute('style','flex:1;padding:14px;background:#fee2e2;color:#dc2626;border:2px solid #dc2626;border-radius:12px;font-size:16px;font-weight:800;cursor:pointer');
+    noBtn.onclick = function(){ respond('no'); };
+
+    btnRow.appendChild(yesBtn);
+    btnRow.appendChild(noBtn);
+  } else {
+    var okBtn = document.createElement('button');
+    okBtn.textContent = '👍 OK';
+    okBtn.setAttribute('style','flex:1;padding:14px;background:#dbeafe;color:#1a56db;border:2px solid #1a56db;border-radius:12px;font-size:16px;font-weight:800;cursor:pointer');
+    okBtn.onclick = function(){ respond('ok'); };
+    btnRow.appendChild(okBtn);
+  }
+
+  box.appendChild(header);
+  box.appendChild(msg);
+  box.appendChild(btnRow);
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+
+  // Vibrate and sound
+  if (navigator.vibrate) navigator.vibrate([300, 100, 300]);
+  playChatSound();
 }
 
 </script>
