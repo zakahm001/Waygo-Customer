@@ -111,6 +111,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;ba
   <button class="tab" id="tab7" onclick="showTab(7)">🚗 Fordon</button>
 </div>
 
+<div id="alertBar" style="display:none;position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:999;min-width:280px;max-width:90vw;padding:12px 18px;border-radius:10px;font-size:13px;font-weight:700;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,.2);transition:opacity .3s">
+  <span id="alertTxt"></span>
+</div>
+<style>
+.alert-bar{display:block !important;opacity:0;transition:opacity .3s}
+.alert-bar.show{opacity:1}
+.a-warn{background:#fef3c7;color:#d97706;border:1px solid #fde68a}
+.a-success{background:#dcfce7;color:#15803d;border:1px solid #bbf7d0}
+.a-error{background:#fee2e2;color:#dc2626;border:1px solid #fecaca}
+.a-info{background:#dbeafe;color:#1a56db;border:1px solid #bfdbfe}
+</style>
 <div id="main"></div>
 
 </head>
@@ -239,6 +250,24 @@ function closeMIfOut(e,id){if(e.target===document.getElementById(id))closeMod(id
 
 // ── CHAT SOUND ──
 var chatUnread = 0;
+function playNewBookingAlert() {
+  try {
+    var ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // Urgent triple beep
+    [523, 659, 784].forEach(function(freq, i) {
+      var o = ctx.createOscillator();
+      var g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = freq;
+      o.type = 'triangle';
+      g.gain.setValueAtTime(0.4, ctx.currentTime + i * 0.18);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.18 + 0.3);
+      o.start(ctx.currentTime + i * 0.18);
+      o.stop(ctx.currentTime + i * 0.18 + 0.3);
+    });
+  } catch(e) {}
+}
+
 function playChatAlert() {
   try {
     var ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -424,8 +453,9 @@ function connectSocket(){
     socket.on('connect',function(){socket.emit('central:join');});
     socket.on('booking:new',function(b){
       allBookings.unshift(b);
+      playNewBookingAlert();
       showAlert('🚨 Ny bokning! '+b.booking_ref+' · '+b.from_address,'warn');
-      showToast('🚨 '+b.booking_ref);
+      showToast('🚨 Ny bokning: '+b.booking_ref);
       if(curTab===0)showTab(0);
     });
     socket.on('booking:assigned',function(b){
@@ -863,14 +893,16 @@ async function openDriverProfile(id){
       '<div style="margin-top:10px"><button class="btn btnB btn-sm" onclick="openChat(\'central-driver-'+d.id+'\',\''+d.name+'\')">💬 Chatta med föraren</button></div>'+
       '</div>';
 
-    h+='<div class="card"><div class="stitle">👑 Ägarinställning</div>'+
-      (d.is_owner?
-        '<div class="ib ib-y">👑 Denna förare är ägare — andel: '+d.owner_share+'%</div>'+
-        '<button class="btn btnG" style="width:100%" onclick="manageDriver('+d.id+',\'remove_owner\')">Ta bort ägarstatus</button>':
-        '<div style="display:flex;gap:8px;margin-bottom:10px">'+
-        '<input class="finput" id="ownerShareInput" type="number" min="0" max="100" placeholder="Ägarandel %" style="margin-bottom:0;flex:1"/>'+
-        '<button class="btn btnY btn-sm" onclick="setOwner('+d.id+')">👑 Sätt ägare</button>'+
-        '</div>')+
+    h+='<div class="card"><div class="stitle">🏢 Åkeritillhörighet</div>'+
+      '<label class="flabel">Åkerinummer</label>'+
+      '<input class="finput" id="drvAkeriNr" value="'+(d.akeri_number||'')+'" placeholder="Åkerinummer (t.ex. AK-1234)"/>'+
+      '<label class="flabel">Anställningstyp</label>'+
+      '<select class="finput" id="drvEmployment">'+
+      '<option value="hourly"'+(d.employment_type==="hourly"?' selected':'')+'>Timavlönad</option>'+
+      '<option value="fixed"'+(d.employment_type==="fixed"?' selected':'')+'>Fast lön</option>'+
+      '<option value="owner"'+(d.employment_type==="owner"?' selected':'')+'>Ägare/Eget åkeri</option>'+
+      '</select>'+
+      '<button class="btn btnP" style="width:100%;background:#1a56db;color:white" onclick="updateDriverAkeri('+d.id+')">Spara åkeriuppgifter →</button>'+
       '</div>';
 
     h+='<div class="card"><div class="stitle">Redigera uppgifter</div>'+
@@ -926,6 +958,25 @@ async function openSuspend(id){
   var until=prompt('Avstängd till vilket datum? (ÅÅÅÅ-MM-DD)');if(!until)return;
   var reason=prompt('Anledning:')||'';
   await manageDriver(id,'suspend',{suspend_until:until+'T23:59:00',reason:reason});
+}
+
+
+async function updateDriverAkeri(id) {
+  var akeriNr = (document.getElementById('drvAkeriNr')||{}).value||'';
+  var employment = (document.getElementById('drvEmployment')||{}).value||'hourly';
+  try {
+    var res = await fetch(API+'/drivers/'+id+'/manage', {
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},
+      body:JSON.stringify({action:'update', akeri_number:akeriNr, employment_type:employment})
+    });
+    var data = await res.json();
+    if (data.driver) {
+      allDrivers = allDrivers.map(function(d){ return d.id===id?Object.assign({},d,data.driver):d; });
+      showToast('✅ Åkeriuppgifter sparade');
+      closeMod('driverMod');
+    } else { showToast('⚠️ '+(data.error||'Fel')); }
+  } catch(e) { showToast('⚠️ Nätverksfel'); }
 }
 
 async function updateDriver(id){
