@@ -939,7 +939,10 @@ async function openDriverProfile(id){
       '<button class="btn btnP" onclick="openSuspend('+d.id+')">⏸ Stäng av</button>'+
       (isSusp&&!isBlocked?'<button class="btn btnS" style="grid-column:span 2" onclick="manageDriver('+d.id+',\'unblock\')">✅ Ta bort avstängning</button>':'')+
       '</div>'+
-      '<div style="margin-top:10px"><button class="btn btnB btn-sm" onclick="openChat(\'central-driver-'+d.id+'\',\''+d.name+'\')">💬 Chatta med föraren</button></div>'+
+      '<div style="margin-top:10px;display:flex;gap:8px">'+
+      '<button class="btn btnB btn-sm" onclick="openChat(\'central-driver-'+d.id+'\',\''+d.name+'\')">💬 Chatt</button>'+
+      '<button class="btn btn-sm" style="background:#7c3aed;color:white" onclick="openQuestionModal('+d.id+','+JSON.stringify(d.name)+')">📨 Skicka fråga</button>'+
+      '</div>'+
       '</div>';
 
     h+='<div class="card"><div class="stitle">🏢 Åkeritillhörighet</div>'+
@@ -1853,6 +1856,66 @@ function showMessagePopup(sender, message) {
 }
 
 function closeMsgPopup(id){var el=document.getElementById(id);if(el)el.remove();}
+// ── DRIVER QUESTION / POPUP MESSAGE ──
+var questionDriverId = null;
+var questionType = 'question';
+
+function openQuestionModal(driverId, driverName) {
+  questionDriverId = driverId;
+  questionType = 'question';
+  document.getElementById('questionDriverName').textContent = driverName;
+  document.getElementById('questionText').value = '';
+  document.getElementById('questionErr').style.display = 'none';
+  setQType('question');
+  document.getElementById('questionMod').classList.add('open');
+}
+
+function setQType(type) {
+  questionType = type;
+  var qBtn = document.getElementById('qtypeQ');
+  var iBtn = document.getElementById('qtypeI');
+  if (type === 'question') {
+    qBtn.style.borderColor = '#7c3aed'; qBtn.style.background = '#ede9fe'; qBtn.style.color = '#7c3aed';
+    iBtn.style.borderColor = '#e2e8f0'; iBtn.style.background = 'white'; iBtn.style.color = '#64748b';
+  } else {
+    iBtn.style.borderColor = '#1a56db'; iBtn.style.background = '#dbeafe'; iBtn.style.color = '#1a56db';
+    qBtn.style.borderColor = '#e2e8f0'; qBtn.style.background = 'white'; qBtn.style.color = '#64748b';
+  }
+}
+
+function sendQuestion() {
+  var text = (document.getElementById('questionText').value || '').trim();
+  var err = document.getElementById('questionErr');
+  if (!text) { err.textContent = 'Skriv ett meddelande'; err.style.display = ''; return; }
+  err.style.display = 'none';
+  // Emit via socket directly to driver
+  if (socket && socket.connected) {
+    socket.emit('central:question', {
+      driver_id: questionDriverId,
+      message: text,
+      type: questionType,
+      from: staffUser ? staffUser.name : 'Central'
+    });
+    showToast('✅ Meddelande skickat');
+    closeMod('questionMod');
+  } else {
+    err.textContent = 'Inte ansluten — ladda om sidan';
+    err.style.display = '';
+  }
+}
+
+// ── Listen for driver responses ──
+function listenForDriverResponses() {
+  if (!socket) return;
+  socket.on('driver:question_response', function(data) {
+    var icon = data.response === 'yes' ? '✅' : data.response === 'no' ? '❌' : '👍';
+    var color = data.response === 'yes' ? '#15803d' : data.response === 'no' ? '#dc2626' : '#1a56db';
+    showToast(icon + ' ' + data.driver_name + ': ' + (data.response === 'yes' ? 'JA' : data.response === 'no' ? 'NEJ' : 'OK'));
+    // Also show as popup
+    showMessagePopup(data.driver_name + ' svarade', icon + ' ' + (data.response === 'yes' ? 'JA' : data.response === 'no' ? 'NEJ' : 'OK'));
+  });
+}
+
 </script>
 
 <div id="iosBannerC" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#0d1b3e;color:white;padding:14px 16px;z-index:999;align-items:center;gap:12px;box-shadow:0 -4px 20px rgba(0,0,0,.3)">
@@ -1875,6 +1938,26 @@ function closeMsgPopup(id){var el=document.getElementById(id);if(el)el.remove();
     <div id="reassignList" style="max-height:300px;overflow-y:auto"></div>
     <div class="ib ib-r" id="reassignErr" style="display:none;margin-top:10px"></div>
     <button class="btn btnG" style="width:100%;margin-top:12px" onclick="closeMod('reassignMod')">Avbryt</button>
+  </div>
+</div>
+
+
+<!-- QUESTION MODAL -->
+<div class="moverlay" id="questionMod">
+  <div class="mbox">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div class="mtitle" style="margin-bottom:0">📨 Skicka meddelande till <span id="questionDriverName" style="color:#7c3aed"></span></div>
+      <button class="mclose" onclick="closeMod('questionMod')">✕</button>
+    </div>
+    <label class="flabel">Typ</label>
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button id="qtypeQ" onclick="setQType('question')" style="flex:1;padding:10px;border-radius:8px;border:2px solid #7c3aed;background:#ede9fe;color:#7c3aed;font-weight:700;cursor:pointer">❓ Fråga (Ja/Nej)</button>
+      <button id="qtypeI" onclick="setQType('info')" style="flex:1;padding:10px;border-radius:8px;border:2px solid #e2e8f0;background:white;color:#64748b;font-weight:700;cursor:pointer">ℹ️ Info (OK)</button>
+    </div>
+    <label class="flabel">Meddelande</label>
+    <textarea id="questionText" class="finput" rows="3" placeholder="Skriv ditt meddelande till föraren..." style="resize:none;min-height:80px"></textarea>
+    <div class="ib ib-r" id="questionErr" style="display:none"></div>
+    <button onclick="sendQuestion()" class="btn btnP" style="width:100%;padding:13px;background:#7c3aed;color:white;font-size:15px;font-weight:800;margin-top:4px">📨 Skicka →</button>
   </div>
 </div>
 
