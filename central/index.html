@@ -903,13 +903,19 @@ async function openDriverProfile(id){
       '<div class="litem"><span style="font-size:13px;color:#64748b">Intäkter idag</span><span style="font-size:13px;font-weight:700;color:#15803d">'+(d.earnings_today||0)+' kr</span></div>'+
       '<div class="litem"><span style="font-size:13px;color:#64748b">Senast aktiv</span><span style="font-size:13px">'+(d.last_active?new Date(d.last_active).toLocaleString('sv-SE',{dateStyle:'short',timeStyle:'short'}):'Aldrig')+'</span></div></div>';
 
-    h+='<div class="card"><div class="stitle">Åtgärder</div>'+
+    h+='<div class="card"><div class="stitle">Status — sätt manuellt</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">'+
+      '<button class="btn btn-sm" style="background:#dcfce7;color:#15803d;border:1px solid #22c55e" onclick="setDriverStatus('+d.id+',\'available\')">🟢 Ledig</button>'+
+      '<button class="btn btn-sm" style="background:#fef3c7;color:#d97706;border:1px solid #f59e0b" onclick="setDriverStatus('+d.id+',\'paused\')">🟡 Paus</button>'+
+      '<button class="btn btn-sm" style="background:#f1f5f9;color:#64748b;border:1px solid #94a3b8" onclick="setDriverStatus('+d.id+',\'offline\')">⚫ Offline</button>'+
+      '</div>'+
+      '<div class="stitle" style="margin-top:8px">Åtgärder</div>'+
       '<div class="agrid">'+
       (isBlocked?
-        '<button class="btn btnS" onclick="manageDriver('+d.id+',\'unblock\')">✅ Avblockera permanent</button>':
-        '<button class="btn btnD" onclick="manageDriver('+d.id+',\'block\')">🔴 Blockera permanent</button>')+
-      '<button class="btn btnP" onclick="openSuspend('+d.id+')">⏸ Stäng av med datum</button>'+
-      (isSusp&&!isBlocked?'<button class="btn btnS" style="grid-column:span 2" onclick="manageDriver('+d.id+',\'unblock\')">✅ Ta bort alla avstängningar</button>':'')+
+        '<button class="btn btnS" onclick="manageDriver('+d.id+',\'unblock\')">✅ Avblockera</button>':
+        '<button class="btn btnD" onclick="manageDriver('+d.id+',\'block\')">🔴 Blockera</button>')+
+      '<button class="btn btnP" onclick="openSuspend('+d.id+')">⏸ Stäng av</button>'+
+      (isSusp&&!isBlocked?'<button class="btn btnS" style="grid-column:span 2" onclick="manageDriver('+d.id+',\'unblock\')">✅ Ta bort avstängning</button>':'')+
       '</div>'+
       '<div style="margin-top:10px"><button class="btn btnB btn-sm" onclick="openChat(\'central-driver-'+d.id+'\',\''+d.name+'\')">💬 Chatta med föraren</button></div>'+
       '</div>';
