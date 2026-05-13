@@ -124,6 +124,11 @@ body{font-family:Arial,sans-serif;background:#0d1b3e;color:white;min-height:100v
 .confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:600;align-items:center;justify-content:center;padding:24px}
 .confirm-overlay.open{display:flex}
 .confirm-box{background:white;border-radius:16px;padding:28px 24px;width:100%;max-width:380px;color:#0d1b3e;text-align:center}
+
+.dmenu-item{display:flex;align-items:center;gap:14px;padding:14px 20px;font-size:15px;font-weight:500;color:#0d1b3e;cursor:pointer;border:none;background:none;width:100%;text-align:left}
+.dmenu-item:hover{background:#f8fafc}
+.dmenu-icon{font-size:20px;width:28px;text-align:center;flex-shrink:0}
+
 </style>
 </head>
 <body>
@@ -242,6 +247,31 @@ body{font-family:Arial,sans-serif;background:#0d1b3e;color:white;min-height:100v
 <div class="toast" id="toast"></div>
 
 <script>
+
+var ZONES = [
+  {id:1,  name:'Trollhättan Centrum', desc:'Det primära stadscentrumet'},
+  {id:2,  name:'Götalunden',          desc:'Östra stadsområdet'},
+  {id:3,  name:'Lextorp',             desc:'Södra stadsområdet'},
+  {id:4,  name:'Gärdhem',             desc:'Sydöstra utkanten'},
+  {id:5,  name:'Fors',                desc:'Industriområde öster'},
+  {id:6,  name:'Lagmansered',         desc:'Västra området'},
+  {id:7,  name:'Norra Björke',        desc:'Norra utkantsområdet'},
+  {id:8,  name:'Rommele',             desc:'Östra landsbygd'},
+  {id:9,  name:'Upphärad',            desc:'Nordöstra området'},
+  {id:10, name:'Väne-Åsaka',          desc:'Sydöstra landsbygd'},
+];
+var QUICK_MSGS = [
+  'Kund i bil — kontakta mig',
+  'Jag är framme vid upphämtningsplatsen',
+  'Kunden vill åka till annan adress — ring mig',
+  'Problem med GPS på adressen',
+  'Kunden är ej på plats',
+  'Kör nu — framme om 5 min',
+  'Kör nu — framme om 10 min',
+  'Kör nu — framme om 15 min',
+  'Avslutar passet om 30 minuter',
+  'Behöver hjälp — ring mig',
+];
 const API = 'https://api.trollhattancab.com';
 
 let driver = null;
@@ -1430,6 +1460,79 @@ function showCentralQuestion(from, message, type) {
   playChatSound();
 }
 
+// ── DRIVER SIDE MENU ──
+function openDriverMenu() {
+  if (!driver) return;
+  document.getElementById('menuDriverName').textContent = driver.name || 'Förare';
+  document.getElementById('menuDriverCity').textContent = 'Trollhättan';
+  document.getElementById('menuDriverTFL').textContent = 'TFL ' + (driver.taxi_license || '—');
+  var menu = document.getElementById('driverMenu');
+  var panel = document.getElementById('driverMenuPanel');
+  menu.style.display = 'block';
+  setTimeout(function(){ panel.style.transform='translateX(0)'; }, 10);
+}
+function closeDriverMenu() {
+  var panel = document.getElementById('driverMenuPanel');
+  panel.style.transform = 'translateX(-100%)';
+  setTimeout(function(){ document.getElementById('driverMenu').style.display='none'; }, 300);
+}
+
+function openQuickMessages() {
+  closeDriverMenu();
+  var list = document.getElementById('quickMsgList');
+  list.innerHTML = QUICK_MSGS.map(function(msg) {
+    return '<div onclick="sendQuickMsg('+JSON.stringify(msg)+')" style="background:#f8fafc;border-radius:10px;padding:14px;margin-bottom:8px;cursor:pointer;font-size:14px;font-weight:600;color:#0d1b3e;border:1px solid #e2e8f0">'+msg+'</div>';
+  }).join('');
+  document.getElementById('quickMsgSheet').style.display = 'flex';
+}
+
+async function sendQuickMsg(msg) {
+  document.getElementById('quickMsgSheet').style.display = 'none';
+  if (!driver || !token) return;
+  var threadKey = 'central-driver-' + driver.id;
+  try {
+    await fetch(API + '/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify({ thread_key: threadKey, sender_name: driver.name, sender_role: 'driver', content: msg })
+    });
+    showToast('✅ Skickat: ' + msg.substring(0, 30) + '...', '#15803d');
+  } catch(e) { showToast('⚠️ Kunde inte skicka meddelandet'); }
+}
+
+function showZonesView() {
+  closeDriverMenu();
+  var list = document.getElementById('zonesList');
+  list.innerHTML = ZONES.map(function(z) {
+    return '<div style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid #f1f5f9">' +
+      '<div style="width:36px;height:36px;border-radius:8px;background:#0d1b3e;color:#fbbf24;font-weight:900;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+z.id+'</div>'+
+      '<div><div style="font-weight:700;font-size:15px">'+z.name+'</div>'+
+      '<div style="font-size:12px;color:#64748b">'+z.desc+'</div></div>'+
+      '</div>';
+  }).join('');
+  document.getElementById('zonesSheet').style.display = 'flex';
+}
+
+function showMyBookings() {
+  closeDriverMenu();
+  // Show trip history for this driver
+  openChat('central-driver-'+(driver?driver.id:''),'Central');
+}
+
+function showGPSInfo() {
+  closeDriverMenu();
+  var lat = lastLat ? lastLat.toFixed(5) : '—';
+  var lng = lastLng ? lastLng.toFixed(5) : '—';
+  var el = document.getElementById('gpsStatus');
+  var status = el ? el.textContent : 'Okänd';
+  showToast('📍 ' + status + ' · ' + lat + ', ' + lng, '#0d1b3e');
+}
+
+function doLogoutConfirm() {
+  closeDriverMenu();
+  if (confirm('Vill du logga ut?')) { logout(); }
+}
+
 </script>
 <script async src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
@@ -1444,5 +1547,65 @@ function showCentralQuestion(from, message, type) {
   <button onclick="installAppD()" style="background:#fbbf24;color:#0d1b3e;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0">Installera</button>
   <button onclick="document.getElementById('installBannerD').style.display='none'" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer">✕</button>
 </div>
+
+<!-- DRIVER SIDE MENU -->
+<div id="driverMenu" style="display:none;position:fixed;inset:0;z-index:9000">
+  <div style="position:absolute;inset:0;background:rgba(0,0,0,.5)" onclick="closeDriverMenu()"></div>
+  <div id="driverMenuPanel" style="position:absolute;left:0;top:0;bottom:0;width:85%;max-width:320px;background:white;overflow-y:auto;transform:translateX(-100%);transition:transform .3s ease;display:flex;flex-direction:column">
+    <!-- Header -->
+    <div style="background:#0d1b3e;padding:24px 20px 20px;color:white">
+      <div style="font-size:20px;font-weight:800" id="menuDriverName">Förare</div>
+      <div style="font-size:13px;color:#4a6090;margin-top:4px" id="menuDriverCity">Trollhättan</div>
+      <div style="font-size:13px;color:#fbbf24;font-weight:700;margin-top:2px" id="menuDriverTFL">TFL —</div>
+    </div>
+    <!-- Menu Items -->
+    <div style="flex:1;padding:8px 0">
+      <div class="dmenu-item" onclick="openQuickMessages()">
+        <span class="dmenu-icon">💬</span><span>Snabbmeddelanden till Central</span>
+      </div>
+      <div class="dmenu-item" onclick="showZonesView()">
+        <span class="dmenu-icon">🗺️</span><span>Zoner</span>
+      </div>
+      <div class="dmenu-item" onclick="showMyBookings()">
+        <span class="dmenu-icon">📋</span><span>Mina resor</span>
+      </div>
+      <div class="dmenu-item" onclick="openChat('central-driver-'+(driver?driver.id:''),'Central Dispatch');closeDriverMenu()">
+        <span class="dmenu-icon">📡</span><span>Chatt med Central</span>
+      </div>
+      <div class="dmenu-item" onclick="showGPSInfo()">
+        <span class="dmenu-icon">📍</span><span>GPS-status</span>
+      </div>
+      <div style="border-top:1px solid #f1f5f9;margin:8px 0"></div>
+      <div class="dmenu-item" onclick="doLogoutConfirm()" style="color:#dc2626">
+        <span class="dmenu-icon">↩</span><span>Logga ut</span>
+      </div>
+    </div>
+    <!-- Footer -->
+    <div style="padding:16px 20px;border-top:1px solid #f1f5f9;font-size:11px;color:#94a3b8;text-align:center">
+      Trollhättan Cab · v5.5
+    </div>
+  </div>
+</div>
+
+<!-- QUICK MESSAGES SHEET -->
+<div id="quickMsgSheet" style="display:none;position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,.5);align-items:flex-end;justify-content:center">
+  <div style="background:white;border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:500px;max-height:80vh;overflow-y:auto">
+    <div style="font-size:16px;font-weight:800;color:#0d1b3e;margin-bottom:4px">💬 Snabbmeddelanden</div>
+    <div style="font-size:13px;color:#64748b;margin-bottom:16px">Skickas direkt till Central</div>
+    <div id="quickMsgList"></div>
+    <button onclick="document.getElementById('quickMsgSheet').style.display='none'" style="width:100%;padding:13px;background:#f1f5f9;color:#64748b;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:10px">Stäng</button>
+  </div>
+</div>
+
+<!-- ZONES SHEET -->
+<div id="zonesSheet" style="display:none;position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,.5);align-items:flex-end;justify-content:center">
+  <div style="background:white;border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:500px;max-height:80vh;overflow-y:auto">
+    <div style="font-size:16px;font-weight:800;color:#0d1b3e;margin-bottom:4px">🗺️ Distriktszoner — Trollhättan</div>
+    <div style="font-size:13px;color:#64748b;margin-bottom:16px">Kommunens taxizoner</div>
+    <div id="zonesList"></div>
+    <button onclick="document.getElementById('zonesSheet').style.display='none'" style="width:100%;padding:13px;background:#f1f5f9;color:#64748b;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;margin-top:10px">Stäng</button>
+  </div>
+</div>
+
 </body>
 </html>
