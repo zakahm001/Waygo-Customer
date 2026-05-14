@@ -486,6 +486,10 @@ async function loadData(){
         }catch(e){}
       }catch(e){}
     }
+    // Load cars
+    var carsRes=await fetch(API+'/cars',{headers:{'Authorization':'Bearer '+staffToken}}).catch(function(){return {json:function(){return {cars:[]};}}; });
+    var carsData=await carsRes.json();
+    if(carsData.cars)allCars=carsData.cars;
   }catch(e){console.log('Load error:',e);}
 }
 
@@ -620,19 +624,7 @@ function showTab(i,extra){
     else if(i===4)m.innerHTML=tabChat();
     else if(i===5)m.innerHTML=tabStaff();
     else if(i===6)m.innerHTML=tabCompanies();
-    else if(i===7){m.innerHTML='<div class="page"><div class="stitle">Laddar fordon...</div></div>';loadCarsTab();}
-  }catch(e){console.log('showTab error:',e);}
-}
-
-// ── BOOKINGS ──
-function tabBookings(filter){
-  var pending=allBookings.filter(function(b){return b.status==='pending';});
-  var active=allBookings.filter(function(b){return b.status==='assigned';});
-  var completed=allBookings.filter(function(b){return b.status==='completed';});
-  var cancelled=allBookings.filter(function(b){return b.status==='cancelled';});
-  var earnings=completed.reduce(function(s,b){return s+(b.fare_sek||0);},0);
-  var h='<div class="page">';
-  // If filter specified, scroll to that section after render
+    else if(i===7){m.innerHTML=tabVehicles();  // If filter specified, scroll to that section after render
   var _filter = filter;
   h+='<div class="stats">';
   h+=sc(active.length,'Aktiva','#1a56db',"showTab(0,'assigned')")+sc(pending.length,'Väntar','#d97706',"showTab(0,'pending')");
@@ -885,6 +877,12 @@ function addLeafletMarker(map, driver, lat, lng){
       className:'',iconSize:[60,16],iconAnchor:[30,-18]
     }),interactive:false
   }).addTo(map);
+  // Click to center and open profile
+  marker.on('click', function(){
+    if(leafletMapInstance) leafletMapInstance.setView([lat,lng],15);
+    openDriverProfile(driver.id);
+  });
+  marker.bindTooltip(driver.name+' · '+(driver.plate||''), {permanent:false, direction:'top'});
   leafletMarkers[driver.id]=marker;
   return marker;
 }
@@ -1330,73 +1328,6 @@ async function addVehicle(){
 // DRIVER PROFILE MODAL
 // ═══════════════════════════════════════════════════════
 
-async function openDriverProfile(id){
-  var d=allDrivers.find(function(x){return x.id===id;});
-  if(!d){showToast('Förare ej hittad');return;}
-  var isBlocked=d.blocked;
-  var stColor=d.status==='available'?'#22c55e':d.status==='busy'?'#f97316':d.status==='paused'?'#d97706':'#94a3b8';
-  var stLabel=d.status==='available'?'🟢 Ledig':d.status==='busy'?'🟠 På uppdrag':d.status==='paused'?'🟡 Paus':'⚫ Offline';
-  var trips=allBookings.filter(function(b){return b.driver_id===d.id&&b.status==='completed';}).sort(function(a,b){return new Date(b.created_at)-new Date(a.created_at);}).slice(0,8);
-
-  var parts=[];
-  parts.push('<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">');
-  parts.push('<div style="width:52px;height:52px;border-radius:50%;background:#0d1b3e;color:#fbbf24;font-weight:900;font-size:22px;display:flex;align-items:center;justify-content:center">'+d.name.charAt(0)+'</div>');
-  parts.push('<div><div style="font-weight:800;font-size:17px">'+d.name+'</div>');
-  parts.push('<div style="font-size:12px;color:#64748b">📋 Leg: '+(d.taxi_license||'—')+' · 📱 '+(d.phone||'—')+'</div>');
-  parts.push('<span style="background:'+stColor+';color:white;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700">'+stLabel+'</span>');
-  if(isBlocked)parts.push('<span style="background:#dc2626;color:white;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;margin-left:4px">🔴 BLOCKERAD</span>');
-  parts.push('</div></div>');
-
-  parts.push('<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px">');
-  parts.push('<button class="prof-stat-btn" data-st="available" style="padding:8px;background:#dcfce7;color:#15803d;border:1px solid #22c55e;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">🟢 Ledig</button>');
-  parts.push('<button class="prof-stat-btn" data-st="paused" style="padding:8px;background:#fef3c7;color:#d97706;border:1px solid #f59e0b;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">🟡 Paus</button>');
-  parts.push('<button class="prof-stat-btn" data-st="offline" style="padding:8px;background:#f1f5f9;color:#64748b;border:1px solid #94a3b8;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">⚫ Offline</button>');
-  parts.push('</div>');
-
-  parts.push('<label class="flabel">Namn</label><input class="finput" id="eDrvName" value="'+d.name+'"/>');
-  parts.push('<label class="flabel">Telefon</label><input class="finput" id="eDrvPhone" value="'+(d.phone||'')+'"/>');
-  parts.push('<label class="flabel">Registreringsskylt</label><input class="finput" id="eDrvPlate" value="'+(d.plate||'')+'"/>');
-  parts.push('<label class="flabel">Taxinummer</label><input class="finput" id="eDrvTaxi" value="'+(d.taxi_nr||'')+'"/>');
-  parts.push('<label class="flabel">Stad</label><input class="finput" id="eDrvCity" value="'+(d.city||'')+'"/>');
-  parts.push('<label class="flabel">Nytt lösenord (lämna tomt)</label><input class="finput" type="password" id="eDrvPwd" placeholder="••••••••"/>');
-  parts.push('<label class="flabel">Anställningstyp</label><select class="finput" id="drvEmployment">');
-  parts.push('<option value="hourly"'+(d.employment_type==='hourly'?' selected':'')+'>Timavlönad</option>');
-  parts.push('<option value="owner"'+(d.employment_type==='owner'?' selected':'')+'>Ägare/Eget åkeri</option>');
-  parts.push('<option value="fixed"'+(d.employment_type==='fixed'?' selected':'')+'>Fast lön</option>');
-  parts.push('</select>');
-  parts.push('<label class="flabel">Kopplat åkeri</label><select class="finput" id="drvCompany"><option value="">Inget åkeri</option>');
-  allCompanies.forEach(function(c){parts.push('<option value="'+c.id+'"'+(d.company_id===c.id?' selected':'')+'>'+c.name+'</option>');});
-  parts.push('</select>');
-  parts.push('<div class="ib ib-blue" style="font-size:11px;margin-bottom:8px">ℹ️ Åkerinummer tillhör <strong>företaget</strong>, inte föraren</div>');
-  parts.push('<button id="profSaveBtn" style="width:100%;padding:11px;background:#1a56db;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;margin-bottom:12px">💾 Spara ändringar</button>');
-  parts.push('<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">');
-  parts.push(isBlocked?'<button id="profBlockBtn" style="padding:10px;background:#dcfce7;color:#15803d;border:none;border-radius:8px;font-weight:700;cursor:pointer">✅ Avblockera</button>':'<button id="profBlockBtn" style="padding:10px;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;font-weight:700;cursor:pointer">🔴 Blockera</button>');
-  parts.push('<button id="profSuspBtn" style="padding:10px;background:#fef3c7;color:#d97706;border:none;border-radius:8px;font-weight:700;cursor:pointer">⏸ Stäng av</button></div>');
-  parts.push('<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">');
-  parts.push('<button id="profChatBtn" style="padding:10px;background:#1a56db;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer">💬 Chatta</button>');
-  parts.push('<button id="profQuestBtn" style="padding:10px;background:#7c3aed;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer">📨 Skicka fråga</button></div>');
-  if(staffUser&&staffUser.level===1)parts.push('<button id="profDelBtn" style="width:100%;padding:10px;background:#fee2e2;color:#dc2626;border:1px solid #dc2626;border-radius:8px;font-weight:700;cursor:pointer;margin-bottom:12px">🗑️ Ta bort förare permanent</button>');
-
-  parts.push('<div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">📋 Reselogg</div>');
-  if(!trips.length){parts.push('<div style="color:#94a3b8;text-align:center;padding:12px">Inga avslutade resor</div>');}
-  else{trips.forEach(function(b){
-    parts.push('<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:12px">');
-    parts.push('<div><div style="font-weight:700;color:#1a56db">'+b.booking_ref+'</div>');
-    parts.push('<div style="color:#94a3b8">'+new Date(b.created_at).toLocaleString('sv-SE',{dateStyle:'short',timeStyle:'short'})+'</div></div>');
-    parts.push('<div style="font-weight:800;color:#15803d">'+(b.fare_sek||0)+' kr</div></div>');
-  });}
-
-  document.getElementById('driverModTitle').textContent=d.name;
-  document.getElementById('driverModContent').innerHTML=parts.join('');
-  document.getElementById('driverMod').classList.add('open');
-  document.querySelectorAll('.prof-stat-btn').forEach(function(btn){btn.onclick=function(){setDriverStatus(d.id,this.dataset.st);};});
-  var sb=document.getElementById('profSaveBtn');if(sb)sb.onclick=function(){updateDriverAkeri(d.id);};
-  var bb=document.getElementById('profBlockBtn');if(bb)bb.onclick=function(){manageDriver(d.id,isBlocked?'unblock':'block');};
-  var spb=document.getElementById('profSuspBtn');if(spb)spb.onclick=function(){openSuspend(d.id);};
-  var cb=document.getElementById('profChatBtn');if(cb)cb.onclick=function(){closeMod('driverMod');openChat('central-driver-'+d.id,d.name);};
-  var qb=document.getElementById('profQuestBtn');if(qb)qb.onclick=function(){openQuestionModal(d.id,d.name);};
-  var db=document.getElementById('profDelBtn');if(db)db.onclick=function(){deleteDriver(d.id,d.name);};
-}
 
 async function updateDriverAkeri(id){
   var employment=(document.getElementById('drvEmployment')||{}).value||'hourly';
@@ -1710,6 +1641,8 @@ function showMessagePopup(sender,message){
 }
 
 function closeMsgPopup(id){var el=document.getElementById(id);if(el)el.remove();}
+}catch(e){console.error(e);}
+}
 </script>
 </body>
 </html>
