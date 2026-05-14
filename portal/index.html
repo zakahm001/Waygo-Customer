@@ -118,6 +118,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;ba
   .main-wrap{margin-left:var(--sidebar-w)}
 }
 </style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body>
 
@@ -145,9 +148,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;ba
 
   <div class="topbar">
     <button class="hamburger" onclick="toggleSidebar()">☰</button>
-    <div class="topbar-logo">🚖 TROLLHÄTTAN CAB</div>
+    <button id="akeriBackBtn" onclick="goBackInPortal()" style="display:none;background:none;border:none;font-size:22px;cursor:pointer;color:#fbbf24;padding:4px">←</button><div class="topbar-logo">🚖 TROLLHÄTTAN CAB</div>
     <div class="topbar-company" id="topbarCompany">—</div>
-    <button onclick="doLogout()" style="background:none;border:none;color:#9ca3af;font-size:12px;cursor:pointer;flex-shrink:0;padding:6px">↩ Logga ut</button>
+    <button onclick="history.back()" style="background:rgba(255,255,255,.1);border:none;color:white;font-size:18px;cursor:pointer;padding:6px 10px;border-radius:8px;line-height:1;margin-right:4px">←</button><button onclick="doLogout()" style="background:none;border:none;color:#9ca3af;font-size:12px;cursor:pointer;flex-shrink:0;padding:6px">↩ Logga ut</button>
   </div>
 
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
@@ -320,6 +323,9 @@ function navTo(i) {
 }
 
 function renderTab(i, extra) {
+  // Show back button on all tabs except dashboard (0)
+  var backBtn = document.getElementById('akeriBackBtn');
+  if (backBtn) backBtn.style.display = i === 0 ? 'none' : '';
   var m = document.getElementById('main');
   if (i === 0) m.innerHTML = tabDashboard();
   else if (i === 1) m.innerHTML = tabDrivers(extra);
@@ -798,7 +804,7 @@ function tabMap() {
       '</span>';
   });
   return '<div style="height:calc(100vh - 100px);display:flex;flex-direction:column">' +
-    '<div id="akeriMap" style="flex:1;width:100%;background:#e2e8f0;min-height:400px"></div>' +
+    '<div id="akeriMap" style="flex:1;width:100%;min-height:400px"></div>' +
     '<div style="background:white;padding:10px 14px;border-top:1px solid #e2e8f0;overflow-x:auto;white-space:nowrap;flex-shrink:0">' +
     '<span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px">' + online.length + ' ONLINE &nbsp;</span>' +
     driverPills +
@@ -828,15 +834,46 @@ function initAkeriMap() {
   }
 }
 
+var akeriSavedCenter = null;
+var akeriSavedZoom = 13;
+
 function buildAkeriMap() {
-  if (akeriMapInstance) { akeriMapInstance.remove(); akeriMapInstance = null; akeriMarkers = {}; }
-  var centerCoords = [58.2835, 12.2887];
-  var dCoords = myDrivers.filter(function(d){ return d.lat&&d.lng; });
-  if(dCoords.length){ centerCoords=[parseFloat(dCoords[0].lat),parseFloat(dCoords[0].lng)]; }
-  var map = L.map('akeriMap', { zoomControl: true }).setView(centerCoords, 13);
+  var mapEl = document.getElementById('akeriMap');
+  if (!mapEl || !window.L) { setTimeout(buildAkeriMap, 200); return; }
+
+  // Detect if container div was replaced (tab switch recreated the DOM)
+  var containerReplaced = akeriMapInstance && (akeriMapInstance.getContainer() !== mapEl);
+
+  if (akeriMapInstance && !containerReplaced) {
+    // Same container — just update markers, keep view
+    akeriMarkers = {};
+    var driversWithGps = myDrivers.filter(function(d){ return d.lat&&d.lng; });
+    driversWithGps.forEach(function(d){
+      var lat=parseFloat(d.lat), lng=parseFloat(d.lng);
+      var color=d.status==='available'?'#22c55e':d.status==='busy'?'#f97316':'#64748b';
+      var icon=L.divIcon({html:'<div style="background:'+color+';color:white;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3)">🚖</div>',className:'',iconSize:[36,36],iconAnchor:[18,18]});
+      var marker=L.marker([lat,lng],{icon:icon}).addTo(akeriMapInstance);
+      marker.bindPopup('<div style="font-size:13px;min-width:140px"><strong>'+d.name+'</strong><br><span style="color:#64748b">'+(d.plate||'')+'</span><br>'+(d.status==='available'?'🟢 Ledig':d.status==='busy'?'🟠 På uppdrag':'⚫ Offline')+'</div>');
+      akeriMarkers[d.id]=marker;
+    });
+    setTimeout(function(){ akeriMapInstance.invalidateSize(); }, 100);
+    return;
+  }
+
+  // Container replaced or first init — save old view
+  if (akeriMapInstance) {
+    try { akeriSavedCenter = akeriMapInstance.getCenter(); akeriSavedZoom = akeriMapInstance.getZoom(); akeriMapInstance.remove(); } catch(e) {}
+    akeriMapInstance = null; akeriMarkers = {};
+  }
+
+  var centerCoords = [58.2835, 12.2887]; var zoom = akeriSavedZoom || 13;
+  if (akeriSavedCenter) { centerCoords = [akeriSavedCenter.lat, akeriSavedCenter.lng]; }
+  else { var dCoords=myDrivers.filter(function(d){return d.lat&&d.lng;}); if(dCoords.length)centerCoords=[parseFloat(dCoords[0].lat),parseFloat(dCoords[0].lng)]; }
+
+  var map = L.map('akeriMap', { zoomControl:true, preferCanvas:true, fadeAnimation:false }).setView(centerCoords, zoom);
   akeriMapInstance = map;
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+    attribution: '© OpenStreetMap',
     maxZoom: 19
   }).addTo(map);
 
@@ -880,9 +917,12 @@ function buildAkeriMap() {
 
   if (bounds.length > 1) map.fitBounds(bounds, { padding: [40, 40] });
   else if (bounds.length === 1) map.setView(bounds[0], 15);
+  setTimeout(function(){ map.invalidateSize(); }, 100);
+  setTimeout(function(){ map.invalidateSize(); }, 400);
 }
 
 async function refreshMap() {
+  if (akeriMapInstance) akeriMapInstance.invalidateSize();
   await loadAllData();
   if (akeriMapInstance) { buildAkeriMap(); }
 }
@@ -899,6 +939,16 @@ function toggleDriverLog(driverId) {
   });
   // Toggle this one
   el.style.display = isOpen ? 'none' : 'block';
+}
+
+function goBackInPortal() {
+  // Go back to dashboard (tab 0)
+  renderTab(0);
+  activeTab = 0;
+  document.querySelectorAll('.nav-item').forEach(function(el, i) {
+    el.classList.toggle('active', i === 0);
+  });
+  document.getElementById('akeriBackBtn').style.display = 'none';
 }
 
 </script>
