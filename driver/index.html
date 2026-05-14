@@ -187,7 +187,7 @@ body{font-family:Arial,sans-serif;background:#0d1b3e;color:white;min-height:100v
   <div style="flex:1;overflow-y:auto;background:#eef1f8" id="tabContent"></div>
   <div class="bnav">
     <button class="bni on" id="bni0" onclick="showTab(0)"><span class="bni-icon">🏠</span><span>Hem</span></button>
-    <button class="bni" id="bni1" onclick="showTab(1)"><span class="bni-icon">📋</span><span>Resor</span></button>
+    <button class="bni" id="bni1" onclick="showZonesTab()"><span class="bni-icon">🗺️</span><span>Zoner</span></button>
     <button class="bni" id="bni2" onclick="showTab(2)"><span class="bni-icon">💬</span><span>Chatt</span></button>
     <button class="bni" id="bni3" onclick="showTab(3)"><span class="bni-icon">👤</span><span>Profil</span></button>
   </div>
@@ -1694,6 +1694,56 @@ function updateZoneBadge() {
   var zone=detectCurrentZone(lastLat,lastLng);
   if(zone){badge.textContent='Zon '+zone.id+' · '+zone.name;badge.style.display='inline-block';}
   else{badge.style.display='none';}
+}
+
+async function showZonesTab() {
+  curTab = 1;
+  document.querySelectorAll('.bni').forEach(function(b,j){ b.classList.toggle('on', j===1); });
+  var c = document.getElementById('tabContent');
+  if (!c) return;
+  c.innerHTML = '<div style="padding:16px;text-align:center;color:#64748b">Laddar zoner...</div>';
+  var myZone = detectCurrentZone(lastLat, lastLng);
+  var zoneCounts = {};
+  try {
+    var res = await fetch(API + '/zones/overview', { headers: { 'Authorization': 'Bearer ' + token } });
+    var data = await res.json();
+    (data.drivers || []).forEach(function(d) {
+      var z = detectCurrentZone(parseFloat(d.lat), parseFloat(d.lng));
+      if (!z) return;
+      if (!zoneCounts[z.id]) zoneCounts[z.id] = { total:0, available:0, busy:0 };
+      zoneCounts[z.id].total++;
+      if (d.status === 'available') zoneCounts[z.id].available++;
+      else if (d.status === 'busy') zoneCounts[z.id].busy++;
+    });
+  } catch(e) {}
+
+  function renderZone(z) {
+    var isMyZone = myZone && myZone.id === z.id;
+    var cnt = zoneCounts[z.id] || { total:0, available:0, busy:0 };
+    return '<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #f1f5f9;background:'+(isMyZone?'#fffbeb':'white')+'">' +
+      '<div style="width:42px;height:42px;border-radius:10px;background:'+(isMyZone?'#f97316':'#0d1b3e')+';color:#fbbf24;font-weight:900;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+z.id+'</div>' +
+      '<div style="flex:1"><div style="font-weight:700;font-size:14px;color:#0d1b3e">'+z.name+(isMyZone?' 📍':'')+'</div>' +
+      '<div style="font-size:11px;color:#64748b">'+z.desc+'</div></div>' +
+      (cnt.total>0 ?
+        '<div style="text-align:right"><div style="font-size:14px;font-weight:800;color:#0d1b3e">'+cnt.total+' 🚖</div>' +
+        '<div style="font-size:10px;color:#22c55e;font-weight:700">'+cnt.available+' ledig</div></div>'
+        : '<div style="font-size:12px;color:#d1d5db">—</div>') +
+    '</div>';
+  }
+
+  var trolhattan = ZONES.filter(function(z){ return z.id<=10; });
+  var vg = ZONES.filter(function(z){ return z.id>10; });
+  var html = '<div style="background:white;min-height:100vh;padding-bottom:80px">';
+  html += '<div style="padding:14px 16px;background:#0d1b3e;color:white">';
+  html += '<div style="font-size:16px;font-weight:800">🗺️ Trollhättan Zoner</div>';
+  html += myZone ? '<div style="font-size:13px;color:#fbbf24;margin-top:4px">📍 Zon '+myZone.id+' · '+myZone.name+'</div>' : '<div style="font-size:12px;color:#4a6090;margin-top:4px">GPS behövs för zondetektering</div>';
+  html += '</div>';
+  html += '<div style="padding:8px 16px;background:#f8fafc;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:2px">Trollhättan distrikt</div>';
+  html += trolhattan.map(renderZone).join('');
+  html += '<div style="padding:8px 16px;background:#f8fafc;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:2px">Västra Götaland</div>';
+  html += vg.map(renderZone).join('');
+  html += '</div>';
+  c.innerHTML = html;
 }
 </script>
 
