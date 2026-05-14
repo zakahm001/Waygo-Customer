@@ -59,6 +59,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;ba
 .ib-blue{background:#dbeafe;color:#1a56db}
 .ib-g{background:#dcfce7;color:#15803d}
 .dcard{background:white;border-radius:12px;padding:14px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,.6)}50%{box-shadow:0 0 0 8px rgba(249,115,22,0)}}
 .dcard.blocked{border-color:#fecaca;background:#fff5f5}
 .dcard.suspended{border-color:#fed7aa;background:#fffbf5}
 .dcard.owner{border-color:#fde68a;background:#fffef0}
@@ -516,22 +517,21 @@ function connectSocket(){
     });
     socket.on('booking:returned',function(b){
       allBookings=allBookings.map(function(x){return x.id===b.id?Object.assign({},x,{status:'pending',driver_id:null,driver_name:null}):x;});
+      playDeclineAlert();
+      showCentralNotif('⚠️ Förare returnerade bokning', (b.booking_ref||'')+(b.driver_name?' ('+b.driver_name+')':''), '#d97706', 0);
+      showToast('⚠️ Bokning returnerad — tilldela om!');
       if(curTab===0)showTab(0);
     });
 
     // Auto-dispatch status updates
     socket.on('message:new', function(data) {
-      // Only notify if message is FROM a driver or customer (not our own messages)
-      if (!data) return;
-      var fromDriver = data.sender_role === 'driver';
-      var fromCustomer = data.sender_role === 'customer';
-      if (fromDriver || fromCustomer) {
-        playChatAlert();
-        chatUnread++;
-        updateChatBadge(chatUnread);
-        // Show persistent chat popup banner
-        showChatPopup(data);
-      }
+      if (!data || data.sender_role === 'staff') return;
+      playChatAlert();
+      chatUnread++;
+      updateChatBadge(chatUnread);
+      var senderLabel = data.sender_role === 'customer' ? '👤 Kund' : '🚖 ' + (data.sender_name||'Förare');
+      // DOM popup — always on top, even if on different tab
+      showMessagePopup(senderLabel, data.content||'');
     });
   socket.on('dispatch:status',function(data){
       // Update or create dispatch status banner for this booking
@@ -568,6 +568,11 @@ function connectSocket(){
 
     socket.on('booking:cancelled',function(data){
       allBookings=allBookings.map(function(b){return b.id===data.id?Object.assign({},b,{status:'cancelled',driver_id:null,driver_name:null}):b;});
+      var bk=allBookings.find(function(b){return b.id===data.id;});
+      var ref=bk?bk.booking_ref:(data.booking_ref||'#'+data.id);
+      playDeclineAlert();
+      showCentralNotif('❌ Kund avbokade', ref + ' — '+(bk?bk.from_address||'':''), '#dc2626', 0);
+      showToast('❌ Kund avbokade: ' + ref);
       if(curTab===0)showTab(0);
     });
     socket.on('driver:location',function(data){
@@ -576,8 +581,14 @@ function connectSocket(){
       updateMarker(did,data.lat,data.lng);
     });
     socket.on('driver:status',function(data){
+      var prevStatus = (allDrivers.find(function(d){return d.id===data.driverId;})||{}).status;
       allDrivers=allDrivers.map(function(d){return d.id===data.driverId?Object.assign({},d,{status:data.status}):d;});
       if(curTab===2)showTab(2);
+      // Alert if driver goes offline while busy
+      if((data.status==='offline'||data.status==='deleted') && prevStatus==='busy'){
+        var d=allDrivers.find(function(x){return x.id===data.driverId;});
+        if(d) showCentralNotif('⚠️ Förare gick offline!', (d.name||'Förare')+' hade aktiv bokning', '#dc2626', 6000);
+      }
     });
   }catch(e){console.log('Socket error:',e);}
 }
@@ -717,6 +728,18 @@ function initMapTab(){
 var leafletMapInstance=null;
 var leafletMarkers={};
 
+function makeTaxiIcon(status, name) {
+  var color = status==='available' ? '#22c55e' : status==='busy' ? '#f97316' : status==='paused' ? '#d97706' : '#94a3b8';
+  var pulse = status==='busy' ? 'animation:pulse 1.5s infinite' : '';
+  var initials = (name||'?').split(' ').map(function(w){return w[0];}).join('').substring(0,2).toUpperCase();
+  var html = '<div style="position:relative;text-align:center">' +
+    '<div style="background:'+color+';color:white;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3);'+pulse+'">🚖</div>' +
+    '<div style="background:#0d1b3e;color:white;font-size:9px;font-weight:700;padding:1px 5px;border-radius:8px;margin-top:2px;white-space:nowrap;max-width:70px;overflow:hidden;text-overflow:ellipsis">'+initials+'</div>' +
+    '</div>';
+  return window.L.divIcon({ html: html, className: '', iconSize: [40, 52], iconAnchor: [20, 52] });
+}
+
+
 function initLeafletMap(drivers){
   // Center on Trollhättan
   // Center on drivers if any have GPS, otherwise Trollhättan
@@ -763,10 +786,7 @@ if(driverCoords.length){centerLat=driverCoords[0].lat;centerLng=driverCoords[0].
 
 function addLeafletMarker(map, driver, lat, lng){
   var color=driver.status==='available'?'#22c55e':driver.status==='busy'?'#f97316':'#64748b';
-  var icon=L.divIcon({
-    html:'<div style="background:'+color+';color:white;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3);font-weight:bold">🚖</div>',
-    className:'',iconSize:[36,36],iconAnchor:[18,18],popupAnchor:[0,-20]
-  });
+  var icon=makeTaxiIcon(driver.status, driver.name);
   var statusTxt=driver.status==='available'?'🟢 Ledig':driver.status==='busy'?'🟠 På uppdrag':'⚫ Offline';
   var marker=L.marker([lat,lng],{icon:icon}).addTo(map);
   marker.bindPopup(
@@ -1933,6 +1953,37 @@ function listenForDriverResponses() {
     // Also show as popup
     showMessagePopup(data.driver_name + ' svarade', icon + ' ' + (data.response === 'yes' ? 'JA' : data.response === 'no' ? 'NEJ' : 'OK'));
   });
+}
+
+// ── CENTRAL NOTIFICATION BANNER ──
+function showCentralNotif(title, body, color, autoDismiss) {
+  // Remove old
+  var old = document.getElementById('centralNotifBanner');
+  if (old) old.remove();
+
+  var banner = document.createElement('div');
+  banner.id = 'centralNotifBanner';
+  banner.setAttribute('style',
+    'position:fixed;top:0;left:0;right:0;z-index:9999;' +
+    'background:'+color+';color:white;padding:12px 18px;' +
+    'display:flex;align-items:center;gap:12px;cursor:pointer;' +
+    'animation:slideDown .3s ease;box-shadow:0 4px 20px rgba(0,0,0,.3)'
+  );
+  var closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕';
+  closeBtn.setAttribute('style','background:none;border:none;color:white;font-size:18px;cursor:pointer;margin-left:auto;flex-shrink:0');
+  closeBtn.onclick = function(e){ e.stopPropagation(); banner.remove(); };
+
+  var inner = document.createElement('div');
+  inner.innerHTML = '<div style="font-weight:800;font-size:14px">'+title+'</div>' +
+    '<div style="font-size:12px;opacity:.9;margin-top:2px">'+body+'</div>';
+
+  banner.appendChild(inner);
+  banner.appendChild(closeBtn);
+  banner.onclick = function(){ banner.remove(); showTab(0); };
+  document.body.appendChild(banner);
+
+  if (autoDismiss > 0) setTimeout(function(){ if(document.getElementById('centralNotifBanner'))document.getElementById('centralNotifBanner').remove(); }, autoDismiss);
 }
 
 </script>
