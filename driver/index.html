@@ -352,6 +352,23 @@ window.addEventListener('load',()=>{
         // Restore state
         const savedBooking=localStorage.getItem('thtcab_active_booking');
         if(savedBooking)try{activeBooking=JSON.parse(savedBooking);}catch(e){}
+        // ── RESTORE TRIP PHASE — verify from server ──
+        if(activeBooking){
+          tripPhase = localStorage.getItem('thtcab_trip_phase') || 'driving';
+          // Verify against server (server is authoritative)
+          fetch(API+'/bookings/'+activeBooking.id+'/trip-phase')
+            .then(function(r){return r.json();})
+            .then(function(d){
+              if(d.trip_phase && d.trip_phase !== 'driving'){
+                tripPhase = d.trip_phase;
+                localStorage.setItem('thtcab_trip_phase', tripPhase);
+              }
+              showTab(0); // Re-render with correct phase
+            }).catch(function(){});
+        }
+        // ── RESTORE SELECTED CAR ──
+        const savedCar=localStorage.getItem('thtcab_selected_car');
+        if(savedCar)try{selectedCar=JSON.parse(savedCar);}catch(e){}
         const savedOnline=localStorage.getItem('thtcab_online_seconds');
         if(savedOnline)onlineSeconds=parseInt(savedOnline)||0;
         // Check if block is still active
@@ -412,6 +429,14 @@ function enterApp(){
     var cn=document.getElementById('companyName');
     if(cn&&driver&&driver.company_name)cn.textContent=driver.company_name;
   },500);
+  // If driver has active booking — skip car selection, go straight to app
+  if(activeBooking){
+    showScreen('sApp');
+    initApp();
+    // Go to active booking tab
+    setTimeout(function(){ showTab(0); },300);
+    return;
+  }
   // Load driver's cars first
   loadDriverCars();
 }
@@ -475,6 +500,10 @@ async function selectCar(carId, plate, model, company){
     var plateEl=document.getElementById('selectedPlate');
     if(plateEl)plateEl.textContent=plate;
   }catch(e){}
+  // If driver had an active booking before refresh — preserve trip state
+  if(!activeBooking){
+    tripPhase = 'driving'; // Only reset if no active booking
+  }
   showScreen('sApp');
   initApp();
 }
@@ -1190,7 +1219,8 @@ async function logout(){
   localStorage.removeItem('thtcab_driver');localStorage.removeItem('thtcab_driver_token');
   localStorage.removeItem('thtcab_active_booking');localStorage.removeItem('thtcab_online_seconds');
   localStorage.removeItem('thtcab_paused_at');localStorage.removeItem('thtcab_block_until');
-  driver=null;token=null;activeBooking=null;onlineSeconds=0;
+  driver=null;token=null;activeBooking=null;onlineSeconds=0;tripPhase='driving';
+  localStorage.removeItem('thtcab_selected_car');localStorage.removeItem('thtcab_trip_phase');localStorage.removeItem('thtcab_active_booking');
   stopLocationTracking();
   showScreen('sLogin');
 }
