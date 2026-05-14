@@ -813,50 +813,75 @@ function addZoneOverlays(map) {
   });
 }
 
+// Saved map view for re-init after DOM replacement
+var savedMapCenter = null;
+var savedMapZoom = 13;
+
 function initLeafletMap(drivers){
-  // ── If map already exists, just refresh markers — DO NOT recreate ──
-  if(leafletMapInstance){
-    // Update existing markers only
+  var mapEl = document.getElementById('leafletMap');
+  if (!mapEl) return;
+
+  // ── Check if the container div was replaced (innerHTML re-set) ──
+  var containerReplaced = leafletMapInstance && (leafletMapInstance.getContainer() !== mapEl);
+
+  if (leafletMapInstance && !containerReplaced) {
+    // Same container — just update marker positions, keep view ──
     drivers.forEach(function(d){
-      var pos=driverPositions[d.id];
-      if(pos&&pos.lat&&pos.lng){
-        if(leafletMarkers[d.id]){
-          leafletMarkers[d.id].setLatLng([pos.lat,pos.lng]);
+      var pos = driverPositions[d.id];
+      if (pos && pos.lat && pos.lng) {
+        if (leafletMarkers[d.id]) {
+          leafletMarkers[d.id].setLatLng([pos.lat, pos.lng]);
         } else {
-          addLeafletMarker(leafletMapInstance,d,pos.lat,pos.lng);
+          addLeafletMarker(leafletMapInstance, d, pos.lat, pos.lng);
         }
       }
     });
-    return; // Keep current view — no jumping
+    setTimeout(function(){ leafletMapInstance.invalidateSize(); }, 100);
+    return;
   }
 
-  // ── First time: create map centered on Trollhättan or first driver ──
-  var centerLat=58.2835, centerLng=12.2887;
-  var driverCoords=Object.values(driverPositions).filter(function(p){return p&&p.lat&&p.lng;});
-  if(driverCoords.length){centerLat=driverCoords[0].lat;centerLng=driverCoords[0].lng;}
+  // ── Container was replaced OR first init — save old view then recreate ──
+  if (leafletMapInstance) {
+    try {
+      savedMapCenter = leafletMapInstance.getCenter();
+      savedMapZoom   = leafletMapInstance.getZoom();
+      leafletMapInstance.remove();
+    } catch(e) {}
+    leafletMapInstance = null;
+    leafletMarkers = {};
+  }
 
-  var map=L.map('leafletMap',{
-    zoomControl:true,
-    attributionControl:true,
-    preferCanvas:true
-  }).setView([centerLat,centerLng],13);
-  leafletMapInstance=map;
+  // Choose center: saved view > driver GPS > Trollhättan default
+  var centerLat = 58.2835, centerLng = 12.2887, zoom = savedMapZoom || 13;
+  if (savedMapCenter) { centerLat = savedMapCenter.lat; centerLng = savedMapCenter.lng; }
+  else {
+    var coords = Object.values(driverPositions).filter(function(p){ return p&&p.lat&&p.lng; });
+    if (coords.length) { centerLat = coords[0].lat; centerLng = coords[0].lng; }
+  }
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    attribution:'© OpenStreetMap',
-    maxZoom:19
+  var map = L.map('leafletMap', {
+    zoomControl: true,
+    attributionControl: true,
+    preferCanvas: true,
+    fadeAnimation: false
+  }).setView([centerLat, centerLng], zoom);
+  leafletMapInstance = map;
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap',
+    maxZoom: 19
   }).addTo(map);
 
-  // Add zone overlays
   addZoneOverlays(map);
 
-  // Add driver markers
   drivers.forEach(function(d){
-    var pos=driverPositions[d.id];
-    if(pos&&pos.lat&&pos.lng){
-      addLeafletMarker(map,d,pos.lat,pos.lng);
-    }
+    var pos = driverPositions[d.id];
+    if (pos && pos.lat && pos.lng) addLeafletMarker(map, d, pos.lat, pos.lng);
   });
+
+  // Force Leaflet to recalculate container size
+  setTimeout(function(){ map.invalidateSize(); }, 100);
+  setTimeout(function(){ map.invalidateSize(); }, 400);
 }
 
 function addLeafletMarker(map, driver, lat, lng){
