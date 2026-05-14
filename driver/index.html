@@ -1027,9 +1027,7 @@ function tabHome(){
       '<div style="font-size:15px;font-weight:700;color:#0d1b3e;margin-bottom:4px">Ledig — väntar på bokningar</div>'+
       '<div style="font-size:12px;color:#64748b">Du får ljud, vibration och notis när en bokning kommer</div></div>')+
     (!activeBooking?'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'+
-    '<button class="btn btn-orange" onclick="startPause()">☕ Ta paus</button>'+
-    '<button class="btn btn-danger" onclick="showLogoutConfirm()">🚪 Logga ut</button>'+
-    '</div>':'')+
+    '<button class="btn btn-orange" onclick="startPause()">☕ Ta paus</button>'+    '</div>':'')+
     '<div style="height:80px"></div></div>';
 }
 
@@ -1701,7 +1699,8 @@ async function showZonesTab() {
   document.querySelectorAll('.bni').forEach(function(b,j){ b.classList.toggle('on', j===1); });
   var c = document.getElementById('tabContent');
   if (!c) return;
-  c.innerHTML = '<div style="padding:16px;text-align:center;color:#64748b">Laddar zoner...</div>';
+  c.innerHTML = '<div style="padding:20px;text-align:center"><div style="font-size:24px">⏳</div><div style="color:#64748b;margin-top:8px">Laddar zoner...</div></div>';
+
   var myZone = detectCurrentZone(lastLat, lastLng);
   var zoneCounts = {};
   try {
@@ -1717,34 +1716,55 @@ async function showZonesTab() {
     });
   } catch(e) {}
 
-  function renderZone(z) {
-    var isMyZone = myZone && myZone.id === z.id;
+  function zoneCard(z) {
+    var isMe = myZone && myZone.id === z.id;
     var cnt = zoneCounts[z.id] || { total:0, available:0, busy:0 };
-    return '<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #f1f5f9;background:'+(isMyZone?'#fffbeb':'white')+'">' +
-      '<div style="width:42px;height:42px;border-radius:10px;background:'+(isMyZone?'#f97316':'#0d1b3e')+';color:#fbbf24;font-weight:900;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+z.id+'</div>' +
-      '<div style="flex:1"><div style="font-weight:700;font-size:14px;color:#0d1b3e">'+z.name+(isMyZone?' 📍':'')+'</div>' +
-      '<div style="font-size:11px;color:#64748b">'+z.desc+'</div></div>' +
-      (cnt.total>0 ?
-        '<div style="text-align:right"><div style="font-size:14px;font-weight:800;color:#0d1b3e">'+cnt.total+' 🚖</div>' +
-        '<div style="font-size:10px;color:#22c55e;font-weight:700">'+cnt.available+' ledig</div></div>'
-        : '<div style="font-size:12px;color:#d1d5db">—</div>') +
+    var bg = isMe ? 'linear-gradient(135deg,#f97316,#ea580c)' : cnt.total > 0 ? 'linear-gradient(135deg,#0d1b3e,#1e3a5f)' : '#f1f5f9';
+    var textColor = (isMe || cnt.total > 0) ? 'white' : '#94a3b8';
+    var subColor = isMe ? 'rgba(255,255,255,0.8)' : cnt.total > 0 ? 'rgba(255,255,255,0.6)' : '#cbd5e1';
+    return '<div style="background:'+bg+';border-radius:14px;padding:14px;position:relative;overflow:hidden">' +
+      (isMe ? '<div style="position:absolute;top:0;right:0;background:rgba(255,255,255,0.2);padding:3px 8px;border-radius:0 14px 0 10px;font-size:10px;font-weight:700;color:white">DIN ZON</div>' : '') +
+      '<div style="font-size:22px;font-weight:900;color:'+textColor+';line-height:1">'+z.id+'</div>' +
+      '<div style="font-size:12px;font-weight:700;color:'+textColor+';margin-top:4px;line-height:1.2">'+z.name+'</div>' +
+      '<div style="font-size:10px;color:'+subColor+';margin-top:2px">'+z.desc+'</div>' +
+      (cnt.total > 0 ?
+        '<div style="display:flex;gap:6px;margin-top:8px">' +
+          '<span style="background:rgba(255,255,255,0.2);border-radius:20px;padding:2px 8px;font-size:11px;font-weight:700;color:white">'+cnt.total+' 🚖</span>' +
+          (cnt.available > 0 ? '<span style="background:rgba(34,197,94,0.3);border-radius:20px;padding:2px 8px;font-size:11px;font-weight:700;color:#bbf7d0">'+cnt.available+' fri</span>' : '') +
+        '</div>'
+        : '<div style="margin-top:8px;font-size:10px;color:'+subColor+'">Inga bilar</div>') +
     '</div>';
   }
 
-  var trolhattan = ZONES.filter(function(z){ return z.id<=10; });
-  var vg = ZONES.filter(function(z){ return z.id>10; });
-  var html = '<div style="background:white;min-height:100vh;padding-bottom:80px">';
-  html += '<div style="padding:14px 16px;background:#0d1b3e;color:white">';
-  html += '<div style="font-size:16px;font-weight:800">🗺️ Trollhättan Zoner</div>';
-  html += myZone ? '<div style="font-size:13px;color:#fbbf24;margin-top:4px">📍 Zon '+myZone.id+' · '+myZone.name+'</div>' : '<div style="font-size:12px;color:#4a6090;margin-top:4px">GPS behövs för zondetektering</div>';
-  html += '</div>';
-  html += '<div style="padding:8px 16px;background:#f8fafc;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:2px">Trollhättan distrikt</div>';
-  html += trolhattan.map(renderZone).join('');
-  html += '<div style="padding:8px 16px;background:#f8fafc;font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:2px">Västra Götaland</div>';
-  html += vg.map(renderZone).join('');
+  var tht = ZONES.filter(function(z){ return z.id<=10; });
+  var vg  = ZONES.filter(function(z){ return z.id>10; });
+
+  var html = '<div style="padding-bottom:80px">';
+  // Header
+  html += '<div style="background:#0d1b3e;padding:16px;color:white;display:flex;align-items:center;gap:12px">';
+  html += '<div>';
+  html += '<div style="font-size:16px;font-weight:800">🗺️ Zonöversikt</div>';
+  html += myZone
+    ? '<div style="font-size:13px;color:#fbbf24;margin-top:2px">📍 Zon '+myZone.id+' · '+myZone.name+'</div>'
+    : '<div style="font-size:12px;color:#4a6090;margin-top:2px">Aktivera GPS för zondetektering</div>';
+  html += '</div></div>';
+
+  // Trollhättan grid
+  html += '<div style="padding:12px 14px 4px"><div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px">Trollhättan</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+  html += tht.map(zoneCard).join('');
+  html += '</div></div>';
+
+  // Västra Götaland grid
+  html += '<div style="padding:12px 14px 4px"><div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px">Västra Götaland</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">';
+  html += vg.map(zoneCard).join('');
+  html += '</div></div>';
+
   html += '</div>';
   c.innerHTML = html;
 }
+
 </script>
 
 
@@ -1773,19 +1793,10 @@ async function showZonesTab() {
     <!-- Menu Items -->
     <div style="flex:1;padding:8px 0">
       <div class="dmenu-item" onclick="openQuickMessages()">
-        <span class="dmenu-icon">💬</span><span>Snabbmeddelanden till Central</span>
-      </div>
-      <div class="dmenu-item" onclick="showZonesView()">
-        <span class="dmenu-icon">🗺️</span><span>Zoner</span>
+        <span class="dmenu-icon">⚡</span><span>Snabbmeddelanden</span>
       </div>
       <div class="dmenu-item" onclick="showMyBookings()">
         <span class="dmenu-icon">📋</span><span>Mina resor</span>
-      </div>
-      <div class="dmenu-item" onclick="openChat('central-driver-'+(driver?driver.id:''),'Central Dispatch');closeDriverMenu()">
-        <span class="dmenu-icon">📡</span><span>Chatt med Central</span>
-      </div>
-      <div class="dmenu-item" onclick="showGPSInfo()">
-        <span class="dmenu-icon">📍</span><span>GPS-status</span>
       </div>
       <div style="border-top:1px solid #f1f5f9;margin:8px 0"></div>
       <div class="dmenu-item" onclick="doLogoutConfirm()" style="color:#dc2626">
