@@ -1536,10 +1536,16 @@ function closeDriverMenu() {
 function openQuickMessages() {
   closeDriverMenu();
   var list = document.getElementById('quickMsgList');
-  list.innerHTML = QUICK_MSGS.map(function(msg) {
-    return '<div onclick="sendQuickMsg('+JSON.stringify(msg)+')" style="background:#f8fafc;border-radius:10px;padding:14px;margin-bottom:8px;cursor:pointer;font-size:14px;font-weight:600;color:#0d1b3e;border:1px solid #e2e8f0">'+msg+'</div>';
+  list.innerHTML = QUICK_MSGS.map(function(msg, i) {
+    return '<div data-idx="'+i+'" onclick="sendQuickByIndex(parseInt(this.dataset.idx))" style="background:#f8fafc;border-radius:10px;padding:14px;margin-bottom:8px;cursor:pointer;font-size:14px;font-weight:600;color:#0d1b3e;border:1px solid #e2e8f0">'+msg+'</div>';
   }).join('');
   document.getElementById('quickMsgSheet').style.display = 'flex';
+}
+
+
+function sendQuickByIndex(idx) {
+  var msg = QUICK_MSGS[idx];
+  if (msg) sendQuickMsg(msg);
 }
 
 async function sendQuickMsg(msg) {
@@ -1556,23 +1562,53 @@ async function sendQuickMsg(msg) {
   } catch(e) { showToast('⚠️ Kunde inte skicka meddelandet'); }
 }
 
-function showZonesView() {
+async function showZonesView() {
   closeDriverMenu();
   var list = document.getElementById('zonesList');
-  // Group by region
-  var trolhattan = ZONES.filter(function(z){ return z.id <= 10; });
-  var vg = ZONES.filter(function(z){ return z.id > 10; });
+  var myZone = detectCurrentZone(lastLat, lastLng);
+
+  // Fetch online driver positions to calculate zone counts
+  var zoneCounts = {}; // zone_id -> {total, available, busy}
+  try {
+    var res = await fetch(API + '/zones/overview', { headers: { 'Authorization': 'Bearer ' + token } });
+    var data = await res.json();
+    (data.drivers || []).forEach(function(d) {
+      var z = detectCurrentZone(parseFloat(d.lat), parseFloat(d.lng));
+      if (!z) return;
+      if (!zoneCounts[z.id]) zoneCounts[z.id] = { total: 0, available: 0, busy: 0 };
+      zoneCounts[z.id].total++;
+      if (d.status === 'available') zoneCounts[z.id].available++;
+      else if (d.status === 'busy') zoneCounts[z.id].busy++;
+    });
+  } catch(e) {}
+
+  function renderZone(z) {
+    var isMyZone = myZone && myZone.id === z.id;
+    var counts = zoneCounts[z.id] || { total: 0, available: 0, busy: 0 };
+    var hasCars = counts.total > 0;
+    return '<div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid #f1f5f9;'+(isMyZone?'background:#fffbeb;margin:0 -16px;padding-left:16px;padding-right:16px':'')+'">' +
+      '<div style="width:40px;height:40px;border-radius:10px;background:'+(isMyZone?'#f97316':'#0d1b3e')+';color:#fbbf24;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">' + z.id + '</div>' +
+      '<div style="flex:1"><div style="font-weight:700;font-size:14px">' + z.name + (isMyZone?' 📍':'') + '</div>' +
+      '<div style="font-size:11px;color:#64748b">' + z.desc + '</div></div>' +
+      (hasCars ?
+        '<div style="text-align:right">' +
+        '<div style="font-size:13px;font-weight:700">' + counts.total + ' 🚖</div>' +
+        '<div style="font-size:10px;color:#22c55e">' + counts.available + ' ledig</div>' +
+        '</div>'
+        : '<div style="color:#e2e8f0;font-size:12px">—</div>') +
+      '</div>';
+  }
+
   function renderGroup(title, zones) {
     return '<div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;padding:12px 0 6px">' + title + '</div>' +
-      zones.map(function(z) {
-        return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f1f5f9">' +
-          '<div style="width:34px;height:34px;border-radius:8px;background:#0d1b3e;color:#fbbf24;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+z.id+'</div>'+
-          '<div><div style="font-weight:700;font-size:14px">'+z.name+'</div>'+
-          '<div style="font-size:11px;color:#64748b">'+z.desc+'</div></div>'+
-          '</div>';
-      }).join('');
+      zones.map(renderZone).join('');
   }
-  list.innerHTML = renderGroup('Trollhättan distrikt', trolhattan) + renderGroup('Västra Götaland', vg);
+
+  var trolhattan = ZONES.filter(function(z){ return z.id <= 10; });
+  var vg = ZONES.filter(function(z){ return z.id > 10; });
+  list.innerHTML = (myZone ? '<div style="background:#fef3c7;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:13px;font-weight:700;color:#d97706">📍 Du är i Zon ' + myZone.id + ' · ' + myZone.name + '</div>' : '') +
+    renderGroup('Trollhättan distrikt', trolhattan) +
+    renderGroup('Västra Götaland', vg);
   document.getElementById('zonesSheet').style.display = 'flex';
 }
 
