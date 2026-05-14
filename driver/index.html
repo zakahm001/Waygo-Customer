@@ -958,7 +958,9 @@ function tabHome(){
   return '<div style="background:#0d1b3e;padding:20px">'+
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">'+
     '<div><div style="color:#fbbf24;font-size:16px;font-weight:bold">'+driver.name+'</div>'+
-    '<div style="color:#4a6090;font-size:12px;margin-top:2px">'+(driver.plate||'')+' · '+(driver.taxi_nr||'')+'</div></div></div>'+
+    '<div style="color:#4a6090;font-size:12px;margin-top:2px">'+(driver.plate||'')+' · '+(driver.taxi_nr||'')+'</div>'+
+    '<div id="zoneBadge" style="display:none;background:#fbbf24;color:#0d1b3e;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;margin-top:4px;display:inline-block"></div>'+
+    '</div></div>'+
     '<div class="stat-row">'+
     '<div class="stat-box"><div class="stat-val">'+(driver.earnings_today||0)+' kr</div><div class="stat-lbl">INTÄKTER</div></div>'+
     '<div class="stat-box"><div class="stat-val">'+(driver.trips_today||0)+'</div><div class="stat-lbl">RESOR</div></div>'+
@@ -1574,10 +1576,44 @@ function showZonesView() {
   document.getElementById('zonesSheet').style.display = 'flex';
 }
 
-function showMyBookings() {
+async function showMyBookings() {
   closeDriverMenu();
-  // Show trip history for this driver
-  openChat('central-driver-'+(driver?driver.id:''),'Central');
+  if(!driver||!token)return;
+  var el = document.getElementById('tabContent');
+  if(el) el.innerHTML = '<div style="padding:20px;text-align:center;color:#64748b">Laddar resor...</div>';
+  showTab(1); // Switch to Resor tab
+  try {
+    var res = await fetch(API+'/drivers/'+driver.id+'/bookings', {headers:{'Authorization':'Bearer '+token}});
+    var data = await res.json();
+    var trips = (data.bookings||data||[]).filter(function(b){return b.status==='completed';}).sort(function(a,b){return new Date(b.created_at)-new Date(a.created_at);});
+    renderMyTrips(trips);
+  } catch(e) {
+    if(el) el.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8">Kunde inte ladda resor</div>';
+  }
+}
+
+function renderMyTrips(trips) {
+  var el = document.getElementById('tabContent');
+  if(!el) return;
+  var total = trips.reduce(function(s,b){return s+(b.fare_sek||0);},0);
+  var h = '<div style="padding:16px">';
+  h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">';
+  h += '<div style="font-size:18px;font-weight:800;color:#0d1b3e">📋 Mina resor</div>';
+  h += '<div style="font-size:13px;color:#64748b">'+trips.length+' resor · '+total+' kr</div></div>';
+  if(!trips.length){h+='<div style="text-align:center;padding:40px;color:#94a3b8">Inga avslutade resor</div></div>';el.innerHTML=h;return;}
+  trips.forEach(function(b){
+    h += '<div style="background:white;border-radius:12px;padding:14px;margin-bottom:10px;border:1px solid #e2e8f0">';
+    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+    h += '<div style="font-weight:800;color:#1a56db;font-size:14px">'+b.booking_ref+'</div>';
+    h += '<div style="font-weight:800;color:#15803d;font-size:16px">'+(b.fare_sek||0)+' kr</div></div>';
+    h += '<div style="font-size:12px;color:#64748b;margin-bottom:4px">📍 '+(b.from_address||'')+'</div>';
+    h += '<div style="font-size:12px;color:#64748b;margin-bottom:4px">🏁 '+(b.to_address||'')+'</div>';
+    h += '<div style="display:flex;justify-content:space-between;font-size:11px;color:#94a3b8">';
+    h += '<span>'+(b.payment_method||'')+'</span>';
+    h += '<span>'+new Date(b.created_at).toLocaleString('sv-SE',{dateStyle:'short',timeStyle:'short'})+'</span></div></div>';
+  });
+  h += '</div>';
+  el.innerHTML = h;
 }
 
 function showGPSInfo() {
@@ -1594,6 +1630,35 @@ function doLogoutConfirm() {
   if (confirm('Vill du logga ut?')) { logout(); }
 }
 
+
+function detectCurrentZone(lat, lng) {
+  var ZB=[
+    {id:1,  name:'Trollhättan Centrum', b:[58.270,12.260,58.295,12.310]},
+    {id:2,  name:'Götalunden',          b:[58.285,12.305,58.305,12.340]},
+    {id:3,  name:'Lextorp',             b:[58.255,12.270,58.278,12.310]},
+    {id:4,  name:'Gärdhem',             b:[58.250,12.310,58.270,12.355]},
+    {id:5,  name:'Fors',                b:[58.272,12.330,58.295,12.380]},
+    {id:6,  name:'Lagmansered',         b:[58.275,12.220,58.300,12.260]},
+    {id:7,  name:'Norra Björke',        b:[58.305,12.240,58.340,12.295]},
+    {id:8,  name:'Rommele',             b:[58.280,12.350,58.320,12.420]},
+    {id:9,  name:'Upphärad',            b:[58.295,12.280,58.330,12.340]},
+    {id:10, name:'Väne-Åsaka',          b:[58.240,12.290,58.270,12.370]},
+    {id:11, name:'Vänersborg',          b:[58.360,12.290,58.410,12.380]},
+    {id:12, name:'Lilla Edet',          b:[58.100,12.160,58.160,12.230]},
+    {id:15, name:'Göteborg',            b:[57.640,11.880,57.780,12.050]},
+  ];
+  if(!lat||!lng)return null;
+  for(var i=0;i<ZB.length;i++){var z=ZB[i];if(lat>=z.b[0]&&lat<=z.b[2]&&lng>=z.b[1]&&lng<=z.b[3])return z;}
+  return null;
+}
+
+function updateZoneBadge() {
+  var badge=document.getElementById('zoneBadge');
+  if(!badge||!lastLat||!lastLng)return;
+  var zone=detectCurrentZone(lastLat,lastLng);
+  if(zone){badge.textContent='Zon '+zone.id+' · '+zone.name;badge.style.display='inline-block';}
+  else{badge.style.display='none';}
+}
 </script>
 
 
