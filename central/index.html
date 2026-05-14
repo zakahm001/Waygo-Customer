@@ -494,6 +494,10 @@ async function loadData(){
 }
 
 function connectSocket(){
+  // Ensure Leaflet redraws when window resizes
+  window.addEventListener('resize', function(){
+    if(leafletMapInstance) leafletMapInstance.invalidateSize();
+  });
   try{
     socket=io(API,{timeout:5000});
     socket.on('connect',function(){socket.emit('central:join');});
@@ -628,18 +632,31 @@ function showTab(i,extra){
   }catch(e){console.error(e);}
 }
 function locateDriver(driverId) {
-  if (!leafletMapInstance) { showTab(1); setTimeout(function(){ locateDriver(driverId); }, 600); return; }
   var pos = driverPositions[driverId];
-  if (!pos || !pos.lat || !pos.lng) { showToast('⚠️ Ingen GPS-position för föraren'); return; }
-  // Switch to map tab if not already there
-  if (curTab !== 1) { showTab(1); setTimeout(function(){ locateDriver(driverId); }, 500); return; }
-  // Fly to driver position
-  leafletMapInstance.flyTo([pos.lat, pos.lng], 15, { animate: true, duration: 1.0 });
-  // Open their marker popup
+  if (!pos || !pos.lat || !pos.lng) {
+    showToast('⚠️ Ingen GPS — föraren har ingen aktiv position');
+    return;
+  }
+  // Switch to map tab
+  if (curTab !== 1) {
+    showTab(1);
+    setTimeout(function(){ locateDriver(driverId); }, 600);
+    return;
+  }
+  if (!leafletMapInstance) {
+    setTimeout(function(){ locateDriver(driverId); }, 400);
+    return;
+  }
+  // Smooth fly to driver
+  leafletMapInstance.flyTo([pos.lat, pos.lng], 16, { animate:true, duration:1.2 });
+  // Show marker popup with name + status
   var marker = leafletMarkers[driverId];
-  if (marker) { marker.openPopup(); }
-  // Show driver profile
-  setTimeout(function(){ openDriverProfile(driverId); }, 600);
+  if (marker) {
+    setTimeout(function(){ marker.openPopup(); }, 1000);
+  }
+  // Small toast — don't open full profile modal (user can click marker for that)
+  var d = allDrivers.find(function(x){ return x.id===driverId; });
+  if (d) showToast('📍 '+d.name+' · '+(d.plate||''), '#0d1b3e');
 }
 
 function sc(val,lbl,color,onclick){return '<div class="scard"'+(onclick?' onclick="'+onclick+'" style="cursor:pointer"':'')+' ><div class="sval" style="color:'+color+'">'+val+'</div><div class="slbl">'+lbl+'</div></div>';}
@@ -699,7 +716,7 @@ function tabMap(){
   });
   // Return HTML only — do NOT set innerHTML here
   return '<div style="height:calc(100vh - 100px);display:flex;flex-direction:column">'+
-    '<div id="leafletMap" style="flex:1;width:100%;min-height:300px;z-index:1;background:#e2e8f0"></div>'+
+    '<div id="leafletMap" style="flex:1;width:100%;height:calc(100vh - 152px);min-height:300px;z-index:1"></div>'+
     '<div style="background:white;padding:10px 14px;border-top:1px solid #d0d7ea;overflow-x:auto;white-space:nowrap;flex-shrink:0">'+
     '<span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px">'+avail.length+' AKTIVA FORDON &nbsp;</span>'+
     driverList+
@@ -732,6 +749,10 @@ function initMapTab(){
     }
   } else {
     initLeafletMap(avail);
+    // CRITICAL: tell Leaflet the container dimensions after it's in the DOM
+    setTimeout(function(){
+      if(leafletMapInstance) leafletMapInstance.invalidateSize();
+    }, 50);
   }
 }
 
@@ -814,12 +835,10 @@ function initLeafletMap(drivers){
   var driverCoords=Object.values(driverPositions).filter(function(p){return p&&p.lat&&p.lng;});
   if(driverCoords.length){centerLat=driverCoords[0].lat;centerLng=driverCoords[0].lng;}
 
-  var TROLHATTAN_BOUNDS = L.latLngBounds([57.9,11.8],[58.7,12.8]);
   var map=L.map('leafletMap',{
     zoomControl:true,
     attributionControl:true,
-    maxBounds:TROLHATTAN_BOUNDS,
-    maxBoundsViscosity:0.8
+    preferCanvas:true
   }).setView([centerLat,centerLng],13);
   leafletMapInstance=map;
 
