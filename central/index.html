@@ -97,6 +97,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;ba
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0d1b3e;color:white;padding:11px 20px;border-radius:22px;font-size:13px;font-weight:700;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.3);white-space:nowrap}
 .toast.show{opacity:1}
 </style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 
@@ -741,11 +743,7 @@ function initMapTab(){
   if(!document.getElementById('leafletMap')){
     setTimeout(initMapTab,100); return;
   }
-  // Set map bounds to Trollhättan region
-  var TROLHATTAN_BOUNDS = L.latLngBounds(
-    [57.9, 11.8],  // SW corner
-    [58.7, 12.8]   // NE corner
-  );
+  // Check Leaflet loaded first
   if(!window.L){
     // Load Leaflet CSS
     if(!document.querySelector('link[href*="leaflet"]')){
@@ -904,38 +902,130 @@ function updateMarker(id,lat,lng){
 }
 
 // ── DRIVERS ──
+async function openDriverProfile(id) {
+  var d = allDrivers.find(function(x){ return x.id===id; });
+  if (!d) { showToast('Förare ej hittad'); return; }
+  var isBlocked = d.blocked;
+  var isSusp = d.suspended_until && new Date(d.suspended_until) > new Date();
+  var stColor = d.status==='available'?'#22c55e':d.status==='busy'?'#f97316':d.status==='paused'?'#d97706':'#94a3b8';
+  var stLabel = d.status==='available'?'🟢 Ledig':d.status==='busy'?'🟠 På uppdrag':d.status==='paused'?'🟡 Paus':'⚫ Offline';
+
+  var driverTrips = allBookings.filter(function(b){ return b.driver_id===d.id && b.status==='completed'; })
+    .sort(function(a,b){ return new Date(b.created_at)-new Date(a.created_at); }).slice(0,8);
+
+  // Build HTML using array join to avoid string concat issues
+  var parts = [];
+  parts.push('<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">');
+  parts.push('<div style="width:52px;height:52px;border-radius:50%;background:#0d1b3e;color:#fbbf24;font-weight:900;font-size:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+d.name.charAt(0)+'</div>');
+  parts.push('<div><div style="font-weight:800;font-size:17px">'+d.name+'</div>');
+  parts.push('<div style="font-size:12px;color:#64748b">📋 Leg: '+(d.taxi_license||'—')+' · 📱 '+(d.phone||'—')+'</div>');
+  parts.push('<div style="margin-top:4px"><span style="background:'+stColor+';color:white;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700">'+stLabel+'</span>');
+  if (isBlocked) parts.push('<span style="background:#dc2626;color:white;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;margin-left:4px">🔴 BLOCKERAD</span>');
+  parts.push('</div></div></div>');
+
+  // Status buttons
+  parts.push('<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px">');
+  parts.push('<button class="prof-stat-btn" data-st="available" style="padding:8px;background:#dcfce7;color:#15803d;border:1px solid #22c55e;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">🟢 Ledig</button>');
+  parts.push('<button class="prof-stat-btn" data-st="paused" style="padding:8px;background:#fef3c7;color:#d97706;border:1px solid #f59e0b;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">🟡 Paus</button>');
+  parts.push('<button class="prof-stat-btn" data-st="offline" style="padding:8px;background:#f1f5f9;color:#64748b;border:1px solid #94a3b8;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">⚫ Offline</button>');
+  parts.push('</div>');
+
+  // Edit fields
+  parts.push('<label class="flabel">Namn</label><input class="finput" id="eDrvName" value="'+d.name+'"/>');
+  parts.push('<label class="flabel">Telefon</label><input class="finput" id="eDrvPhone" value="'+(d.phone||'')+'"/>');
+  parts.push('<label class="flabel">Registreringsskylt</label><input class="finput" id="eDrvPlate" value="'+(d.plate||'')+'"/>');
+  parts.push('<label class="flabel">Taxinummer</label><input class="finput" id="eDrvTaxi" value="'+(d.taxi_nr||'')+'"/>');
+  parts.push('<label class="flabel">Stad</label><input class="finput" id="eDrvCity" value="'+(d.city||'')+'"/>');
+  parts.push('<label class="flabel">Nytt lösenord (lämna tomt)</label><input class="finput" type="password" id="eDrvPwd" placeholder="••••••••"/>');
+  parts.push('<label class="flabel">Anställningstyp</label>');
+  parts.push('<select class="finput" id="drvEmployment">');
+  parts.push('<option value="hourly"'+(d.employment_type==='hourly'?' selected':'')+'>Timavlönad</option>');
+  parts.push('<option value="owner"'+(d.employment_type==='owner'?' selected':'')+'>Ägare/Eget åkeri</option>');
+  parts.push('<option value="fixed"'+(d.employment_type==='fixed'?' selected':'')+'>Fast lön</option>');
+  parts.push('</select>');
+  parts.push('<label class="flabel">Kopplat åkeri</label><select class="finput" id="drvCompany">');
+  parts.push('<option value="">Inget åkeri</option>');
+  allCompanies.forEach(function(c){
+    parts.push('<option value="'+c.id+'"'+(d.company_id===c.id?' selected':'')+'>'+c.name+'</option>');
+  });
+  parts.push('</select>');
+  parts.push('<div class="ib ib-blue" style="font-size:11px;margin-bottom:8px">ℹ️ Åkerinummer tillhör <strong>företaget</strong></div>');
+  parts.push('<button id="profSaveBtn" style="width:100%;padding:11px;background:#1a56db;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;margin-bottom:12px">💾 Spara ändringar</button>');
+
+  // Action buttons
+  parts.push('<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">');
+  parts.push(isBlocked ?
+    '<button id="profBlockBtn" style="padding:10px;background:#dcfce7;color:#15803d;border:none;border-radius:8px;font-weight:700;cursor:pointer">✅ Avblockera</button>' :
+    '<button id="profBlockBtn" style="padding:10px;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;font-weight:700;cursor:pointer">🔴 Blockera</button>'
+  );
+  parts.push('<button id="profSuspBtn" style="padding:10px;background:#fef3c7;color:#d97706;border:none;border-radius:8px;font-weight:700;cursor:pointer">⏸ Stäng av</button>');
+  parts.push('</div>');
+  parts.push('<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">');
+  parts.push('<button id="profChatBtn" style="padding:10px;background:#1a56db;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer">💬 Chatta</button>');
+  parts.push('<button id="profQuestBtn" style="padding:10px;background:#7c3aed;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer">📨 Skicka fråga</button>');
+  parts.push('</div>');
+  if (staffUser && staffUser.level === 1) {
+    parts.push('<button id="profDelBtn" style="width:100%;padding:10px;background:#fee2e2;color:#dc2626;border:1px solid #dc2626;border-radius:8px;font-weight:700;cursor:pointer;margin-bottom:12px">🗑️ Ta bort förare permanent</button>');
+  }
+
+  // Trip log
+  parts.push('<div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">📋 Reselogg</div>');
+  if (!driverTrips.length) {
+    parts.push('<div style="color:#94a3b8;text-align:center;padding:12px">Inga avslutade resor</div>');
+  } else {
+    driverTrips.forEach(function(b){
+      parts.push('<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:12px">');
+      parts.push('<div><div style="font-weight:700;color:#1a56db">'+b.booking_ref+'</div>');
+      parts.push('<div style="color:#94a3b8">'+new Date(b.created_at).toLocaleString('sv-SE',{dateStyle:'short',timeStyle:'short'})+'</div></div>');
+      parts.push('<div style="font-weight:800;color:#15803d">'+(b.fare_sek||0)+' kr</div></div>');
+    });
+  }
+
+  document.getElementById('driverModTitle').textContent = d.name;
+  document.getElementById('driverModContent').innerHTML = parts.join('');
+  document.getElementById('driverMod').classList.add('open');
+
+  // Wire buttons
+  document.querySelectorAll('.prof-stat-btn').forEach(function(btn){
+    btn.onclick = function(){ setDriverStatus(d.id, this.dataset.st); };
+  });
+  var sb = document.getElementById('profSaveBtn');
+  if (sb) sb.onclick = function(){ updateDriverAkeri(d.id); };
+  var bb = document.getElementById('profBlockBtn');
+  if (bb) bb.onclick = function(){ manageDriver(d.id, isBlocked ? 'unblock' : 'block'); };
+  var spb = document.getElementById('profSuspBtn');
+  if (spb) spb.onclick = function(){ openSuspend(d.id); };
+  var cb = document.getElementById('profChatBtn');
+  if (cb) cb.onclick = function(){ closeMod('driverMod'); openChat('central-driver-'+d.id, d.name); };
+  var qb = document.getElementById('profQuestBtn');
+  if (qb) qb.onclick = function(){ openQuestionModal(d.id, d.name); };
+  var db = document.getElementById('profDelBtn');
+  if (db) db.onclick = function(){ deleteDriver(d.id, d.name); };
+}
+
+// ═══════════════════════════════════════════════════════
+// TAB RENDERING FUNCTIONS
+// ═══════════════════════════════════════════════════════
+
 function tabDrivers(filter){
-  filter = filter || 'all';
+  filter=filter||'all';
   var canManage=staffUser&&staffUser.level<=2;
   var h='<div class="page">';
-
-  // ── FILTER BAR ──
   var filters=[
-    {key:'all',    label:'Alla',        color:'#0d1b3e', bg:'#e2e8f0'},
-    {key:'available', label:'🟢 Ledig', color:'#15803d', bg:'#dcfce7'},
-    {key:'busy',   label:'🟠 På uppdrag',color:'#d97706',bg:'#fef3c7'},
-    {key:'paused', label:'🟡 Paus',     color:'#d97706', bg:'#fef3c7'},
-    {key:'offline',label:'⚫ Offline',  color:'#64748b', bg:'#f1f5f9'},
-    {key:'blocked',label:'🔴 Blockerad',color:'#dc2626', bg:'#fee2e2'},
+    {key:'all',      label:'Alla',         color:'#0d1b3e',bg:'#e2e8f0'},
+    {key:'available',label:'🟢 Ledig',     color:'#15803d',bg:'#dcfce7'},
+    {key:'busy',     label:'🟠 På uppdrag',color:'#d97706',bg:'#fef3c7'},
+    {key:'paused',   label:'🟡 Paus',      color:'#d97706',bg:'#fef3c7'},
+    {key:'offline',  label:'⚫ Offline',   color:'#64748b',bg:'#f1f5f9'},
+    {key:'blocked',  label:'🔴 Blockerad', color:'#dc2626',bg:'#fee2e2'},
   ];
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;padding:4px 0">';
   filters.forEach(function(f){
-    var active = filter===f.key;
-    var count = f.key==='all' ? allDrivers.length :
-                f.key==='blocked' ? allDrivers.filter(function(d){return d.blocked;}).length :
-                allDrivers.filter(function(d){return d.status===f.key&&!d.blocked;}).length;
-    h+='<button onclick="showTab(2,\''+f.key+'\')" style="padding:7px 14px;border-radius:20px;border:2px solid '+(active?f.color:'#e2e8f0')+';background:'+(active?f.bg:'white')+';color:'+(active?f.color:'#64748b')+';font-size:12px;font-weight:'+(active?'700':'500')+';cursor:pointer">'+
-      f.label+' <span style="font-weight:800">'+count+'</span></button>';
+    var active=filter===f.key;
+    var count=f.key==='all'?allDrivers.length:f.key==='blocked'?allDrivers.filter(function(d){return d.blocked;}).length:allDrivers.filter(function(d){return d.status===f.key&&!d.blocked;}).length;
+    h+='<button onclick="showTab(2,\''+f.key+'\')" style="padding:6px 12px;border-radius:20px;border:2px solid '+(active?f.color:'#e2e8f0')+';background:'+(active?f.bg:'white')+';color:'+(active?f.color:'#64748b')+';font-size:12px;font-weight:'+(active?'700':'500')+';cursor:pointer">'+f.label+' <strong>'+count+'</strong></button>';
   });
   h+='</div>';
-
-  // ── FILTER DRIVERS ──
-  var filtered = allDrivers.filter(function(d){
-    if(filter==='all') return true;
-    if(filter==='blocked') return d.blocked;
-    if(filter==='offline') return d.status==='offline'&&!d.blocked;
-    return d.status===filter&&!d.blocked;
-  });
 
   if(canManage){
     h+='<div class="card"><div class="stitle">➕ Lägg till ny förare</div>'+
@@ -961,27 +1051,38 @@ function tabDrivers(filter){
       '<div class="ib ib-r" id="dnErr" style="display:none"></div>'+
       '<button class="btn btnP" id="addDrvBtn" onclick="addDriver()">Lägg till förare →</button></div>';
   }
-  h+='<div class="stitle">'+(filter==='all'?'Alla förare':'Filtrerat')+' ('+filtered.length+')</div>';
+
+  var filtered=allDrivers.filter(function(d){
+    if(filter==='all')return true;
+    if(filter==='blocked')return d.blocked;
+    if(filter==='offline')return d.status==='offline'&&!d.blocked;
+    return d.status===filter&&!d.blocked;
+  });
+
+  h+='<div class="stitle">'+(filter==='all'?'Alla':'Filtrerat')+' ('+filtered.length+')</div>';
   filtered.forEach(function(d){
     var isBlocked=d.blocked;
-    var isSusp=d.suspended_until&&new Date(d.suspended_until)>new Date();
-    var isOwner=d.is_owner;
-    var cls='dcard'+(isBlocked?' blocked':isSusp?' suspended':isOwner?' owner':'');
-    var st=isBlocked?'🔴 Blockerad':isSusp?'🟡 Avstängd':d.status==='available'?'🟢 Ledig':d.status==='busy'?'🟠 På uppdrag':d.status==='paused'?'🟡 Paus':'⚫ Offline';
-    var ab=allBookings.find(function(b){return b.driver_id===d.id&&b.status==='assigned';});
-    h+='<div class="'+cls+'"><div class="davatar">'+d.name.charAt(0)+'</div>'+
-      '<div style="flex:1">'+
-      '<div style="font-size:14px;font-weight:700;color:#0d1b3e">'+d.name+'</div>'+
-      '<div style="font-size:12px;color:#64748b;margin-bottom:4px">'+d.plate+' · '+(d.taxi_nr||'')+'</div>'+
-      '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px">'+
-      '<span style="font-size:12px;color:#64748b">'+st+'</span>'+
-      (isOwner?'<span class="badge bown">👑 Ägare '+d.owner_share+'%</span>':'')+
+    var stColor=d.status==='available'?'#22c55e':d.status==='busy'?'#f97316':d.status==='paused'?'#d97706':'#94a3b8';
+    var stLabel=d.status==='available'?'🟢 Ledig':d.status==='busy'?'🟠 På uppdrag':d.status==='paused'?'🟡 Paus':'⚫ Offline';
+    h+='<div class="dcard" style="flex-direction:column;align-items:stretch">'+
+      '<div style="display:flex;align-items:center;gap:12px">'+
+        '<div class="davatar" style="background:'+(isBlocked?'#dc2626':'#0d1b3e')+'">'+d.name.charAt(0)+'</div>'+
+        '<div style="flex:1">'+
+          '<div style="font-weight:700">'+d.name+'</div>'+
+          '<div style="font-size:12px;color:#64748b">'+(d.plate||'')+(d.taxi_nr?' · '+d.taxi_nr:'')+'</div>'+
+          '<div style="font-size:11px;color:#94a3b8">Leg: '+(d.taxi_license||'—')+'</div>'+
+        '</div>'+
+        '<div style="text-align:right">'+
+          (isBlocked?'<span style="font-size:11px;font-weight:700;color:#dc2626">🔴 BLOCKERAD</span>':
+            '<span style="font-size:12px;font-weight:700;color:'+stColor+'">'+stLabel+'</span>')+
+          '<div style="font-size:11px;color:#64748b;margin-top:4px">'+(d.earnings_today||0)+' kr idag</div>'+
+        '</div>'+
       '</div>'+
-      (ab?'<div style="font-size:11px;color:#1a56db;background:#dbeafe;padding:3px 8px;border-radius:6px;display:inline-block;margin-bottom:6px">📍 '+ab.from_address+' → '+ab.to_address+'</div>':'')+
-      '<div style="display:flex;gap:6px;margin-top:4px">'+
-      (canManage?'<button class="btn btnP btn-sm" onclick="openDriverProfile('+d.id+')">Hantera</button>':'')+
-      '<button class="btn btnB btn-sm" onclick="openChat(\'central-driver-'+d.id+'\',\''+d.name+'\')">💬 Chatta</button>'+
-      '</div></div></div>';
+      '<div style="display:flex;gap:8px;margin-top:10px">'+
+        '<button class="btn btnP btn-sm" data-did="'+d.id+'" onclick="openDriverProfile(parseInt(this.dataset.did))" style="flex:1">👤 Hantera</button>'+
+        '<button class="btn btnB btn-sm" data-did="'+d.id+'" data-dn="'+d.name+'" onclick="openChat(\'central-driver-\'+this.dataset.did,this.dataset.dn)" style="flex:1">💬 Chatt</button>'+
+      '</div>'+
+    '</div>';
   });
   if(!allDrivers.length)h+='<div class="empty">🚖<br>Inga förare</div>';
   h+='<div style="height:80px"></div></div>';
@@ -1009,291 +1110,79 @@ async function addDriver(){
       body:JSON.stringify({name:name,email:email,phone:phone,taxi_license:license,plate:plate,taxi_nr:taxi,city:city,employment_type:empType,company_id:akeriId||null})
     });
     var data=await res.json();
-    if(data.driver){
-      allDrivers.push(data.driver);
-      showToast('✅ Förare '+name+' tillagd!');
-      showTab(2);
-    }else{err.textContent='⚠️ '+(data.error||'Fel');err.style.display='';}
+    if(data.driver){allDrivers.push(data.driver);showToast('✅ Förare '+name+' tillagd!');showTab(2);}
+    else{err.textContent='⚠️ '+(data.error||'Fel');err.style.display='';}
   }catch(e){err.textContent='⚠️ Nätverksfel';err.style.display='';}
   btn.textContent='Lägg till förare →';btn.disabled=false;
 }
 
-
-async function manageDriver(id,action,extra){
-  try{
-    var body=Object.assign({action:action},extra||{});
-    var res=await fetch(API+'/drivers/'+id+'/manage',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify(body)});
-    var data=await res.json();
-    if(data.driver){
-      allDrivers=allDrivers.map(function(d){return d.id===id?Object.assign({},d,data.driver):d;});
-      showToast('✅ Åtgärd genomförd');closeMod('driverMod');openDriverProfile(id);
-    }else{showToast('⚠️ '+(data.error||'Fel'));}
-  }catch(e){showToast('⚠️ Nätverksfel');}
-}
-
-async function setOwner(id){
-  var share=parseInt(document.getElementById('ownerShareInput').value)||0;
-  await manageDriver(id,'set_owner',{owner_share:share});
-}
-
-async function openSuspend(id){
-  var until=prompt('Avstängd till vilket datum? (ÅÅÅÅ-MM-DD)');if(!until)return;
-  var reason=prompt('Anledning:')||'';
-  await manageDriver(id,'suspend',{suspend_until:until+'T23:59:00',reason:reason});
-}
-
-
-async function deleteDriver(id, name) {
-  if (!confirm('Ta bort ' + name + '?')) return;
-  try {
-    var res = await fetch(API+'/drivers/'+id, {method:'DELETE', headers:{'Authorization':'Bearer '+staffToken}});
-    var d = await res.json();
-    if (d.ok) {
-      allDrivers = allDrivers.filter(function(x){ return x.id !== id; });
-      showToast('Borttagen: ' + name);
-      closeMod('driverMod');
-      showTab(2);
-    } else { showToast(d.error || 'Fel'); }
-  } catch(e) { showToast('Natverksfel'); }
-}
-
-async function updateDriverAkeri(id) {
-  var companyId = (document.getElementById('drvCompany')||{}).value||'';
-  var employment = (document.getElementById('drvEmployment')||{}).value||'hourly';
-  try {
-    var res = await fetch(API+'/drivers/'+id+'/manage', {
-      method:'PATCH',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},
-      body:JSON.stringify({action:'update', company_id:companyId||null, employment_type:employment})
-    });
-    var data = await res.json();
-    if (data.driver) {
-      allDrivers = allDrivers.map(function(d){ return d.id===id?Object.assign({},d,data.driver):d; });
-      showToast('✅ Åkeriuppgifter sparade');
-      closeMod('driverMod');
-    } else { showToast('⚠️ '+(data.error||'Fel')); }
-  } catch(e) { showToast('⚠️ Nätverksfel'); }
-}
-
-async function updateDriver(id){
-  var name=document.getElementById('eDrvName').value.trim();
-  var phone=document.getElementById('eDrvPhone').value.trim();
-  var plate=document.getElementById('eDrvPlate').value.trim();
-  var taxi=document.getElementById('eDrvTaxi').value.trim();
-  var city=document.getElementById('eDrvCity').value.trim();
-  var pwd=document.getElementById('eDrvPwd').value.trim();
-  await manageDriver(id,'update',{name:name,phone:phone,plate:plate,taxi_nr:taxi,city:city,password:pwd||undefined});
-}
-async function updateDriverAdmin(id){
-  var email=(document.getElementById('eDrvEmail')||{}).value||'';
-  var license=(document.getElementById('eDrvLicense')||{}).value||'';
-  var employment=(document.getElementById('eDrvEmployment')||{}).value||'hourly';
-  if(staffUser.level!==1){showToast('⚠️ Superadmin krävs');return;}
-  try{
-    var res=await fetch(API+'/drivers/'+id+'/manage',{
-      method:'PATCH',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},
-      body:JSON.stringify({action:'update',email:email,taxi_license:license,employment_type:employment})
-    });
-    var data=await res.json();
-    if(data.driver){
-      allDrivers=allDrivers.map(function(d){return d.id===id?Object.assign({},d,data.driver):d;});
-      showToast('✅ Känsliga uppgifter sparade');closeMod('driverMod');
-    }else{showToast('⚠️ '+(data.error||'Fel'));}
-  }catch(e){showToast('⚠️ Nätverksfel');}
-}
-
-async function updateCustomerAdmin(id){
-  if(staffUser.level!==1){showToast('⚠️ Superadmin krävs');return;}
-  var name=(document.getElementById('eCustName')||{}).value||'';
-  var email=(document.getElementById('eCustEmail')||{}).value||'';
-  var phone=(document.getElementById('eCustPhone')||{}).value||'';
-  var type=(document.getElementById('eCustType')||{}).value||'private';
-  var org=(document.getElementById('eCustOrg')||{}).value||'';
-  var bill=(document.getElementById('eCustBill')||{}).value||'';
-  var pay=(document.getElementById('eCustPay')||{}).value||'swish';
-  var pwd=(document.getElementById('eCustPwd')||{}).value||'';
-  if(!name||!email||!phone){showToast('⚠️ Namn, e-post och telefon krävs');return;}
-  try{
-    var body={action:'update',name:name,email:email,phone:phone,
-      customer_type:type,org_number:org||null,billing_address:bill||null,preferred_payment:pay};
-    if(pwd&&pwd.length>=6)body.new_password=pwd;
-    else if(pwd&&pwd.length>0&&pwd.length<6){showToast('⚠️ Lösenord minst 6 tecken');return;}
-    var res=await fetch(API+'/customers/'+id+'/manage',{
-      method:'PATCH',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},
-      body:JSON.stringify(body)
-    });
-    var data=await res.json();
-    if(data.customer){
-      allCustomers=allCustomers.map(function(c){return c.id===id?Object.assign({},c,data.customer):c;});
-      showToast('✅ Kundprofil uppdaterad');closeMod('customerMod');
-    }else{showToast('⚠️ '+(data.error||'Fel'));}
-  }catch(e){showToast('⚠️ Nätverksfel');}
-}
-
-
-// ── CUSTOMERS ──
-function tabCustomers(){
-  var canManage=staffUser&&staffUser.level<=2;
-  var h='<div class="page"><div class="stitle">Alla kunder ('+allCustomers.length+')</div>';
-  if(!canManage)h+='<div class="ib ib-y">Du behöver admin-behörighet för att hantera kunder.</div>';
-  allCustomers.forEach(function(c){
-    var isBlocked=c.blocked;
-    h+='<div class="ccard'+(isBlocked?' blocked':'')+'">'+
-      '<div class="cavatar">'+c.name.charAt(0)+'</div>'+
-      '<div style="flex:1">'+
-      '<div style="font-size:14px;font-weight:700;color:#0d1b3e">'+c.name+'</div>'+
-      '<div style="font-size:12px;color:#64748b">'+c.email+' · '+c.phone+'</div>'+
-      '<div style="display:flex;gap:4px;margin-top:4px">'+
-      '<span class="badge '+(c.customer_type==='business'?'ba':'bx')+'">'+(c.customer_type==='business'?'🏢 Företag':'👤 Privat')+'</span>'+
-      (isBlocked?'<span class="badge bblk">🔴 Blockerad</span>':'')+
-      '</div></div>'+
-      (canManage?'<button class="btn btnP btn-sm" onclick="openCustomerProfile('+c.id+')">Hantera</button>':'')+
-      '</div>';
-  });
-  if(!allCustomers.length)h+='<div class="empty">👤<br>Inga kunder ännu</div>';
-  h+='<div style="height:80px"></div></div>';
-  return h;
-}
-
-async function openCustomerProfile(id){
-  document.getElementById('customerMod').classList.add('open');
-  var c=allCustomers.find(function(x){return x.id===id;});if(!c)return;
-  document.getElementById('customerModTitle').textContent=c.name;
-  var h='<div class="profhdr" style="background:linear-gradient(135deg,#0d9488,#0f766e)">'+
-    '<div class="big-av" style="background:#0d1b3e;color:#fbbf24">'+c.name.charAt(0)+'</div>'+
-    '<div><div style="font-size:18px;font-weight:bold">'+c.name+'</div>'+
-    '<div style="color:#a7f3d0;font-size:13px;margin-top:2px">'+c.email+'</div>'+
-    '<div style="margin-top:8px;display:flex;gap:6px">'+
-    '<span class="badge '+(c.customer_type==='business'?'ba':'bx')+'">'+(c.customer_type==='business'?'🏢 Företag':'👤 Privat')+'</span>'+
-    (c.blocked?'<span class="badge bblk">🔴 Blockerad</span>':'')+
-    '</div></div></div>';
-  h+='<div class="card"><div class="stitle">Kontaktuppgifter</div>'+
-    '<div class="litem"><span style="font-size:13px;color:#64748b">Telefon</span><span style="font-size:13px">'+c.phone+'</span></div>'+
-    '<div class="litem"><span style="font-size:13px;color:#64748b">E-post</span><span style="font-size:13px">'+c.email+'</span></div>'+
-    '<div class="litem"><span style="font-size:13px;color:#64748b">Kund sedan</span><span style="font-size:13px">'+new Date(c.created_at).toLocaleDateString('sv-SE')+'</span></div>'+
-    (c.blocked&&c.block_reason?'<div class="ib ib-r" style="margin-top:8px">Anledning: '+c.block_reason+'</div>':'')+
-    '</div>';
-  h+='<div class="card"><div class="stitle">Åtgärder</div>'+
-    '<div class="agrid">'+
-    (c.blocked?
-      '<button class="btn btnS" onclick="manageCustomer('+c.id+',\'unblock\')">✅ Avblockera</button>':
-      '<button class="btn btnD" onclick="blockCustomer('+c.id+')">🔴 Blockera</button>')+
-    '<button class="btn btnP" onclick="resetCustomerPwd('+c.id+')">🔑 Återställ lösenord</button>'+
-    '</div></div>';
-
-  // SUPERADMIN ONLY
-  if(staffUser&&staffUser.level===1){
-    h+='<div class="card" style="border:2px solid #7c3aed">'+
-      '<div class="stitle" style="color:#7c3aed">👑 Superadmin — Redigera profil</div>'+
-      '<label class="flabel">Fullständigt namn</label>'+
-      '<input class="finput" id="eCustName" value="'+(c.name||'')+'" placeholder="Namn"/>'+
-      '<label class="flabel">E-post</label>'+
-      '<input class="finput" id="eCustEmail" value="'+(c.email||'')+'" type="email" placeholder="E-post"/>'+
-      '<label class="flabel">Telefon</label>'+
-      '<input class="finput" id="eCustPhone" value="'+(c.phone||'')+'" placeholder="Telefon"/>'+
-      '<label class="flabel">Kundtyp</label>'+
-      '<select class="finput" id="eCustType">'+
-      '<option value="private"'+(c.customer_type==="private"?' selected':'')+'>👤 Privat</option>'+
-      '<option value="business"'+(c.customer_type==="business"?' selected':'')+'>🏢 Företag</option>'+
-      '</select>'+
-      '<label class="flabel">Organisationsnummer</label>'+
-      '<input class="finput" id="eCustOrg" value="'+(c.org_number||'')+'" placeholder="556xxx-xxxx"/>'+
-      '<label class="flabel">Faktureringsadress</label>'+
-      '<input class="finput" id="eCustBill" value="'+(c.billing_address||'')+'" placeholder="Gatuadress, stad"/>'+
-      '<label class="flabel">Föredragen betalning</label>'+
-      '<select class="finput" id="eCustPay">'+
-      '<option value="swish"'+(c.preferred_payment==="swish"?' selected':'')+'>📱 Swish</option>'+
-      '<option value="card"'+(c.preferred_payment==="card"?' selected':'')+'>💳 Kort</option>'+
-      '<option value="invoice"'+(c.preferred_payment==="invoice"?' selected':'')+'>📄 Faktura</option>'+
-      '</select>'+
-      '<label class="flabel">Nytt lösenord (lämna tomt = behåll)</label>'+
-      '<input class="finput" id="eCustPwd" type="password" placeholder="Minst 6 tecken"/>'+
-      '<button class="btn btnP" style="width:100%;background:#7c3aed;color:white" onclick="updateCustomerAdmin('+c.id+')">👑 Spara alla ändringar →</button>'+
-      '</div>';
-  }
-  document.getElementById('customerModContent').innerHTML=h;
-}
-
-async function manageCustomer(id,action,extra){
-  try{
-    var body=Object.assign({action:action},extra||{});
-    var res=await fetch(API+'/customers/'+id+'/manage',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify(body)});
-    var data=await res.json();
-    if(data.customer){
-      allCustomers=allCustomers.map(function(c){return c.id===id?Object.assign({},c,data.customer):c;});
-      showToast('✅ Åtgärd genomförd');closeMod('customerMod');
-    }else{showToast('⚠️ '+(data.error||'Fel'));}
-  }catch(e){showToast('⚠️ Nätverksfel');}
-}
-
-async function blockCustomer(id){
-  var reason=prompt('Anledning till blockering (valfri):')||'';
-  await manageCustomer(id,'block',{reason:reason});
-}
-
-async function resetCustomerPwd(id){
-  var pwd=prompt('Ange nytt lösenord för kunden:');
-  if(!pwd||pwd.length<6){showToast('⚠️ Lösenord minst 6 tecken');return;}
-  await manageCustomer(id,'reset_password',{new_password:pwd});
-  showToast('✅ Lösenord återställt');closeMod('customerMod');
-}
-
-// ── CHAT ──
 function tabChat(){
+  var activeBooks=allBookings.filter(function(b){return b.status==='assigned';});
   var h='<div class="page"><div class="stitle">Chatta med förare</div>';
-  // Sort drivers: those with unread messages first
-  var sortedDrivers = allDrivers.slice().sort(function(a,b){
-    var aKey = 'central-driver-'+a.id;
-    var bKey = 'central-driver-'+b.id;
-    var aThread = chatThreads[aKey]||{unread:0};
-    var bThread = chatThreads[bKey]||{unread:0};
-    return (bThread.unread||0)-(aThread.unread||0);
+  var sorted=allDrivers.slice().sort(function(a,b){
+    return ((chatThreads['central-driver-'+b.id]||{}).unread||0)-((chatThreads['central-driver-'+a.id]||{}).unread||0);
   });
-  sortedDrivers.forEach(function(d){
-    var threadKey = 'central-driver-'+d.id;
-    var thread = chatThreads[threadKey]||{};
-    var unread = thread.unread||0;
-    var lastMsg = thread.lastMsg||'';
-    var lastSender = thread.lastSender||'';
-    var lastTime = thread.lastTime||'';
-    h+='<div class="dcard" style="cursor:pointer;align-items:center" onclick="openChat(\'central-driver-'+d.id+'\',\''+d.name+'\')">'+
-      '<div class="davatar" style="background:#7c3aed">💬</div>'+
-      '<div><div style="font-size:14px;font-weight:700;color:#0d1b3e">'+d.name+'</div>'+
-      '<div style="font-size:12px;color:#64748b">'+d.plate+'</div></div>'+
-      '<div style="margin-left:auto;color:#94a3b8;font-size:20px">›</div></div>';
+  sorted.forEach(function(d){
+    var key='central-driver-'+d.id;
+    var thread=chatThreads[key]||{};
+    var unread=thread.unread||0;
+    var lastMsg=thread.lastMsg||'Tryck för att chatta';
+    var lastSender=thread.lastSender||'';
+    var lastTime=thread.lastTime||'';
+    var stColor=d.status==='available'?'#22c55e':d.status==='busy'?'#f97316':'#94a3b8';
+    h+='<div onclick="openChat(\'central-driver-'+d.id+'\',\''+d.name+'\')" style="background:white;border-radius:12px;border:1px solid #e2e8f0;margin-bottom:8px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px">'+
+      '<div style="position:relative;flex-shrink:0">'+
+        '<div style="width:42px;height:42px;border-radius:50%;background:#7c3aed;color:white;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center">'+d.name.charAt(0)+'</div>'+
+        '<div style="position:absolute;bottom:0;right:0;width:12px;height:12px;border-radius:50%;background:'+stColor+';border:2px solid white"></div>'+
+      '</div>'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center">'+
+          '<div style="font-weight:700;font-size:14px;color:#0d1b3e">'+d.name+'</div>'+
+          (lastTime?'<div style="font-size:10px;color:#94a3b8">'+lastTime+'</div>':'')+
+        '</div>'+
+        '<div style="font-size:12px;color:#64748b;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+
+          (lastSender===d.name?'<span style="font-weight:600;color:#7c3aed">'+d.name+': </span>':'<span style="font-weight:600;color:#0d1b3e">Du: </span>')+
+          lastMsg+
+        '</div>'+
+      '</div>'+
+      (unread>0?'<div style="background:#dc2626;color:white;border-radius:12px;padding:2px 8px;font-size:12px;font-weight:700;flex-shrink:0">'+unread+'</div>':'<div style="color:#94a3b8;font-size:18px">›</div>')+
+    '</div>';
   });
   if(activeBooks.length){
-    h+='<div class="stitle" style="margin-top:8px">Chatta med kunder</div>';
+    h+='<div class="stitle" style="margin-top:16px">💬 Kunder med aktiv bokning</div>';
     activeBooks.forEach(function(b){
-      h+='<div class="dcard" style="cursor:pointer;align-items:center" onclick="openChat(\'customer-central-'+b.id+'\',\''+b.customer_name+'\')">'+
-        '<div class="davatar" style="background:#0d9488">👤</div>'+
-        '<div><div style="font-size:14px;font-weight:700;color:#0d1b3e">'+b.customer_name+'</div>'+
+      h+='<div onclick="openChat(\'customer-central-'+b.id+'\',\''+b.customer_name+'\')" style="background:white;border-radius:12px;border:1px solid #e2e8f0;margin-bottom:8px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px">'+
+        '<div style="width:42px;height:42px;border-radius:50%;background:#0d9488;color:white;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center">'+b.customer_name.charAt(0)+'</div>'+
+        '<div style="flex:1"><div style="font-weight:700;font-size:14px">'+b.customer_name+'</div>'+
         '<div style="font-size:12px;color:#64748b">'+b.booking_ref+' · '+b.customer_phone+'</div></div>'+
-        '<div style="margin-left:auto;color:#94a3b8;font-size:20px">›</div></div>';
+        '<div style="color:#94a3b8;font-size:18px">›</div></div>';
     });
   }
   h+='<div style="height:80px"></div></div>';
   return h;
 }
 
-// ── STAFF ──
+function tabCustomers(){
+  var h='<div class="page"><div class="stitle">Kunder ('+allCustomers.length+')</div>';
+  if(!allCustomers.length){h+='<div class="empty">👤<br>Inga kunder</div></div>';return h;}
+  allCustomers.forEach(function(c){
+    var trips=allBookings.filter(function(b){return b.customer_id===c.id;});
+    h+='<div class="dcard" onclick="openCustomerProfile('+c.id+')" style="cursor:pointer">'+
+      '<div class="davatar">'+c.name.charAt(0)+'</div>'+
+      '<div style="flex:1"><div style="font-weight:700">'+c.name+'</div>'+
+      '<div style="font-size:12px;color:#64748b">'+c.phone+'</div>'+
+      '<div style="font-size:11px;color:#94a3b8">'+trips.length+' resor</div></div>'+
+      (c.blocked?'<span style="font-size:11px;font-weight:700;color:#dc2626">🔴</span>':'<div style="color:#94a3b8;font-size:18px">›</div>')+
+    '</div>';
+  });
+  h+='<div style="height:80px"></div></div>';
+  return h;
+}
+
 function tabStaff(){
-  if(!staffUser||staffUser.level>2)return '<div class="page"><div class="ib ib-r">⚠️ Åtkomst nekad</div></div>';
-  var canAddAdmin=staffUser.level===1;
-  var h='<div class="page">';
-
-  h+='<div class="card"><div class="stitle">Mitt konto</div>'+
-    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">'+
-    '<div class="savatar">'+staffUser.name.charAt(0)+'</div>'+
-    '<div style="flex:1"><div style="font-size:15px;font-weight:700;color:#0d1b3e">'+staffUser.name+'</div>'+
-    '<div style="font-size:12px;color:#64748b">'+staffUser.email+'</div>'+
-    '<div style="font-size:12px;color:#7c3aed;font-weight:700;margin-top:4px">'+(staffUser.role==='superadmin'?'👑 Super Admin':staffUser.role==='admin'?'🔑 Admin':'🎧 Dispatcher')+'</div></div>'+
-    '<button class="btn btnG btn-sm" onclick="document.getElementById(\'myPwdMod\').classList.add(\'open\')">🔒 Ändra lösenord</button>'+
-    '</div></div>';
-
-  h+='<div class="card"><div class="stitle">➕ Lägg till personal</div>'+
+  var canAddAdmin=staffUser&&staffUser.level===1;
+  var h='<div class="page"><div class="stitle">Personal</div>';
+  h+='<div class="card"><div class="stitle">Lägg till personal</div>'+
     '<input class="finput" id="sName" placeholder="Fullständigt namn *"/>'+
     '<input class="finput" id="sEmail" type="email" placeholder="E-post *"/>'+
     '<input class="finput" id="sPwd" type="password" placeholder="Lösenord *"/>'+
@@ -1308,37 +1197,27 @@ function tabStaff(){
     '<select class="finput" id="sCompanyId">'+
     '<option value="">Välj åkeri...</option>'+
     allCompanies.map(function(c){return '<option value="'+c.id+'">'+c.name+'</option>';}).join('')+
-    '</select>'+
-    '</div>'+
+    '</select></div>'+
     '<div class="ib ib-r" id="sErr" style="display:none"></div>'+
     '<button class="btn btnP" id="addStaffBtn" onclick="addStaff()">Lägg till →</button></div>';
-
   h+='<div class="stitle">All personal ('+allStaff.length+')</div>';
   allStaff.forEach(function(s){
-    var roleLabel=s.role==='superadmin'?'👑 Super Admin':s.role==='admin'?'🔑 Admin':'🎧 Dispatcher';
-    var roleColor=s.role==='superadmin'?'#7c3aed':s.role==='admin'?'#1a56db':'#0d9488';
-    var canEdit=staffUser.level===1||(staffUser.level===2&&s.level===3);
-    var canDelete=s.id!==staffUser.id&&s.level>1&&(staffUser.level===1||(staffUser.level===2&&s.level===3));
-    h+='<div class="card" style="padding:14px">'+
-      '<div style="display:flex;align-items:center;gap:12px">'+
-      '<div class="savatar" style="background:'+roleColor+'">'+s.name.charAt(0)+'</div>'+
-      '<div style="flex:1"><div style="font-size:14px;font-weight:700;color:#0d1b3e">'+s.name+'</div>'+
+    h+='<div class="dcard">'+
+      '<div class="davatar" style="background:#1a56db">'+s.name.charAt(0)+'</div>'+
+      '<div style="flex:1"><div style="font-weight:700">'+s.name+'</div>'+
       '<div style="font-size:12px;color:#64748b">'+s.email+'</div>'+
-      '<div style="font-size:12px;color:'+roleColor+';font-weight:700;margin-top:3px">'+roleLabel+'</div></div>'+
-      '<div style="display:flex;flex-direction:column;gap:6px">'+
-      (canEdit?'<button class="btn btnG btn-sm" onclick="openStaffEdit('+s.id+',\''+s.name+'\',\''+s.email+'\',\''+s.role+'\')">✏️</button>':'')+
-      (canDelete?'<button class="btn btnD btn-sm" onclick="deleteStaff('+s.id+',\''+s.name+'\')">🗑</button>':'')+
-      '</div></div></div>';
+      '<div style="font-size:11px;color:#94a3b8">'+s.role+'</div></div>'+
+      (canAddAdmin&&s.id!==staffUser.id?'<button class="btn btn-sm btnB" onclick="openStaffEdit('+s.id+')">✏️</button>':'')+
+    '</div>';
   });
   h+='<div style="height:80px"></div></div>';
   return h;
 }
 
-
-function toggleAkeriFields() {
-  var role = (document.getElementById('sRole')||{}).value;
-  var fields = document.getElementById('akeriFields');
-  if (fields) fields.style.display = role === 'akeri' ? '' : 'none';
+function toggleAkeriFields(){
+  var role=(document.getElementById('sRole')||{}).value;
+  var fields=document.getElementById('akeriFields');
+  if(fields)fields.style.display=role==='akeri'?'':'none';
 }
 
 async function addStaff(){
@@ -1352,135 +1231,267 @@ async function addStaff(){
   if(role==='akeri'&&!companyId){err.textContent='⚠️ Välj ett åkeri';err.style.display='';return;}
   btn.textContent='Lägger till...';btn.disabled=true;err.style.display='none';
   try{
-    var isAkeriRole = role==='akeri';
-    var endpoint = isAkeriRole ? '/staff/create-portal-access' : '/staff/add';
-    var body = isAkeriRole
-      ? {email:email,password:pwd,company_id:parseInt(companyId),company_name:name}
-      : {name:name,email:email,password:pwd,role:role};
+    var isAkeri=role==='akeri';
+    var endpoint=isAkeri?'/staff/create-portal-access':'/staff/add';
+    var body=isAkeri?{email:email,password:pwd,company_id:parseInt(companyId),company_name:name}:{name:name,email:email,password:pwd,role:role};
     var res=await fetch(API+endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify(body)});
     var data=await res.json();
-    if(data.staff||data.success){
-      showToast('✅ '+(isAkeriRole?'Åkeri-åtkomst skapad':''+name+' tillagd!'));
-      showTab(5);
-    } else {err.textContent='⚠️ '+(data.error||'Fel');err.style.display='';}
+    if(data.staff||data.success){showToast('✅ '+(isAkeri?'Åkeri-åtkomst skapad':name+' tillagd!'));showTab(5);}
+    else{err.textContent='⚠️ '+(data.error||'Fel');err.style.display='';}
   }catch(e){err.textContent='⚠️ Nätverksfel';err.style.display='';}
   btn.textContent='Lägg till →';btn.disabled=false;
 }
 
-function openStaffEdit(id,name,email,role){
-  document.getElementById('editStaffId').value=id;
-  document.getElementById('editStaffName').value=name;
-  document.getElementById('editStaffEmail').value=email;
-  document.getElementById('editStaffRole').value=role;
-  document.getElementById('editStaffPwd').value='';
-  document.getElementById('staffModErr').style.display='none';
-  document.getElementById('staffModTitle').textContent='Redigera: '+name;
-  document.getElementById('staffMod').classList.add('open');
+function tabCompanies(){
+  var h='<div class="page"><div class="stitle">Företag / Åkerier</div>';
+  h+='<div class="card"><div class="stitle">Lägg till nytt åkeri</div>'+
+    '<input class="finput" id="cName" placeholder="Företagsnamn *"/>'+
+    '<input class="finput" id="cOrgNr" placeholder="Org.nummer * (556xxx-xxxx)"/>'+
+    '<input class="finput" id="cAkeri" placeholder="Åkerinummer (från Transportstyrelsen)"/>'+
+    '<input class="finput" id="cEmail" type="email" placeholder="E-post"/>'+
+    '<input class="finput" id="cPhone" placeholder="Telefon"/>'+
+    '<div class="ib ib-r" id="cErr" style="display:none"></div>'+
+    '<button class="btn btnP" onclick="addCompany()">Lägg till företag →</button></div>';
+  allCompanies.forEach(function(c){
+    h+='<div class="card">'+
+      '<div style="font-weight:800;font-size:15px">'+c.name+'</div>'+
+      '<div style="font-size:12px;color:#64748b;margin-top:4px">Org: '+c.org_number+'</div>'+
+      (c.akeri_number?'<div style="font-size:12px;color:#64748b">Åkeri: '+c.akeri_number+'</div>':'')+
+      (c.email?'<div style="font-size:12px;color:#64748b">'+c.email+'</div>':'')+
+    '</div>';
+  });
+  h+='<div style="height:80px"></div></div>';
+  return h;
 }
 
-async function saveStaffEdit(){
-  var id=document.getElementById('editStaffId').value;
-  var name=document.getElementById('editStaffName').value.trim();
-  var email=document.getElementById('editStaffEmail').value.trim();
-  var role=document.getElementById('editStaffRole').value;
-  var pwd=document.getElementById('editStaffPwd').value.trim();
-  var err=document.getElementById('staffModErr');err.style.display='none';
+async function addCompany(){
+  var name=document.getElementById('cName').value.trim();
+  var org=document.getElementById('cOrgNr').value.trim();
+  var akeri=(document.getElementById('cAkeri')||{}).value||'';
+  var email=(document.getElementById('cEmail')||{}).value||'';
+  var phone=(document.getElementById('cPhone')||{}).value||'';
+  var err=document.getElementById('cErr');
+  if(!name||!org){err.textContent='⚠️ Namn och org.nummer krävs';err.style.display='';return;}
+  err.style.display='none';
   try{
-    var body={name:name,email:email,role:role};if(pwd)body.password=pwd;
-    var res=await fetch(API+'/staff/'+id,{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify(body)});
+    var res=await fetch(API+'/companies',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify({name:name,org_number:org,akeri_number:akeri,email:email,phone:phone})});
     var data=await res.json();
-    if(data.staff){
-      allStaff=allStaff.map(function(s){return s.id===parseInt(id)?data.staff:s;});
-      closeMod('staffMod');showToast('✅ '+name+' uppdaterad!');showTab(5);
-    }else{err.textContent='⚠️ '+(data.error||'Fel');err.style.display='';}
-  }catch(e){err.textContent='⚠️ Nätverksfel';err.style.display='';}
-}
-
-async function deleteStaff(id,name){
-  if(!confirm('Ta bort '+name+'?'))return;
-  try{
-    var res=await fetch(API+'/staff/'+id,{method:'DELETE',headers:{'Authorization':'Bearer '+staffToken}});
-    if(res.ok){allStaff=allStaff.filter(function(s){return s.id!==id;});showToast('✓ '+name+' borttagen');showTab(5);}
-  }catch(e){showToast('⚠️ Nätverksfel');}
-}
-
-async function doChangeMyPwd(){
-  var cur=document.getElementById('myCur').value.trim();
-  var nw=document.getElementById('myNew').value.trim();
-  var conf=document.getElementById('myConf').value.trim();
-  var err=document.getElementById('myPwdErr');err.style.display='none';
-  if(!cur||!nw||!conf){err.textContent='⚠️ Fyll i alla fält';err.style.display='';return;}
-  if(nw!==conf){err.textContent='⚠️ Lösenorden matchar inte';err.style.display='';return;}
-  if(nw.length<6){err.textContent='⚠️ Minst 6 tecken';err.style.display='';return;}
-  try{
-    var res=await fetch(API+'/staff/change-password',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify({current_password:cur,new_password:nw})});
-    var data=await res.json();
-    if(data.success){closeMod('myPwdMod');showToast('✅ Lösenord ändrat!');}
+    if(data.company){allCompanies.push(data.company);showToast('✅ '+name+' tillagt!');showTab(6);}
     else{err.textContent='⚠️ '+(data.error||'Fel');err.style.display='';}
   }catch(e){err.textContent='⚠️ Nätverksfel';err.style.display='';}
 }
 
-// ── ASSIGN ──
-function openAssign(id,ref){
-  assignId=id;assignRef=ref;
-  var b=allBookings.find(function(x){return x.id===id;});
-  var info=document.getElementById('assignInfo');
-  if(info)info.innerHTML='<strong>Bokning:</strong> '+ref+'<br><strong>Från:</strong> '+(b?b.from_address:'')+'<br><strong>Till:</strong> '+(b?b.to_address:'');
-  var available=allDrivers.filter(function(d){return d.status==='available'&&!d.blocked;});
-  var listEl=document.getElementById('assignList');
-  if(listEl){
-    if(!available.length){listEl.innerHTML='<div class="ib ib-y">⚠️ Inga lediga förare.</div>';}
-    else{
-      listEl.innerHTML=available.map(function(d){
-        return '<div class="dcard" style="cursor:pointer;margin-bottom:8px;align-items:center" onclick="doAssign('+d.id+',\''+d.name+'\')">'+
-          '<div class="davatar">'+d.name.charAt(0)+'</div>'+
-          '<div style="flex:1"><div style="font-size:14px;font-weight:700;color:#0d1b3e">'+d.name+'</div>'+
-          '<div style="font-size:12px;color:#64748b">'+d.plate+' · ⭐ '+(d.rating||'—')+'</div></div>'+
-          '<div style="color:#15803d;font-size:12px;font-weight:700">✓ Ledig</div></div>';
-      }).join('');
-    }
+function tabVehicles(){
+  var h='<div class="page"><div class="stitle">Fordon</div>';
+  if(staffUser&&staffUser.level<=2){
+    h+='<div class="card"><div class="stitle">Lägg till fordon</div>'+
+      '<input class="finput" id="vPlate" placeholder="Registreringsskylt * (ABC 123)"/>'+
+      '<input class="finput" id="vModel" placeholder="Modell (t.ex. Volvo V90)"/>'+
+      '<input class="finput" id="vTaxi" placeholder="Taxinummer"/>'+
+      '<select class="finput" id="vCompany">'+
+      '<option value="">Välj åkeri *</option>'+
+      allCompanies.map(function(c){return '<option value="'+c.id+'">'+c.name+'</option>';}).join('')+
+      '</select>'+
+      '<div class="ib ib-r" id="vErr" style="display:none"></div>'+
+      '<button class="btn btnP" onclick="addVehicle()">Lägg till fordon →</button></div>';
   }
-  document.getElementById('assignMod').classList.add('open');
+  if(!allCars||!allCars.length){h+='<div class="empty">🚗<br>Inga fordon</div>';h+='<div style="height:80px"></div></div>';return h;}
+  allCars.forEach(function(c){
+    var stColor=c.status==='available'?'#22c55e':c.status==='busy'?'#f97316':'#94a3b8';
+    h+='<div class="dcard">'+
+      '<div class="davatar" style="font-size:20px">🚗</div>'+
+      '<div style="flex:1"><div style="font-weight:700">'+c.plate+'</div>'+
+      '<div style="font-size:12px;color:#64748b">'+(c.model||'')+(c.taxi_nr?' · '+c.taxi_nr:'')+'</div>'+
+      '<div style="font-size:11px;color:#94a3b8">'+(c.company_name||'')+'</div></div>'+
+      '<span style="font-size:11px;font-weight:700;color:'+stColor+'">'+c.status+'</span>'+
+    '</div>';
+  });
+  h+='<div style="height:80px"></div></div>';
+  return h;
 }
 
-async function doAssign(driverId,driverName){
-  closeMod('assignMod');
+async function addVehicle(){
+  var plate=(document.getElementById('vPlate')||{}).value||'';
+  var model=(document.getElementById('vModel')||{}).value||'';
+  var taxi=(document.getElementById('vTaxi')||{}).value||'';
+  var company=(document.getElementById('vCompany')||{}).value||'';
+  var err=document.getElementById('vErr');
+  if(!plate||!company){err.textContent='⚠️ Skylt och åkeri krävs';err.style.display='';return;}
+  err.style.display='none';
   try{
-    var res=await fetch(API+'/bookings/'+assignId+'/assign',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({driver_id:driverId})});
-    if(res.ok){
-      allBookings=allBookings.map(function(b){return b.id===assignId?Object.assign({},b,{status:'assigned',driver_id:driverId,driver_name:driverName}):b;});
-      allDrivers=allDrivers.map(function(d){return d.id===driverId?Object.assign({},d,{status:'busy'}):d;});
-      showAlert('✅ '+assignRef+' tilldelad till '+driverName,'success');
-      showToast('✅ Tilldelad: '+driverName);showTab(0);
-    }else{showToast('⚠️ Kunde inte tilldela');}
+    var res=await fetch(API+'/cars/add',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify({plate:plate,model:model,taxi_nr:taxi,company_id:parseInt(company)})});
+    var data=await res.json();
+    if(data.car){if(!allCars)allCars=[];allCars.push(data.car);showToast('✅ '+plate+' tillagt!');showTab(7);}
+    else{err.textContent='⚠️ '+(data.error||'Fel');err.style.display='';}
+  }catch(e){err.textContent='⚠️ Nätverksfel';err.style.display='';}
+}
+
+// ═══════════════════════════════════════════════════════
+// DRIVER PROFILE MODAL
+// ═══════════════════════════════════════════════════════
+
+async function openDriverProfile(id){
+  var d=allDrivers.find(function(x){return x.id===id;});
+  if(!d){showToast('Förare ej hittad');return;}
+  var isBlocked=d.blocked;
+  var stColor=d.status==='available'?'#22c55e':d.status==='busy'?'#f97316':d.status==='paused'?'#d97706':'#94a3b8';
+  var stLabel=d.status==='available'?'🟢 Ledig':d.status==='busy'?'🟠 På uppdrag':d.status==='paused'?'🟡 Paus':'⚫ Offline';
+  var trips=allBookings.filter(function(b){return b.driver_id===d.id&&b.status==='completed';}).sort(function(a,b){return new Date(b.created_at)-new Date(a.created_at);}).slice(0,8);
+
+  var parts=[];
+  parts.push('<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">');
+  parts.push('<div style="width:52px;height:52px;border-radius:50%;background:#0d1b3e;color:#fbbf24;font-weight:900;font-size:22px;display:flex;align-items:center;justify-content:center">'+d.name.charAt(0)+'</div>');
+  parts.push('<div><div style="font-weight:800;font-size:17px">'+d.name+'</div>');
+  parts.push('<div style="font-size:12px;color:#64748b">📋 Leg: '+(d.taxi_license||'—')+' · 📱 '+(d.phone||'—')+'</div>');
+  parts.push('<span style="background:'+stColor+';color:white;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700">'+stLabel+'</span>');
+  if(isBlocked)parts.push('<span style="background:#dc2626;color:white;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;margin-left:4px">🔴 BLOCKERAD</span>');
+  parts.push('</div></div>');
+
+  parts.push('<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px">');
+  parts.push('<button class="prof-stat-btn" data-st="available" style="padding:8px;background:#dcfce7;color:#15803d;border:1px solid #22c55e;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">🟢 Ledig</button>');
+  parts.push('<button class="prof-stat-btn" data-st="paused" style="padding:8px;background:#fef3c7;color:#d97706;border:1px solid #f59e0b;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">🟡 Paus</button>');
+  parts.push('<button class="prof-stat-btn" data-st="offline" style="padding:8px;background:#f1f5f9;color:#64748b;border:1px solid #94a3b8;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">⚫ Offline</button>');
+  parts.push('</div>');
+
+  parts.push('<label class="flabel">Namn</label><input class="finput" id="eDrvName" value="'+d.name+'"/>');
+  parts.push('<label class="flabel">Telefon</label><input class="finput" id="eDrvPhone" value="'+(d.phone||'')+'"/>');
+  parts.push('<label class="flabel">Registreringsskylt</label><input class="finput" id="eDrvPlate" value="'+(d.plate||'')+'"/>');
+  parts.push('<label class="flabel">Taxinummer</label><input class="finput" id="eDrvTaxi" value="'+(d.taxi_nr||'')+'"/>');
+  parts.push('<label class="flabel">Stad</label><input class="finput" id="eDrvCity" value="'+(d.city||'')+'"/>');
+  parts.push('<label class="flabel">Nytt lösenord (lämna tomt)</label><input class="finput" type="password" id="eDrvPwd" placeholder="••••••••"/>');
+  parts.push('<label class="flabel">Anställningstyp</label><select class="finput" id="drvEmployment">');
+  parts.push('<option value="hourly"'+(d.employment_type==='hourly'?' selected':'')+'>Timavlönad</option>');
+  parts.push('<option value="owner"'+(d.employment_type==='owner'?' selected':'')+'>Ägare/Eget åkeri</option>');
+  parts.push('<option value="fixed"'+(d.employment_type==='fixed'?' selected':'')+'>Fast lön</option>');
+  parts.push('</select>');
+  parts.push('<label class="flabel">Kopplat åkeri</label><select class="finput" id="drvCompany"><option value="">Inget åkeri</option>');
+  allCompanies.forEach(function(c){parts.push('<option value="'+c.id+'"'+(d.company_id===c.id?' selected':'')+'>'+c.name+'</option>');});
+  parts.push('</select>');
+  parts.push('<div class="ib ib-blue" style="font-size:11px;margin-bottom:8px">ℹ️ Åkerinummer tillhör <strong>företaget</strong>, inte föraren</div>');
+  parts.push('<button id="profSaveBtn" style="width:100%;padding:11px;background:#1a56db;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;margin-bottom:12px">💾 Spara ändringar</button>');
+  parts.push('<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">');
+  parts.push(isBlocked?'<button id="profBlockBtn" style="padding:10px;background:#dcfce7;color:#15803d;border:none;border-radius:8px;font-weight:700;cursor:pointer">✅ Avblockera</button>':'<button id="profBlockBtn" style="padding:10px;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;font-weight:700;cursor:pointer">🔴 Blockera</button>');
+  parts.push('<button id="profSuspBtn" style="padding:10px;background:#fef3c7;color:#d97706;border:none;border-radius:8px;font-weight:700;cursor:pointer">⏸ Stäng av</button></div>');
+  parts.push('<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">');
+  parts.push('<button id="profChatBtn" style="padding:10px;background:#1a56db;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer">💬 Chatta</button>');
+  parts.push('<button id="profQuestBtn" style="padding:10px;background:#7c3aed;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer">📨 Skicka fråga</button></div>');
+  if(staffUser&&staffUser.level===1)parts.push('<button id="profDelBtn" style="width:100%;padding:10px;background:#fee2e2;color:#dc2626;border:1px solid #dc2626;border-radius:8px;font-weight:700;cursor:pointer;margin-bottom:12px">🗑️ Ta bort förare permanent</button>');
+
+  parts.push('<div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">📋 Reselogg</div>');
+  if(!trips.length){parts.push('<div style="color:#94a3b8;text-align:center;padding:12px">Inga avslutade resor</div>');}
+  else{trips.forEach(function(b){
+    parts.push('<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:12px">');
+    parts.push('<div><div style="font-weight:700;color:#1a56db">'+b.booking_ref+'</div>');
+    parts.push('<div style="color:#94a3b8">'+new Date(b.created_at).toLocaleString('sv-SE',{dateStyle:'short',timeStyle:'short'})+'</div></div>');
+    parts.push('<div style="font-weight:800;color:#15803d">'+(b.fare_sek||0)+' kr</div></div>');
+  });}
+
+  document.getElementById('driverModTitle').textContent=d.name;
+  document.getElementById('driverModContent').innerHTML=parts.join('');
+  document.getElementById('driverMod').classList.add('open');
+  document.querySelectorAll('.prof-stat-btn').forEach(function(btn){btn.onclick=function(){setDriverStatus(d.id,this.dataset.st);};});
+  var sb=document.getElementById('profSaveBtn');if(sb)sb.onclick=function(){updateDriverAkeri(d.id);};
+  var bb=document.getElementById('profBlockBtn');if(bb)bb.onclick=function(){manageDriver(d.id,isBlocked?'unblock':'block');};
+  var spb=document.getElementById('profSuspBtn');if(spb)spb.onclick=function(){openSuspend(d.id);};
+  var cb=document.getElementById('profChatBtn');if(cb)cb.onclick=function(){closeMod('driverMod');openChat('central-driver-'+d.id,d.name);};
+  var qb=document.getElementById('profQuestBtn');if(qb)qb.onclick=function(){openQuestionModal(d.id,d.name);};
+  var db=document.getElementById('profDelBtn');if(db)db.onclick=function(){deleteDriver(d.id,d.name);};
+}
+
+async function updateDriverAkeri(id){
+  var employment=(document.getElementById('drvEmployment')||{}).value||'hourly';
+  var companyId=(document.getElementById('drvCompany')||{}).value||'';
+  var name=(document.getElementById('eDrvName')||{}).value||'';
+  var phone=(document.getElementById('eDrvPhone')||{}).value||'';
+  var plate=(document.getElementById('eDrvPlate')||{}).value||'';
+  var taxi=(document.getElementById('eDrvTaxi')||{}).value||'';
+  var city=(document.getElementById('eDrvCity')||{}).value||'';
+  var pwd=(document.getElementById('eDrvPwd')||{}).value||'';
+  try{
+    var res=await fetch(API+'/drivers/'+id+'/manage',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify({action:'update',name:name,phone:phone,plate:plate,taxi_nr:taxi,city:city,password:pwd||undefined,employment_type:employment,company_id:companyId||null})});
+    var data=await res.json();
+    if(data.driver){allDrivers=allDrivers.map(function(d){return d.id===id?Object.assign({},d,data.driver):d;});showToast('✅ Sparad');closeMod('driverMod');}
+    else{showToast('⚠️ '+(data.error||'Fel'));}
   }catch(e){showToast('⚠️ Nätverksfel');}
 }
 
-// ── CANCEL ──
-function openCancel(id,ref){
-  cancelId=id;cancelRef=ref;
-  var b=allBookings.find(function(x){return x.id===id;});
-  var info=document.getElementById('cancelInfo');
-  if(info)info.innerHTML='<strong>Bokning:</strong> '+ref+'<br><strong>Kund:</strong> '+(b?b.customer_name:'')+'<br><strong>Förare:</strong> '+(b&&b.driver_name?b.driver_name:'Ingen');
-  document.getElementById('cancelMod').classList.add('open');
-}
-
-async function doCancel(){
-  closeMod('cancelMod');
+async function manageDriver(id,action,extra){
   try{
-    var res=await fetch(API+'/bookings/'+cancelId+'/cancel',{method:'PATCH'});
-    if(res.ok){
-      var b=allBookings.find(function(x){return x.id===cancelId;});
-      if(b&&b.driver_id)allDrivers=allDrivers.map(function(d){return d.id===b.driver_id?Object.assign({},d,{status:'available'}):d;});
-      allBookings=allBookings.map(function(x){return x.id===cancelId?Object.assign({},x,{status:'cancelled',driver_id:null,driver_name:null}):x;});
-      showAlert('Bokning '+cancelRef+' avbokad','info');
-      showToast('✓ '+cancelRef+' avbokad');showTab(0);
-    }
+    var body=Object.assign({action:action},extra||{});
+    var res=await fetch(API+'/drivers/'+id+'/manage',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify(body)});
+    var data=await res.json();
+    if(data.driver){allDrivers=allDrivers.map(function(d){return d.id===id?Object.assign({},d,data.driver):d;});showToast('✅ Åtgärd genomförd');closeMod('driverMod');}
+    else{showToast('⚠️ '+(data.error||'Fel'));}
   }catch(e){showToast('⚠️ Nätverksfel');}
 }
 
-// ── CHAT ──
+async function setDriverStatus(id,status){
+  try{
+    var res=await fetch(API+'/drivers/'+id+'/manage',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify({action:'status',status:status})});
+    var data=await res.json();
+    if(data.driver||data.ok){allDrivers=allDrivers.map(function(d){return d.id===id?Object.assign({},d,{status:status}):d;});showToast('✅ Status satt');closeMod('driverMod');showTab(2);}
+    else{showToast('⚠️ '+(data.error||'Fel'));}
+  }catch(e){showToast('⚠️ Nätverksfel');}
+}
+
+async function deleteDriver(id,name){
+  if(!confirm('Ta bort '+name+'? Kan inte ångras!'))return;
+  try{
+    var res=await fetch(API+'/drivers/'+id,{method:'DELETE',headers:{'Authorization':'Bearer '+staffToken}});
+    var data=await res.json();
+    if(data.ok){allDrivers=allDrivers.filter(function(d){return d.id!==id;});showToast('Borttagen: '+name);closeMod('driverMod');showTab(2);}
+    else{showToast(data.error||'Fel');}
+  }catch(e){showToast('Nätverksfel');}
+}
+
+function openSuspend(id){
+  var until=prompt('Stäng av tills (YYYY-MM-DD):');
+  if(!until)return;
+  manageDriver(id,'suspend',{suspend_until:until});
+}
+
+// ═══════════════════════════════════════════════════════
+// CUSTOMER PROFILE
+// ═══════════════════════════════════════════════════════
+
+function openCustomerProfile(id){
+  var c=allCustomers.find(function(x){return x.id===id;});
+  if(!c)return;
+  var trips=allBookings.filter(function(b){return b.customer_id===c.id;});
+  var parts=[];
+  parts.push('<div style="font-weight:800;font-size:17px;margin-bottom:4px">'+c.name+'</div>');
+  parts.push('<div style="font-size:13px;color:#64748b">📱 '+c.phone+'</div>');
+  parts.push('<div style="font-size:13px;color:#64748b">✉️ '+(c.email||'Ingen e-post')+'</div>');
+  parts.push('<div style="font-size:13px;margin-top:8px;margin-bottom:12px">'+trips.length+' resor · '+(c.blocked?'<span style="color:#dc2626">🔴 Blockerad</span>':'<span style="color:#22c55e">✅ Aktiv</span>')+'</div>');
+  parts.push('<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">');
+  parts.push(c.blocked?'<button onclick="manageCustomer('+id+',\'unblock\')" style="padding:10px;background:#dcfce7;color:#15803d;border:none;border-radius:8px;font-weight:700;cursor:pointer">✅ Avblockera</button>':'<button onclick="manageCustomer('+id+',\'block\')" style="padding:10px;background:#fee2e2;color:#dc2626;border:none;border-radius:8px;font-weight:700;cursor:pointer">🔴 Blockera</button>');
+  parts.push('<button onclick="openChat(\'customer-central-'+id+'\',\''+c.name+'\')" style="padding:10px;background:#0d9488;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer">💬 Chatta</button></div>');
+  trips.slice(0,5).forEach(function(b){
+    parts.push('<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:12px"><div><div style="font-weight:700;color:#1a56db">'+b.booking_ref+'</div><div style="color:#94a3b8">'+new Date(b.created_at).toLocaleString('sv-SE',{dateStyle:'short',timeStyle:'short'})+'</div></div><div style="font-weight:800;color:#15803d">'+(b.fare_sek||0)+' kr</div></div>');
+  });
+  document.getElementById('customerModTitle').textContent=c.name;
+  document.getElementById('customerModContent').innerHTML=parts.join('');
+  document.getElementById('customerMod').classList.add('open');
+}
+
+async function manageCustomer(id,action){
+  try{
+    var res=await fetch(API+'/customers/'+id+'/manage',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify({action:action})});
+    var data=await res.json();
+    if(data.customer){allCustomers=allCustomers.map(function(c){return c.id===id?Object.assign({},c,data.customer):c;});showToast('✅ Kund uppdaterad');closeMod('customerMod');}
+    else{showToast('⚠️ '+(data.error||'Fel'));}
+  }catch(e){showToast('⚠️ Nätverksfel');}
+}
+
+// ═══════════════════════════════════════════════════════
+// CHAT
+// ═══════════════════════════════════════════════════════
+
+var chatThreads={};
+var chatKey='';
+
 function openChat(key,name){
+  if(chatThreads[key]){chatUnread=Math.max(0,chatUnread-(chatThreads[key].unread||0));chatThreads[key].unread=0;updateChatBadge(chatUnread);}
   chatKey=key;
   document.getElementById('chatTitle').textContent='💬 '+name;
   document.getElementById('chatMsgs').innerHTML='<div style="text-align:center;color:#94a3b8;font-size:12px;padding:20px">Laddar...</div>';
@@ -1490,615 +1501,215 @@ function openChat(key,name){
 
 async function loadChat(key){
   try{
-    var res=await fetch(API+'/messages/'+key);var data=await res.json();var msgs=data.messages||[];
+    var res=await fetch(API+'/messages/'+encodeURIComponent(key),{headers:{'Authorization':'Bearer '+staffToken}});
+    var data=await res.json();
+    var msgs=data.messages||[];
     var el=document.getElementById('chatMsgs');
-    if(!msgs.length){el.innerHTML='<div style="text-align:center;color:#94a3b8;font-size:12px;padding:20px">Inga meddelanden</div>';return;}
+    if(!el)return;
     el.innerHTML=msgs.map(function(m){
-      var mine=m.sender_role==='central';
-      var avCls=m.sender_role==='driver'?'drv':m.sender_role==='customer'?'cus':'';
-      return '<div class="cmsg '+(mine?'mine':'other')+'">'+
-        '<div class="cav '+avCls+'">'+(m.sender_name?m.sender_name.charAt(0):'?')+'</div>'+
-        '<div style="max-width:72%"><div style="font-size:10px;color:#94a3b8;margin-bottom:2px;text-align:'+(mine?'right':'left')+'">'+m.sender_name+'</div>'+
-        '<div class="cbub">'+m.content+'</div></div></div>';
+      var isMe=m.sender_role==='staff';
+      return '<div style="display:flex;justify-content:'+(isMe?'flex-end':'flex-start')+';margin-bottom:8px">'+
+        '<div style="background:'+(isMe?'#0d1b3e':'white')+';color:'+(isMe?'white':'#0d1b3e')+';padding:8px 12px;border-radius:12px;max-width:78%;font-size:13px">'+
+        '<div>'+m.content+'</div>'+
+        '<div style="font-size:10px;opacity:.6;margin-top:2px;text-align:right">'+new Date(m.created_at).toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'})+'</div>'+
+        '</div></div>';
     }).join('');
     el.scrollTop=el.scrollHeight;
-  }catch(e){document.getElementById('chatMsgs').innerHTML='<div style="text-align:center;color:#dc2626;font-size:12px;padding:20px">Kunde inte ladda</div>';}
+  }catch(e){}
 }
 
 async function sendChat(){
-  var input=document.getElementById('chatIn');var text=input?input.value.trim():'';
-  if(!text||!chatKey)return;
-  var el=document.getElementById('chatMsgs');
-  var div=document.createElement('div');div.className='cmsg mine';
-  div.innerHTML='<div class="cav">C</div><div style="max-width:72%"><div style="font-size:10px;color:#94a3b8;margin-bottom:2px;text-align:right">'+(staffUser?staffUser.name:'Central')+'</div><div class="cbub">'+text+'</div></div>';
-  el.appendChild(div);el.scrollTop=el.scrollHeight;if(input)input.value='';
+  var inp=document.getElementById('chatInput');
+  var msg=(inp.value||'').trim();
+  if(!msg||!chatKey)return;
+  inp.value='';
   try{
-    await fetch(API+'/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({thread_key:chatKey,sender_name:staffUser?staffUser.name:'Central Dispatch',sender_role:'central',content:text})});
+    await fetch(API+'/messages',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify({thread_key:chatKey,sender_name:staffUser?staffUser.name:'Central',sender_role:'staff',content:msg})});
+    loadChat(chatKey);
   }catch(e){}
 }
-// ── COMPANIES TAB ──
-function tabCompanies(){
-  var canManage=staffUser&&staffUser.level<=2;
-  var h='<div class="page">';
-  if(canManage){
-    h+='<div class="card"><div class="stitle">➕ Lägg till partnerföretag</div>'+
-      '<input class="finput" id="cName" placeholder="Företagsnamn *"/>'+
-      '<input class="finput" id="cOrg" placeholder="Org.nummer * (556xxx-xxxx)"/>'+
-      '<input class="finput" id="cAkeri" placeholder="Åkerinummer (valfritt)"/>'+
-      '<input class="finput" id="cEmail" type="email" placeholder="Kontakt e-post"/>'+
-      '<input class="finput" id="cPhone" placeholder="Kontakt telefon"/>'+
-      '<input class="finput" id="cDate" type="date"/>'+
-      '<input class="finput" id="cNotes" placeholder="Anteckningar"/>'+
-      '<div class="ib ib-r" id="cErr" style="display:none"></div>'+
-      '<button class="btn btnP" id="addCoBtn" onclick="addCompany()">Lägg till företag →</button></div>';
-  }
-  h+='<div class="stitle">Partnerföretag ('+allCompanies.length+')</div>';
-  allCompanies.forEach(function(c){
-    var drivers=allDrivers.filter(function(d){return d.company_id===c.id;});
-    h+='<div class="card">'+
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">'+
-      '<div><div style="font-size:15px;font-weight:700;color:#0d1b3e">'+c.name+'</div>'+
-      '<div style="font-size:12px;color:#64748b">Org.nr: '+c.org_number+'</div>'+
-      (c.contact_email?'<div style="font-size:12px;color:#1a56db">'+c.contact_email+'</div>':'')+
-      (c.contact_phone?'<div style="font-size:12px;color:#64748b">'+c.contact_phone+'</div>':'')+
-      '</div><span class="badge '+(c.status==='active'?'bc':'bx')+'">'+(c.status==='active'?'Aktiv':'Inaktiv')+'</span></div>'+
-      '<div class="stitle" style="margin-bottom:6px">Kopplade förare ('+drivers.length+')</div>'+
-      (drivers.length?drivers.map(function(d){
-        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f1f5f9">'+
-          '<span style="font-size:13px">🚖 '+d.name+' · '+d.plate+'</span>'+
-          (canManage?'<button class="btn btnG" style="padding:4px 10px;font-size:11px" onclick="unassignDriver('+d.id+')">Ta bort</button>':'')+
-          '</div>';}).join(''):
-        '<div style="font-size:12px;color:#94a3b8;margin-bottom:8px">Inga förare kopplade</div>')+
-      (canManage?'<div style="margin-top:10px;display:flex;gap:8px">'+
-        '<select class="finput" id="dsel-'+c.id+'" style="margin-bottom:0;flex:1">'+
-        '<option value="">Välj förare...</option>'+
-        allDrivers.filter(function(d){return !d.company_id;}).map(function(d){
-          return '<option value="'+d.id+'">'+d.name+' · '+d.plate+'</option>';}).join('')+
-        '</select><button class="btn btnP" onclick="assignDriver('+c.id+')" style="padding:8px 14px">Koppla</button></div>':'')+
-      (staffUser&&staffUser.level===1?
-        '<div style="margin-top:12px;padding-top:10px;border-top:2px solid #ede9fe">'+
-        '<div style="font-size:10px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">👑 Åkeriportal-åtkomst</div>'+
-        (c.portal_email?'<div style="background:#f5f3ff;border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:12px">✅ Aktiv: <strong>'+c.portal_email+'</strong></div>':'<div style="background:#fff7ed;border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:12px;color:#d97706">⚠️ Ingen portal-åtkomst</div>')+
-        '<div style="display:flex;gap:6px;margin-bottom:6px">'+
-        '<input class="finput" id="pe-'+c.id+'" placeholder="E-post" value="'+(c.contact_email||'')+'" style="margin:0;flex:1;font-size:12px"/>'+
-        '<input class="finput" id="pp-'+c.id+'" type="password" placeholder="Lösenord" style="margin:0;width:100px;font-size:12px"/></div>'+
-        '<button class="btn" style="width:100%;padding:8px;background:#7c3aed;color:white;font-size:12px;font-weight:700;border-radius:8px;border:none;cursor:pointer" onclick="createPortalAccess('+c.id+','+JSON.stringify(c.name)+')">'+(c.portal_email?'🔄 Uppdatera åtkomst':'🔑 Skapa portal-åtkomst')+'</button>'+
-        '</div>'
-      :'')+
-      '</div>';
+
+// ═══════════════════════════════════════════════════════
+// REASSIGN & CANCEL
+// ═══════════════════════════════════════════════════════
+
+function openReassignById(bookingId){
+  var b=allBookings.find(function(x){return x.id===bookingId;});
+  if(!b)return;
+  var available=allDrivers.filter(function(d){return d.status==='available'&&!d.blocked&&d.id!==b.driver_id;});
+  var h='<div class="stitle">Tilldela om — '+b.booking_ref+'</div>';
+  h+='<div style="font-size:12px;color:#64748b;margin-bottom:12px">'+b.from_address+'</div>';
+  if(!available.length){h+='<div class="ib ib-r">Inga lediga förare</div>';document.getElementById('reassignMod').querySelector('.mbox').innerHTML=h;document.getElementById('reassignMod').classList.add('open');return;}
+  available.forEach(function(d){
+    h+='<div class="dcard" style="cursor:pointer" onclick="doReassign('+bookingId+','+d.id+')">'+
+      '<div class="davatar">'+d.name.charAt(0)+'</div>'+
+      '<div style="flex:1"><div style="font-weight:700">'+d.name+'</div>'+
+      '<div style="font-size:12px;color:#64748b">'+(d.plate||'')+'</div></div>'+
+      '<div style="color:#22c55e;font-weight:700">Välj →</div></div>';
   });
-  if(!allCompanies.length)h+='<div class="card" style="text-align:center;color:#94a3b8;padding:30px">🏢<br>Inga partnerföretag ännu</div>';
-  h+='<div style="height:80px"></div></div>';
-  return h;
-}
-
-async function addCompany(){
-  var name=document.getElementById('cName').value.trim();
-  var org=document.getElementById('cOrg').value.trim();
-  var email=document.getElementById('cEmail').value.trim();
-  var phone=document.getElementById('cPhone').value.trim();
-  var date=document.getElementById('cDate').value;
-  var notes=document.getElementById('cNotes').value.trim();
-  var err=document.getElementById('cErr');var btn=document.getElementById('addCoBtn');
-  if(!name||!org){err.textContent='⚠️ Namn och org.nr krävs';err.style.display='';return;}
-  btn.textContent='Lägger till...';btn.disabled=true;err.style.display='none';
-  try{
-    var res=await fetch(API+'/companies/add',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify({name,org_number:org,contact_email:email,contact_phone:phone,agreement_date:date||null,notes,akeri_number:document.getElementById('cAkeri')?document.getElementById('cAkeri').value.trim():null})});
-    var data=await res.json();
-    if(data.company){allCompanies.push(data.company);showToast('✅ '+name+' tillagd!');showTab(6);}
-    else{err.textContent='⚠️ '+(data.error||'Fel');err.style.display='';}
-  }catch(e){err.textContent='⚠️ Nätverksfel';err.style.display='';}
-  btn.textContent='Lägg till företag →';btn.disabled=false;
-}
-
-async function assignDriver(companyId){
-  var sel=document.getElementById('dsel-'+companyId);
-  if(!sel||!sel.value){showToast('⚠️ Välj en förare');return;}
-  var driverId=parseInt(sel.value);
-  try{
-    var res=await fetch(API+'/companies/'+companyId+'/assign-driver',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify({driver_id:driverId})});
-    if(res.ok){allDrivers=allDrivers.map(function(d){return d.id===driverId?Object.assign({},d,{company_id:companyId}):d;});showToast('✅ Förare kopplad!');showTab(6);}
-  }catch(e){showToast('⚠️ Nätverksfel');}
-}
-
-async function unassignDriver(driverId){
-  try{
-    await fetch(API+'/drivers/'+driverId+'/manage',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify({action:'update',company_id:null})});
-    allDrivers=allDrivers.map(function(d){return d.id===driverId?Object.assign({},d,{company_id:null}):d;});
-    showToast('✅ Borttagen');showTab(6);
-  }catch(e){showToast('⚠️ Nätverksfel');}
-}
-async function createPortalAccess(companyId, companyName){
-  if(!staffUser||staffUser.level!==1){showToast('⚠️ Superadmin krävs');return;}
-  var email=(document.getElementById('pe-'+companyId)||{}).value||'';
-  var pwd=(document.getElementById('pp-'+companyId)||{}).value||'';
-  email=email.trim();
-  if(!email){showToast('⚠️ Ange e-post');return;}
-  if(!pwd||pwd.length<6){showToast('⚠️ Lösenord minst 6 tecken');return;}
-  try{
-    var res=await fetch(API+'/staff/create-portal-access',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},
-      body:JSON.stringify({email:email,password:pwd,company_id:companyId,company_name:companyName})
-    });
-    var data=await res.json();
-    if(data.success||data.staff){
-      // Update local companies data
-      allCompanies=allCompanies.map(function(c){
-        return c.id===companyId?Object.assign({},c,{portal_email:email}):c;
-      });
-      showToast('✅ Portal-åtkomst skapad för '+companyName,'#7c3aed');
-      showTab(6);
-    }else{
-      showToast('⚠️ '+(data.error||'Fel'));
-    }
-  }catch(e){showToast('⚠️ Nätverksfel');}
-}
-
-
-// ── CARS TAB ──
-async function loadCarsTab() {
-  try {
-    var res = await fetch(API+'/cars', {headers:{'Authorization':'Bearer '+staffToken}});
-    var data = await res.json();
-    allCars = data.cars || [];
-  } catch(e) { allCars = []; }
-  renderCarsTab();
-}
-
-function renderCarsTab() {
-  var canManage = staffUser && staffUser.level <= 2;
-  var m = document.getElementById('main');
-  if(!m) return;
-  var h = '<div class="page">';
-  if (canManage) {
-    h += '<div class="card"><div class="stitle">➕ Lägg till fordon</div>'+
-      '<input class="finput" id="carPlate" placeholder="Registreringsskylt * (ABC 123)"/>'+
-      '<input class="finput" id="carModel" placeholder="Märke & modell (t.ex. Toyota Prius)"/>'+
-      '<input class="finput" id="carYear" type="number" placeholder="Årsmodell"/>'+
-      '<input class="finput" id="carColor" placeholder="Färg"/>'+
-      '<input class="finput" id="carTaxi" placeholder="Taxinummer (TL-XXXX)"/>'+
-      '<label class="flabel">Företag</label>'+
-      '<select class="finput" id="carCompany">'+
-      '<option value="">Inget företag</option>'+
-      allCompanies.map(function(c){return '<option value="'+c.id+'">'+c.name+'</option>';}).join('')+
-      '</select>'+
-      '<div class="ib ib-r" id="carErr" style="display:none"></div>'+
-      '<button class="btn btnP" id="addCarBtn" onclick="addCar()">Lägg till fordon →</button></div>';
-  }
-  h += '<div class="stitle">Alla fordon ('+allCars.length+')</div>';
-  if (!allCars.length) {
-    h += '<div class="card" style="text-align:center;color:#94a3b8;padding:30px">🚗<br>Inga fordon registrerade ännu</div>';
-  }
-  allCars.forEach(function(car) {
-    var statusColor = car.status==='available'?'#22c55e':car.status==='busy'?'#f97316':'#64748b';
-    var statusLabel = car.status==='available'?'🟢 Ledig':car.status==='busy'?'🟠 På uppdrag':'⚫ Offline';
-    h += '<div class="card">'+
-      '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'+
-      '<div>'+
-      '<div style="font-size:16px;font-weight:800;color:#0d1b3e">'+car.plate+'</div>'+
-      '<div style="font-size:12px;color:#64748b">'+(car.model||'')+(car.year?' · '+car.year:'')+(car.color?' · '+car.color:'')+'</div>'+
-      (car.taxi_nr?'<div style="font-size:12px;color:#64748b">Taxinr: '+car.taxi_nr+'</div>':'')+
-      (car.company_name?'<div style="font-size:12px;color:#7c3aed;font-weight:700">🏢 '+car.company_name+'</div>':'')+
-      '</div>'+
-      '<div style="text-align:right">'+
-      '<div style="font-size:13px;font-weight:700;color:'+statusColor+'">'+statusLabel+'</div>'+
-      (car.current_driver_name?'<div style="font-size:11px;color:#64748b">'+car.current_driver_name+'</div>':'')+
-      '</div></div>'+
-      (car.lat&&car.lng?'<div style="font-size:11px;color:#94a3b8;margin-bottom:8px">📍 '+parseFloat(car.lat).toFixed(4)+', '+parseFloat(car.lng).toFixed(4)+'</div>':'')+
-      (canManage?
-        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">'+
-        '<select class="finput" id="drvsel-'+car.id+'" style="margin-bottom:0;flex:1;font-size:12px">'+
-        '<option value="">Koppla förare...</option>'+
-        allDrivers.map(function(d){return '<option value="'+d.id+'">'+d.name+(d.taxi_license?' ('+d.taxi_license+')':'')+'</option>';}).join('')+
-        '</select>'+
-        '<button class="btn btnP btn-sm" onclick="assignDriverToCar('+car.id+')">Koppla</button>'+
-        '<button class="btn btnD btn-sm" onclick="deleteCar('+car.id+',this.dataset.p)" data-p="'+car.plate+'">🗑</button>'+
-        '</div>':'')
-      +'</div>';
-  });
-  h += '<div style="height:80px"></div></div>';
-  m.innerHTML = h;
-}
-
-async function addCar() {
-  var plate=(document.getElementById('carPlate')||{}).value||'';
-  var model=(document.getElementById('carModel')||{}).value||'';
-  var year=(document.getElementById('carYear')||{}).value||'';
-  var color=(document.getElementById('carColor')||{}).value||'';
-  var taxi=(document.getElementById('carTaxi')||{}).value||'';
-  var company=(document.getElementById('carCompany')||{}).value||'';
-  var err=document.getElementById('carErr');
-  var btn=document.getElementById('addCarBtn');
-  plate=plate.trim().toUpperCase();
-  if(!plate){if(err){err.textContent='⚠️ Registreringsskylt krävs';err.style.display='';}return;}
-  if(btn){btn.textContent='Lägger till...';btn.disabled=true;}
-  if(err)err.style.display='none';
-  try{
-    var res=await fetch(API+'/cars/add',{
-      method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},
-      body:JSON.stringify({plate,model,year:year||null,color,taxi_nr:taxi,company_id:company||null})
-    });
-    var data=await res.json();
-    if(data.car){allCars.push(data.car);showToast('✅ '+plate+' tillagd!');renderCarsTab();}
-    else{if(err){err.textContent='⚠️ '+(data.error||'Fel');err.style.display='';}}
-  }catch(e){if(err){err.textContent='⚠️ Nätverksfel';err.style.display='';}}
-  if(btn){btn.textContent='Lägg till fordon →';btn.disabled=false;}
-}
-
-async function assignDriverToCar(carId){
-  var sel=document.getElementById('drvsel-'+carId);
-  if(!sel||!sel.value){showToast('⚠️ Välj en förare');return;}
-  try{
-    var res=await fetch(API+'/cars/'+carId+'/assign-driver',{
-      method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},
-      body:JSON.stringify({driver_id:parseInt(sel.value)})
-    });
-    if(res.ok){showToast('✅ Förare kopplad till fordon');loadCarsTab();}
-  }catch(e){showToast('⚠️ Nätverksfel');}
-}
-
-async function deleteCar(id,plate){
-  if(!confirm('Ta bort fordon '+plate+'?'))return;
-  try{
-    var res=await fetch(API+'/cars/'+id,{method:'DELETE',headers:{'Authorization':'Bearer '+staffToken}});
-    if(res.ok){allCars=allCars.filter(function(c){return c.id!==id;});showToast('✅ '+plate+' borttagen');renderCarsTab();}
-  }catch(e){showToast('⚠️ Nätverksfel');}
-}
-
-// ── PWA INSTALL — CENTRAL ──
-var deferredPromptC = null;
-window.addEventListener('beforeinstallprompt', function(e) {
-  e.preventDefault();
-  deferredPromptC = e;
-  setTimeout(function() {
-    var b = document.getElementById('installBannerC');
-    if(b) b.style.display = 'flex';
-  }, 3000);
-});
-function installAppC() {
-  if (!deferredPromptC) return;
-  deferredPromptC.prompt();
-  deferredPromptC.userChoice.then(function() {
-    var b = document.getElementById('installBannerC');
-    if(b) b.style.display = 'none';
-    deferredPromptC = null;
-  });
-}
-var isIOSC = /iphone|ipad|ipod/i.test(navigator.userAgent);
-var isStandaloneC = window.navigator.standalone === true;
-if(isIOSC && !isStandaloneC && !localStorage.getItem('cntBannerDismissed')) {
-  setTimeout(function() {
-    var b = document.getElementById('iosBannerC');
-    if(b) b.style.display = 'flex';
-  }, 3000);
-}
-
-
-
-// ── CHAT POPUP ──
-function showChatPopup(data) {
-  var existing = document.getElementById('chatPopupBanner');
-  if (existing) existing.remove();
-
-  var senderName = data.sender_name || 'Förare';
-  var msg = data.content || '';
-  var time = new Date().toLocaleTimeString('sv-SE', {timeStyle:'short'});
-  var threadKey = data.thread_key || '';
-
-  var banner = document.createElement('div');
-  banner.id = 'chatPopupBanner';
-  banner.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:9999;background:#0d1b3e;color:white;border-radius:14px;padding:14px 18px;max-width:340px;width:90vw;box-shadow:0 8px 30px rgba(0,0,0,.4);cursor:pointer;border-left:4px solid #fbbf24;animation:slideDown .3s ease';
-  banner.innerHTML =
-    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">' +
-    '<div style="flex:1">' +
-    '<div style="font-size:11px;color:#fbbf24;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">💬 ' + senderName + ' · ' + time + '</div>' +
-    '<div style="font-size:14px;font-weight:600;line-height:1.4">' + msg + '</div>' +
-    '</div>' +
-    '<button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;padding:0;flex-shrink:0;line-height:1">×</button>' +
-    '</div>' +
-    '<div style="font-size:11px;color:#4a6090;margin-top:8px">Tryck för att svara</div>';
-
-  banner.onclick = function(e) {
-    if (e.target.tagName === 'BUTTON') return;
-    banner.remove();
-    // Open chat for this thread
-    var driverId = threadKey.replace('central-driver-','');
-    var driver = allDrivers.find(function(d){ return String(d.id) === driverId; });
-    if (driver) {
-      showTab(4);
-      setTimeout(function(){ openChat('central-driver-'+driverId, driver.name); }, 300);
-    } else {
-      showTab(4);
-    }
-  };
-
-  document.body.appendChild(banner);
-  setTimeout(function() { if (banner.parentElement) banner.remove(); }, 8000);
-}
-
-// sidebar removed - using tab bar
-
-// ── REASSIGN BOOKING ──
-var reassignBookingId = null;
-
-function openReassignById(bookingId) {
-  var b = allBookings.find(function(x){ return x.id === bookingId; });
-  openReassign(bookingId, b ? b.booking_ref : '', b ? (b.driver_name||'') : '');
-}
-
-function openReassign(bookingId, ref, currentDriver) {
-  reassignBookingId = bookingId;
-  document.getElementById('reassignRef').textContent = ref;
-  document.getElementById('reassignErr').style.display = 'none';
-  var list = document.getElementById('reassignList');
-  var availDrivers = allDrivers.filter(function(d) {
-    return d.status !== 'offline' && d.name !== currentDriver;
-  });
-  if (!availDrivers.length) {
-    list.innerHTML = '<div style="text-align:center;padding:20px;color:#94a3b8">Inga tillgängliga förare</div>';
-  } else {
-    list.innerHTML = availDrivers.map(function(d) {
-      var stColor = d.status === 'available' ? '#22c55e' : '#f97316';
-      var stLabel = d.status === 'available' ? 'Ledig' : 'På uppdrag';
-      return '<div class="dcard" style="cursor:pointer;margin-bottom:8px;align-items:center" onclick="doReassign('+d.id+')">'+
-        '<div class="davatar">'+d.name.charAt(0)+'</div>'+
-        '<div style="flex:1"><div style="font-weight:700">'+d.name+'</div>'+
-        '<div style="font-size:12px;color:#64748b">'+d.plate+(d.taxi_nr?' · '+d.taxi_nr:'')+'</div></div>'+
-        '<span style="font-size:12px;font-weight:700;color:'+stColor+'">'+stLabel+'</span>'+
-        '</div>';
-    }).join('');
-  }
+  document.getElementById('reassignMod').querySelector('.mbox').innerHTML=h;
   document.getElementById('reassignMod').classList.add('open');
 }
 
-async function doReassign(newDriverId) {
-  var err = document.getElementById('reassignErr');
-  err.style.display = 'none';
-  try {
-    var res = await fetch(API + '/bookings/' + reassignBookingId + '/reassign', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + staffToken },
-      body: JSON.stringify({ new_driver_id: newDriverId })
-    });
-    var data = await res.json();
-    if (data.ok || data.booking) {
-      showToast('✅ Bokning omtilldelad', '#15803d');
-      closeMod('reassignMod');
-      await loadData();
-      showTab(curTab);
-    } else {
-      err.textContent = data.error || 'Fel vid omtilldelning';
-      err.style.display = '';
-    }
-  } catch(e) {
-    err.textContent = 'Nätverksfel';
-    err.style.display = '';
-  }
+async function doReassign(bookingId,driverId){
+  closeMod('reassignMod');
+  try{
+    var res=await fetch(API+'/bookings/'+bookingId+'/reassign',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify({driver_id:driverId})});
+    var data=await res.json();
+    if(data.booking){allBookings=allBookings.map(function(b){return b.id===bookingId?Object.assign({},b,data.booking):b;});showToast('✅ Bokning omtilldelad');}
+    else{showToast('⚠️ '+(data.error||'Fel'));}
+  }catch(e){showToast('⚠️ Nätverksfel');}
 }
 
-// ── CHAT POPUP BANNER ──
-var chatPopupTimer = null;
-
-// ── MESSAGE POPUP ──
-var msgPopupTimer = null;
-function showMessagePopup(sender, message) {
-  var existing = document.getElementById('msgPopup');
-  if (existing) existing.remove();
-  if (msgPopupTimer) clearTimeout(msgPopupTimer);
-  var popup = document.createElement('div');
-  popup.id = 'msgPopup';
-  popup.setAttribute('style','position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9999;background:#0d1b3e;color:white;border-radius:16px;padding:14px 18px;min-width:280px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.4);cursor:pointer');
-  var closeBtn = document.createElement('div');
-  closeBtn.textContent = '✕';
-  closeBtn.setAttribute('style','font-size:18px;color:#64748b;flex-shrink:0;cursor:pointer;position:absolute;top:12px;right:14px');
-  closeBtn.onclick = function(e){ e.stopPropagation(); popup.remove(); };
-  var inner = document.createElement('div');
-  inner.setAttribute('style','display:flex;align-items:flex-start;gap:12px;padding-right:24px');
-  inner.innerHTML = '<div style="font-size:24px;flex-shrink:0">💬</div><div><div style="font-size:12px;font-weight:700;color:#fbbf24;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">'+sender+'</div><div style="font-size:14px;line-height:1.4">'+message+'</div></div>';
-  var hint = document.createElement('div');
-  hint.textContent = 'Tryck för att öppna chatten';
-  hint.setAttribute('style','font-size:11px;color:#4a6090;margin-top:8px;text-align:center');
-  popup.style.position = 'relative';
-  popup.appendChild(closeBtn);
-  popup.appendChild(inner);
-  popup.appendChild(hint);
-  popup.onclick = function(){ popup.remove(); showTab(4); };
-  document.body.appendChild(popup);
-  msgPopupTimer = setTimeout(function(){ if(document.getElementById('msgPopup'))document.getElementById('msgPopup').remove(); }, 8000);
+function openCancel(bookingId,ref){
+  if(!confirm('Avboka '+ref+'?'))return;
+  cancelBooking(bookingId);
 }
 
-function closeMsgPopup(id){var el=document.getElementById(id);if(el)el.remove();}
-// ── DRIVER QUESTION / POPUP MESSAGE ──
-var questionDriverId = null;
-var questionType = 'question';
+async function cancelBooking(bookingId){
+  try{
+    var res=await fetch(API+'/bookings/'+bookingId+'/cancel',{method:'POST',headers:{'Authorization':'Bearer '+staffToken}});
+    var data=await res.json();
+    if(data.ok||data.booking){allBookings=allBookings.map(function(b){return b.id===bookingId?Object.assign({},b,{status:'cancelled'}):b;});showToast('✅ Bokning avbokad');if(curTab===0)showTab(0);}
+    else{showToast('⚠️ '+(data.error||'Fel'));}
+  }catch(e){showToast('⚠️ Nätverksfel');}
+}
 
-function openQuestionModal(driverId, driverName) {
-  questionDriverId = driverId;
-  questionType = 'question';
-  document.getElementById('questionDriverName').textContent = driverName;
-  document.getElementById('questionText').value = '';
-  document.getElementById('questionErr').style.display = 'none';
+// ═══════════════════════════════════════════════════════
+// STAFF EDIT
+// ═══════════════════════════════════════════════════════
+
+function openStaffEdit(id){
+  var s=allStaff.find(function(x){return x.id===id;});
+  if(!s)return;
+  document.getElementById('editStaffId').value=s.id;
+  document.getElementById('editStaffName').value=s.name;
+  document.getElementById('editStaffEmail').value=s.email;
+  document.getElementById('editStaffRole').value=s.role||'dispatcher';
+  document.getElementById('editStaffPwd').value='';
+  document.getElementById('staffModTitle').textContent='Redigera: '+s.name;
+  document.getElementById('staffMod').classList.add('open');
+}
+
+async function saveStaffEdit(){
+  var id=parseInt(document.getElementById('editStaffId').value);
+  var name=document.getElementById('editStaffName').value.trim();
+  var email=document.getElementById('editStaffEmail').value.trim();
+  var role=document.getElementById('editStaffRole').value;
+  var pwd=document.getElementById('editStaffPwd').value;
+  try{
+    var res=await fetch(API+'/staff/'+id,{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify({name:name,email:email,role:role,password:pwd||undefined})});
+    var data=await res.json();
+    if(data.staff){allStaff=allStaff.map(function(s){return s.id===id?Object.assign({},s,data.staff):s;});showToast('✅ Sparad');closeMod('staffMod');}
+    else{document.getElementById('staffModErr').textContent='⚠️ '+(data.error||'Fel');document.getElementById('staffModErr').style.display='';}
+  }catch(e){document.getElementById('staffModErr').textContent='⚠️ Nätverksfel';document.getElementById('staffModErr').style.display='';}
+}
+
+// ═══════════════════════════════════════════════════════
+// QUESTION / POPUP MESSAGE
+// ═══════════════════════════════════════════════════════
+
+var questionDriverId=null;
+var questionType='question';
+
+function openQuestionModal(driverId,driverName){
+  questionDriverId=driverId;
+  questionType='question';
+  document.getElementById('questionDriverName').textContent=driverName;
+  document.getElementById('questionText').value='';
+  document.getElementById('questionErr').style.display='none';
   setQType('question');
   document.getElementById('questionMod').classList.add('open');
 }
 
-function setQType(type) {
-  questionType = type;
-  var qBtn = document.getElementById('qtypeQ');
-  var iBtn = document.getElementById('qtypeI');
-  if (type === 'question') {
-    qBtn.style.borderColor = '#7c3aed'; qBtn.style.background = '#ede9fe'; qBtn.style.color = '#7c3aed';
-    iBtn.style.borderColor = '#e2e8f0'; iBtn.style.background = 'white'; iBtn.style.color = '#64748b';
-  } else {
-    iBtn.style.borderColor = '#1a56db'; iBtn.style.background = '#dbeafe'; iBtn.style.color = '#1a56db';
-    qBtn.style.borderColor = '#e2e8f0'; qBtn.style.background = 'white'; qBtn.style.color = '#64748b';
+function setQType(type){
+  questionType=type;
+  var qBtn=document.getElementById('qtypeQ');
+  var iBtn=document.getElementById('qtypeI');
+  if(type==='question'){
+    qBtn.style.borderColor='#7c3aed';qBtn.style.background='#ede9fe';qBtn.style.color='#7c3aed';
+    iBtn.style.borderColor='#e2e8f0';iBtn.style.background='white';iBtn.style.color='#64748b';
+  }else{
+    iBtn.style.borderColor='#1a56db';iBtn.style.background='#dbeafe';iBtn.style.color='#1a56db';
+    qBtn.style.borderColor='#e2e8f0';qBtn.style.background='white';qBtn.style.color='#64748b';
   }
 }
 
-function sendQuestion() {
-  var text = (document.getElementById('questionText').value || '').trim();
-  var err = document.getElementById('questionErr');
-  if (!text) { err.textContent = 'Skriv ett meddelande'; err.style.display = ''; return; }
-  err.style.display = 'none';
-  // Emit via socket directly to driver
-  if (socket && socket.connected) {
-    socket.emit('central:question', {
-      driver_id: questionDriverId,
-      message: text,
-      type: questionType,
-      from: staffUser ? staffUser.name : 'Central'
-    });
+function sendQuestion(){
+  var text=(document.getElementById('questionText').value||'').trim();
+  var err=document.getElementById('questionErr');
+  if(!text){err.textContent='Skriv ett meddelande';err.style.display='';return;}
+  err.style.display='none';
+  if(socket&&socket.connected){
+    socket.emit('central:question',{driver_id:questionDriverId,message:text,type:questionType,from:staffUser?staffUser.name:'Central'});
     showToast('✅ Meddelande skickat');
     closeMod('questionMod');
-  } else {
-    err.textContent = 'Inte ansluten — ladda om sidan';
-    err.style.display = '';
-  }
+  }else{err.textContent='Inte ansluten — ladda om';err.style.display='';}
 }
 
-// ── Listen for driver responses ──
-function listenForDriverResponses() {
-  if (!socket) return;
-  socket.on('driver:question_response', function(data) {
-    var icon = data.response === 'yes' ? '✅' : data.response === 'no' ? '❌' : '👍';
-    var color = data.response === 'yes' ? '#15803d' : data.response === 'no' ? '#dc2626' : '#1a56db';
-    showToast(icon + ' ' + data.driver_name + ': ' + (data.response === 'yes' ? 'JA' : data.response === 'no' ? 'NEJ' : 'OK'));
-    // Also show as popup
-    showMessagePopup(data.driver_name + ' svarade', icon + ' ' + (data.response === 'yes' ? 'JA' : data.response === 'no' ? 'NEJ' : 'OK'));
+function listenForDriverResponses(){
+  if(!socket)return;
+  socket.on('driver:question_response',function(data){
+    var icon=data.response==='yes'?'✅':data.response==='no'?'❌':'👍';
+    showToast(icon+' '+(data.driver_name||'Förare')+': '+(data.response==='yes'?'JA':data.response==='no'?'NEJ':'OK'));
+    showMessagePopup((data.driver_name||'Förare')+' svarade',icon+' '+(data.response==='yes'?'JA':data.response==='no'?'NEJ':'OK'));
   });
 }
 
-// ── CENTRAL NOTIFICATION BANNER ──
-function showCentralNotif(title, body, color, autoDismiss) {
-  // Remove old
-  var old = document.getElementById('centralNotifBanner');
-  if (old) old.remove();
+// ═══════════════════════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════════════════════
 
-  var banner = document.createElement('div');
-  banner.id = 'centralNotifBanner';
-  banner.setAttribute('style',
-    'position:fixed;top:0;left:0;right:0;z-index:9999;' +
-    'background:'+color+';color:white;padding:12px 18px;' +
-    'display:flex;align-items:center;gap:12px;cursor:pointer;' +
-    'animation:slideDown .3s ease;box-shadow:0 4px 20px rgba(0,0,0,.3)'
-  );
-  var closeBtn = document.createElement('button');
-  closeBtn.textContent = '✕';
-  closeBtn.setAttribute('style','background:none;border:none;color:white;font-size:18px;cursor:pointer;margin-left:auto;flex-shrink:0');
-  closeBtn.onclick = function(e){ e.stopPropagation(); banner.remove(); };
+var notifPermission='default';
 
-  var inner = document.createElement('div');
-  inner.innerHTML = '<div style="font-weight:800;font-size:14px">'+title+'</div>' +
-    '<div style="font-size:12px;opacity:.9;margin-top:2px">'+body+'</div>';
-
-  banner.appendChild(inner);
-  banner.appendChild(closeBtn);
-  banner.onclick = function(){ banner.remove(); showTab(0); };
-  document.body.appendChild(banner);
-
-  if (autoDismiss > 0) setTimeout(function(){ if(document.getElementById('centralNotifBanner'))document.getElementById('centralNotifBanner').remove(); }, autoDismiss);
-}
-
-// ── BROWSER NOTIFICATION SYSTEM ──
-var notifPermission = 'default';
-
-function requestNotifPermission() {
-  if (!('Notification' in window)) return;
-  if (Notification.permission === 'granted') {
-    notifPermission = 'granted'; return;
-  }
-  if (Notification.permission !== 'denied') {
-    // Show a friendly prompt first
-    var prompt = document.createElement('div');
-    prompt.id = 'notifPrompt';
-    prompt.setAttribute('style',
-      'position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:9999;' +
-      'background:#0d1b3e;color:white;border-radius:16px;padding:16px 20px;min-width:280px;max-width:90vw;' +
-      'box-shadow:0 8px 32px rgba(0,0,0,.4);text-align:center'
-    );
-    prompt.innerHTML =
-      '<div style="font-size:24px;margin-bottom:8px">🔔</div>' +
-      '<div style="font-weight:700;margin-bottom:4px">Tillåt notiser</div>' +
-      '<div style="font-size:13px;color:#94a3b8;margin-bottom:14px">Få larm för nya bokningar och avbokningar även när fliken är i bakgrunden</div>' +
-      '<div style="display:flex;gap:8px;justify-content:center">' +
-      '<button id="notifYes" style="flex:1;padding:10px;background:#22c55e;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer">✅ Tillåt</button>' +
-      '<button id="notifNo" style="flex:1;padding:10px;background:#374151;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer">Senare</button>' +
-      '</div>';
+function requestNotifPermission(){
+  if(!('Notification' in window))return;
+  if(Notification.permission==='granted'){notifPermission='granted';return;}
+  if(Notification.permission!=='denied'){
+    var prompt=document.createElement('div');
+    prompt.id='notifPrompt';
+    prompt.setAttribute('style','position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:9999;background:#0d1b3e;color:white;border-radius:16px;padding:16px 20px;min-width:280px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.4);text-align:center');
+    prompt.innerHTML='<div style="font-size:24px;margin-bottom:8px">🔔</div><div style="font-weight:700;margin-bottom:4px">Tillåt notiser</div><div style="font-size:13px;color:#94a3b8;margin-bottom:14px">Få larm även när fliken är i bakgrunden</div><div style="display:flex;gap:8px;justify-content:center"><button id="notifYes" style="flex:1;padding:10px;background:#22c55e;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer">✅ Tillåt</button><button id="notifNo" style="flex:1;padding:10px;background:#374151;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer">Senare</button></div>';
     document.body.appendChild(prompt);
-    document.getElementById('notifYes').onclick = function() {
-      prompt.remove();
-      Notification.requestPermission().then(function(p) { notifPermission = p; });
-    };
-    document.getElementById('notifNo').onclick = function() { prompt.remove(); };
-    setTimeout(function() { if(document.getElementById('notifPrompt')) document.getElementById('notifPrompt').remove(); }, 12000);
-  } else {
-    notifPermission = Notification.permission;
-  }
+    document.getElementById('notifYes').onclick=function(){prompt.remove();Notification.requestPermission().then(function(p){notifPermission=p;});};
+    document.getElementById('notifNo').onclick=function(){prompt.remove();};
+    setTimeout(function(){if(document.getElementById('notifPrompt'))document.getElementById('notifPrompt').remove();},12000);
+  }else{notifPermission=Notification.permission;}
 }
 
-function sendBrowserNotif(title, body, tag, onClick) {
-  if (!('Notification' in window)) return;
-  if (Notification.permission !== 'granted') return;
-  try {
-    var n = new Notification(title, {
-      body: body,
-      icon: '/favicon.ico',
-      tag: tag || 'thtcab',
-      requireInteraction: true  // stays until user clicks
-    });
-    n.onclick = function() {
-      window.focus();
-      n.close();
-      if (onClick) onClick();
-    };
-  } catch(e) {}
+function sendBrowserNotif(title,body,tag,onClick){
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  try{var n=new Notification(title,{body:body,icon:'/favicon.ico',tag:tag||'thtcab',requireInteraction:true});n.onclick=function(){window.focus();n.close();if(onClick)onClick();};}catch(e){}
 }
 
+function showCentralNotif(title,body,color,autoDismiss){
+  var old=document.getElementById('centralNotifBanner');if(old)old.remove();
+  var banner=document.createElement('div');
+  banner.id='centralNotifBanner';
+  banner.setAttribute('style','position:fixed;top:0;left:0;right:0;z-index:9999;background:'+color+';color:white;padding:12px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;animation:slideDown .3s ease;box-shadow:0 4px 20px rgba(0,0,0,.3)');
+  var closeBtn=document.createElement('button');closeBtn.textContent='✕';closeBtn.setAttribute('style','background:none;border:none;color:white;font-size:18px;cursor:pointer;margin-left:auto;flex-shrink:0');closeBtn.onclick=function(e){e.stopPropagation();banner.remove();};
+  var inner=document.createElement('div');inner.innerHTML='<div style="font-weight:800;font-size:14px">'+title+'</div><div style="font-size:12px;opacity:.9;margin-top:2px">'+body+'</div>';
+  banner.appendChild(inner);banner.appendChild(closeBtn);banner.onclick=function(){banner.remove();showTab(0);};
+  document.body.appendChild(banner);
+  if(autoDismiss>0)setTimeout(function(){var b=document.getElementById('centralNotifBanner');if(b)b.remove();},autoDismiss);
+}
+
+var msgPopupTimer=null;
+function showMessagePopup(sender,message){
+  var existing=document.getElementById('msgPopup');if(existing)existing.remove();
+  if(msgPopupTimer)clearTimeout(msgPopupTimer);
+  var popup=document.createElement('div');popup.id='msgPopup';
+  popup.setAttribute('style','position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9999;background:#0d1b3e;color:white;border-radius:16px;padding:14px 18px;min-width:280px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.4);cursor:pointer');
+  var closeBtn=document.createElement('button');closeBtn.textContent='✕';closeBtn.setAttribute('style','position:absolute;top:12px;right:14px;background:none;border:none;color:#64748b;font-size:18px;cursor:pointer');closeBtn.onclick=function(e){e.stopPropagation();popup.remove();};
+  var inner=document.createElement('div');inner.setAttribute('style','display:flex;align-items:flex-start;gap:12px;padding-right:24px');inner.innerHTML='<div style="font-size:24px;flex-shrink:0">💬</div><div><div style="font-size:12px;font-weight:700;color:#fbbf24;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">'+sender+'</div><div style="font-size:14px;line-height:1.4">'+message+'</div></div>';
+  var hint=document.createElement('div');hint.textContent='Tryck för att öppna chatten';hint.setAttribute('style','font-size:11px;color:#4a6090;margin-top:8px;text-align:center');
+  popup.appendChild(closeBtn);popup.appendChild(inner);popup.appendChild(hint);
+  popup.onclick=function(){popup.remove();showTab(4);};
+  document.body.appendChild(popup);
+  msgPopupTimer=setTimeout(function(){var p=document.getElementById('msgPopup');if(p)p.remove();},8000);
+}
+
+function closeMsgPopup(id){var el=document.getElementById(id);if(el)el.remove();}
 </script>
-
-<div id="iosBannerC" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#0d1b3e;color:white;padding:14px 16px;z-index:999;align-items:center;gap:12px;box-shadow:0 -4px 20px rgba(0,0,0,.3)">
-  <img src="/icon-72.png" style="width:44px;height:44px;border-radius:10px;flex-shrink:0" alt="THTCab"/>
-  <div style="flex:1;font-size:13px;line-height:1.5"><strong>Installera Central</strong><br>Tryck <strong>□↑</strong> och välj <strong>"Lägg till på hemskärmen"</strong></div>
-  <button onclick="this.parentElement.style.display='none';localStorage.setItem('cntBannerDismissed','1')" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer">✕</button>
-</div>
-<div id="installBannerC" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#0d1b3e;color:white;padding:14px 16px;z-index:999;align-items:center;gap:12px;box-shadow:0 -4px 20px rgba(0,0,0,.3)">
-  <img src="/icon-72.png" style="width:44px;height:44px;border-radius:10px;flex-shrink:0" alt="THTCab"/>
-  <div style="flex:1"><div style="font-size:14px;font-weight:700">Installera Central</div><div style="font-size:12px;color:#94a3b8">Lägg till på hemskärmen</div></div>
-  <button onclick="installAppC()" style="background:#fbbf24;color:#0d1b3e;border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0">Installera</button>
-  <button onclick="document.getElementById('installBannerC').style.display='none'" style="background:none;border:none;color:#94a3b8;font-size:20px;cursor:pointer">✕</button>
-</div>
-
-<!-- REASSIGN MODAL -->
-<div class="moverlay" id="reassignMod">
-  <div class="mbox">
-    <div class="mtitle">🔄 Tilldela om bokning <span id="reassignRef" style="color:#1a56db"></span></div>
-    <div style="font-size:13px;color:#64748b;margin-bottom:12px">Välj den förare du vill tilldela bokningen till:</div>
-    <div id="reassignList" style="max-height:300px;overflow-y:auto"></div>
-    <div class="ib ib-r" id="reassignErr" style="display:none;margin-top:10px"></div>
-    <button class="btn btnG" style="width:100%;margin-top:12px" onclick="closeMod('reassignMod')">Avbryt</button>
-  </div>
-</div>
-
-
-<!-- QUESTION MODAL -->
-<div class="moverlay" id="questionMod">
-  <div class="mbox">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <div class="mtitle" style="margin-bottom:0">📨 Skicka meddelande till <span id="questionDriverName" style="color:#7c3aed"></span></div>
-      <button class="mclose" onclick="closeMod('questionMod')">✕</button>
-    </div>
-    <label class="flabel">Typ</label>
-    <div style="display:flex;gap:8px;margin-bottom:12px">
-      <button id="qtypeQ" onclick="setQType('question')" style="flex:1;padding:10px;border-radius:8px;border:2px solid #7c3aed;background:#ede9fe;color:#7c3aed;font-weight:700;cursor:pointer">❓ Fråga (Ja/Nej)</button>
-      <button id="qtypeI" onclick="setQType('info')" style="flex:1;padding:10px;border-radius:8px;border:2px solid #e2e8f0;background:white;color:#64748b;font-weight:700;cursor:pointer">ℹ️ Info (OK)</button>
-    </div>
-    <label class="flabel">Meddelande</label>
-    <textarea id="questionText" class="finput" rows="3" placeholder="Skriv ditt meddelande till föraren..." style="resize:none;min-height:80px"></textarea>
-    <div class="ib ib-r" id="questionErr" style="display:none"></div>
-    <button onclick="sendQuestion()" class="btn btnP" style="width:100%;padding:13px;background:#7c3aed;color:white;font-size:15px;font-weight:800;margin-top:4px">📨 Skicka →</button>
-  </div>
-</div>
-
 </body>
 </html>
