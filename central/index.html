@@ -627,6 +627,21 @@ function showTab(i,extra){
     else if(i===7){m.innerHTML=tabVehicles();}
   }catch(e){console.error(e);}
 }
+function locateDriver(driverId) {
+  if (!leafletMapInstance) { showTab(1); setTimeout(function(){ locateDriver(driverId); }, 600); return; }
+  var pos = driverPositions[driverId];
+  if (!pos || !pos.lat || !pos.lng) { showToast('⚠️ Ingen GPS-position för föraren'); return; }
+  // Switch to map tab if not already there
+  if (curTab !== 1) { showTab(1); setTimeout(function(){ locateDriver(driverId); }, 500); return; }
+  // Fly to driver position
+  leafletMapInstance.flyTo([pos.lat, pos.lng], 15, { animate: true, duration: 1.0 });
+  // Open their marker popup
+  var marker = leafletMarkers[driverId];
+  if (marker) { marker.openPopup(); }
+  // Show driver profile
+  setTimeout(function(){ openDriverProfile(driverId); }, 600);
+}
+
 function sc(val,lbl,color,onclick){return '<div class="scard"'+(onclick?' onclick="'+onclick+'" style="cursor:pointer"':'')+' ><div class="sval" style="color:'+color+'">'+val+'</div><div class="slbl">'+lbl+'</div></div>';}
 
 function getBadge(s){
@@ -676,10 +691,10 @@ function tabMap(){
     var color=d.status==='available'?'#22c55e':d.status==='busy'?'#f97316':'#64748b';
     var pos=driverPositions[d.id];
     var hasGps=pos&&pos.lat&&pos.lng;
-    driverList+='<span style="display:inline-flex;align-items:center;gap:5px;background:#f8fafc;border-radius:20px;padding:4px 10px;margin-right:6px;font-size:12px;font-weight:600">'+
+    driverList+='<span onclick="locateDriver('+d.id+')" style="display:inline-flex;align-items:center;gap:5px;background:'+(hasGps?'#f0fdf4':'#f8fafc')+';border-radius:20px;padding:4px 12px;margin-right:6px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid '+(hasGps?'#22c55e':'#e2e8f0')+'">'+
       '<span style="width:8px;height:8px;border-radius:50%;background:'+color+';flex-shrink:0"></span>'+
       d.name.split(' ')[0]+' '+(d.plate||'')+
-      (hasGps?' 📍':'<span style="color:#dc2626"> ⚠️nogps</span>')+
+      (hasGps?' 📍':'<span style="color:#dc2626"> ⚠️</span>')+
       '</span>';
   });
   // Return HTML only — do NOT set innerHTML here
@@ -761,8 +776,9 @@ function addZoneOverlays(map) {
       color: zone.color,
       weight: 2,
       fillColor: zone.color,
-      fillOpacity: 0.08,
-      dashArray: '5,5'
+      fillOpacity: 0.18,
+      dashArray: '6,4',
+      interactive: false
     }).addTo(map);
     // Zone label
     var center = [(zone.bounds[0][0]+zone.bounds[1][0])/2, (zone.bounds[0][1]+zone.bounds[1][1])/2];
@@ -777,47 +793,51 @@ function addZoneOverlays(map) {
 }
 
 function initLeafletMap(drivers){
-  // Center on Trollhättan
-  // Center on drivers if any have GPS, otherwise Trollhättan
-var centerLat=58.2835, centerLng=12.2887;
-var driverCoords=Object.values(driverPositions).filter(function(p){return p&&p.lat&&p.lng;});
-if(driverCoords.length){centerLat=driverCoords[0].lat;centerLng=driverCoords[0].lng;}
+  // ── If map already exists, just refresh markers — DO NOT recreate ──
   if(leafletMapInstance){
-    leafletMapInstance.remove();
-    leafletMapInstance=null;
-    leafletMarkers={};
+    // Update existing markers only
+    drivers.forEach(function(d){
+      var pos=driverPositions[d.id];
+      if(pos&&pos.lat&&pos.lng){
+        if(leafletMarkers[d.id]){
+          leafletMarkers[d.id].setLatLng([pos.lat,pos.lng]);
+        } else {
+          addLeafletMarker(leafletMapInstance,d,pos.lat,pos.lng);
+        }
+      }
+    });
+    return; // Keep current view — no jumping
   }
-  var map=L.map('leafletMap',{zoomControl:true,attributionControl:true}).setView([centerLat,centerLng],13);
+
+  // ── First time: create map centered on Trollhättan or first driver ──
+  var centerLat=58.2835, centerLng=12.2887;
+  var driverCoords=Object.values(driverPositions).filter(function(p){return p&&p.lat&&p.lng;});
+  if(driverCoords.length){centerLat=driverCoords[0].lat;centerLng=driverCoords[0].lng;}
+
+  var TROLHATTAN_BOUNDS = L.latLngBounds([57.9,11.8],[58.7,12.8]);
+  var map=L.map('leafletMap',{
+    zoomControl:true,
+    attributionControl:true,
+    maxBounds:TROLHATTAN_BOUNDS,
+    maxBoundsViscosity:0.8
+  }).setView([centerLat,centerLng],13);
   leafletMapInstance=map;
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',
+    attribution:'© OpenStreetMap',
     maxZoom:19
   }).addTo(map);
+
+  // Add zone overlays
+  addZoneOverlays(map);
 
   // Add driver markers
   drivers.forEach(function(d){
     var pos=driverPositions[d.id];
-    var lat=pos&&pos.lat?pos.lat:null;
-    var lng=pos&&pos.lng?pos.lng:null;
-
-    if(!lat||!lng){
-      // No GPS yet — show notice
-      console.log('No GPS for driver: '+d.name);
-      return;
+    if(pos&&pos.lat&&pos.lng){
+      addLeafletMarker(map,d,pos.lat,pos.lng);
     }
-    addLeafletMarker(map, d, lat, lng);
   });
-
-  // If no drivers have GPS, show message
-  var withGps=drivers.filter(function(d){
-    var p=driverPositions[d.id];return p&&p.lat&&p.lng;
-  });
-  if(withGps.length===0&&drivers.length>0){
-    L.popup().setLatLng([centerLat,centerLng])
-      .setContent('<b>'+drivers.length+' förare online</b><br>Väntar på GPS-position...<br><small>Förarna behöver tillåta GPS i sin webbläsare</small>')
-      .openOn(map);
-  }
 }
 
 function addLeafletMarker(map, driver, lat, lng){
