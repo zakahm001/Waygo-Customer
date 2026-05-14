@@ -250,16 +250,38 @@ body{font-family:Arial,sans-serif;background:#0d1b3e;color:white;min-height:100v
 <script>
 
 var ZONES = [
-  {id:1,  name:'Trollhättan Centrum', desc:'Det primära stadscentrumet'},
-  {id:2,  name:'Götalunden',          desc:'Östra stadsområdet'},
-  {id:3,  name:'Lextorp',             desc:'Södra stadsområdet'},
+  // ─ Trollhättan & omgivning ─
+  {id:1,  name:'Trollhättan Centrum', desc:'Stadscentrum, Drottningtorget'},
+  {id:2,  name:'Götalunden',          desc:'Östra Trollhättan'},
+  {id:3,  name:'Lextorp',             desc:'Södra Trollhättan'},
   {id:4,  name:'Gärdhem',             desc:'Sydöstra utkanten'},
   {id:5,  name:'Fors',                desc:'Industriområde öster'},
-  {id:6,  name:'Lagmansered',         desc:'Västra området'},
-  {id:7,  name:'Norra Björke',        desc:'Norra utkantsområdet'},
+  {id:6,  name:'Lagmansered',         desc:'Västra Trollhättan'},
+  {id:7,  name:'Norra Björke',        desc:'Norra utkanten'},
   {id:8,  name:'Rommele',             desc:'Östra landsbygd'},
-  {id:9,  name:'Upphärad',            desc:'Nordöstra området'},
+  {id:9,  name:'Upphärad',            desc:'Nordöstra Trollhättan'},
   {id:10, name:'Väne-Åsaka',          desc:'Sydöstra landsbygd'},
+  // ─ Västra Götaland ─
+  {id:11, name:'Vänersborg',          desc:'Residensstad, ~15 km N Trollhättan'},
+  {id:12, name:'Lilla Edet',          desc:'~25 km S Trollhättan'},
+  {id:13, name:'Ale',                 desc:'Alafors, Nödinge'},
+  {id:14, name:'Kungälv',             desc:'~60 km S, nära Göteborg'},
+  {id:15, name:'Göteborg Centrum',    desc:'Centralen, Avenyn'},
+  {id:16, name:'Göteborg Hisingen',   desc:'Eriksberg, Backaplan'},
+  {id:17, name:'Göteborg Landvetter', desc:'Landvetter flygplats'},
+  {id:18, name:'Mölndal',             desc:'Söder om Göteborg'},
+  {id:19, name:'Partille',            desc:'Öster om Göteborg'},
+  {id:20, name:'Lerum',               desc:'Göteborgsregionen öster'},
+  {id:21, name:'Alingsås',            desc:'~45 km ÖNÖ Göteborg'},
+  {id:22, name:'Borås',               desc:'~60 km Ö Göteborg'},
+  {id:23, name:'Uddevalla',           desc:'~60 km N Göteborg'},
+  {id:24, name:'Stenungsund',         desc:'~40 km N Göteborg'},
+  {id:25, name:'Lidköping',           desc:'Vänern, ~80 km NÖ'},
+  {id:26, name:'Skövde',             desc:'Skaraborg, ~110 km Ö'},
+  {id:27, name:'Mariestad',           desc:'Norra Vänern'},
+  {id:28, name:'Åmål',               desc:'~80 km N Trollhättan'},
+  {id:29, name:'Strömstad',           desc:'Norra Bohuslän, gränsen'},
+  {id:30, name:'Falköping',           desc:'Skaraborg'},
 ];
 var QUICK_MSGS = [
   'Kund i bil — kontakta mig',
@@ -1534,13 +1556,20 @@ async function sendQuickMsg(msg) {
 function showZonesView() {
   closeDriverMenu();
   var list = document.getElementById('zonesList');
-  list.innerHTML = ZONES.map(function(z) {
-    return '<div style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid #f1f5f9">' +
-      '<div style="width:36px;height:36px;border-radius:8px;background:#0d1b3e;color:#fbbf24;font-weight:900;font-size:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+z.id+'</div>'+
-      '<div><div style="font-weight:700;font-size:15px">'+z.name+'</div>'+
-      '<div style="font-size:12px;color:#64748b">'+z.desc+'</div></div>'+
-      '</div>';
-  }).join('');
+  // Group by region
+  var trolhattan = ZONES.filter(function(z){ return z.id <= 10; });
+  var vg = ZONES.filter(function(z){ return z.id > 10; });
+  function renderGroup(title, zones) {
+    return '<div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:2px;padding:12px 0 6px">' + title + '</div>' +
+      zones.map(function(z) {
+        return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #f1f5f9">' +
+          '<div style="width:34px;height:34px;border-radius:8px;background:#0d1b3e;color:#fbbf24;font-weight:900;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+z.id+'</div>'+
+          '<div><div style="font-weight:700;font-size:14px">'+z.name+'</div>'+
+          '<div style="font-size:11px;color:#64748b">'+z.desc+'</div></div>'+
+          '</div>';
+      }).join('');
+  }
+  list.innerHTML = renderGroup('Trollhättan distrikt', trolhattan) + renderGroup('Västra Götaland', vg);
   document.getElementById('zonesSheet').style.display = 'flex';
 }
 
