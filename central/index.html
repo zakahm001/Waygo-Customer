@@ -624,47 +624,9 @@ function showTab(i,extra){
     else if(i===4)m.innerHTML=tabChat();
     else if(i===5)m.innerHTML=tabStaff();
     else if(i===6)m.innerHTML=tabCompanies();
-    else if(i===7){m.innerHTML=tabVehicles();  // If filter specified, scroll to that section after render
-  var _filter = filter;
-  h+='<div class="stats">';
-  h+=sc(active.length,'Aktiva','#1a56db',"showTab(0,'assigned')")+sc(pending.length,'Väntar','#d97706',"showTab(0,'pending')");
-  h+=sc(allDrivers.filter(function(d){return d.status==='available';}).length,'Lediga förare','#15803d',"showTab(2,'available')");
-  var cancelled_today=allBookings.filter(function(b){return b.status==='cancelled';}).length;
-  var avgFare=completed.length?Math.round(earnings/completed.length):0;
-  h+=sc(earnings+' kr','Intäkter idag','#7c3aed');
-  h+='</div>';
-  // ── REVENUE DETAIL ROW ──
-  h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:0 0 12px">'+
-    '<div style="background:#f0fdf4;border-radius:10px;padding:10px;text-align:center"><div style="font-size:16px;font-weight:800;color:#15803d">'+completed.length+'</div><div style="font-size:10px;color:#64748b">AVSLUTADE</div></div>'+
-    '<div style="background:#fef3c7;border-radius:10px;padding:10px;text-align:center"><div style="font-size:16px;font-weight:800;color:#d97706">'+cancelled_today+'</div><div style="font-size:10px;color:#64748b">AVBOKADE</div></div>'+
-    '<div style="background:#ede9fe;border-radius:10px;padding:10px;text-align:center"><div style="font-size:16px;font-weight:800;color:#7c3aed">'+avgFare+' kr</div><div style="font-size:10px;color:#64748b">SNITT/RESA</div></div>'+
-    '</div>';
-  // Per-driver revenue today
-  var driverRevHtml='';
-  allDrivers.forEach(function(d){
-    var dBooks=completed.filter(function(b){return b.driver_id===d.id;});
-    var dRev=dBooks.reduce(function(s,b){return s+(b.fare_sek||0);},0);
-    if(dRev>0||dBooks.length>0){
-      var pct=earnings>0?Math.round(dRev/earnings*100):0;
-      driverRevHtml+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9">'+
-        '<div style="width:32px;height:32px;border-radius:50%;background:#0d1b3e;color:#fbbf24;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+d.name.charAt(0)+'</div>'+
-        '<div style="flex:1"><div style="font-weight:700;font-size:13px">'+d.name+'</div>'+
-        '<div style="background:#f1f5f9;border-radius:20px;height:6px;margin-top:4px"><div style="background:#7c3aed;height:100%;width:'+pct+'%;border-radius:20px"></div></div></div>'+
-        '<div style="text-align:right"><div style="font-weight:800;color:#7c3aed;font-size:13px">'+dRev+' kr</div><div style="font-size:10px;color:#64748b">'+dBooks.length+' resor</div></div></div>';
-    }
-  });
-  if(driverRevHtml)h+='<div class="card"><div class="stitle">Intäkt per förare idag</div>'+driverRevHtml+'</div>';
-  if(pending.length)h+='<div class="stitle">🔴 Väntar ('+pending.length+')</div>'+
-    '<div id="dispatchLog" style="margin-bottom:10px"></div>'+
-    pending.map(bcard).join('');
-  if(active.length)h+='<div class="stitle">🔵 Aktiva ('+active.length+')</div>'+active.map(bcard).join('');
-  if(completed.length)h+='<div class="stitle">✅ Avslutade ('+completed.length+')</div>'+completed.slice(0,10).map(bcard).join('');
-  if(cancelled.length)h+='<div class="stitle">❌ Avbokade ('+cancelled.length+')</div>'+cancelled.slice(0,5).map(bcard).join('');
-  if(!allBookings.length)h+='<div class="empty">📋<br>Inga bokningar ännu</div>';
-  h+='<div style="height:80px"></div></div>';
-  return h;
+    else if(i===7){m.innerHTML=tabVehicles();}
+  }catch(e){console.error(e);}
 }
-
 function sc(val,lbl,color,onclick){return '<div class="scard"'+(onclick?' onclick="'+onclick+'" style="cursor:pointer"':'')+' ><div class="sval" style="color:'+color+'">'+val+'</div><div class="slbl">'+lbl+'</div></div>';}
 
 function getBadge(s){
@@ -1004,6 +966,84 @@ async function openDriverProfile(id) {
 // ═══════════════════════════════════════════════════════
 // TAB RENDERING FUNCTIONS
 // ═══════════════════════════════════════════════════════
+
+function tabBookings(filter) {
+  var today = new Date().toDateString();
+  var pending   = allBookings.filter(function(b){ return b.status==='pending'; });
+  var active    = allBookings.filter(function(b){ return b.status==='assigned'; });
+  var completed = allBookings.filter(function(b){ return b.status==='completed' && new Date(b.created_at).toDateString()===today; });
+  var cancelled = allBookings.filter(function(b){ return b.status==='cancelled' && new Date(b.created_at).toDateString()===today; });
+  var earnings  = completed.reduce(function(s,b){ return s+(b.fare_sek||0); }, 0);
+  var avgFare   = completed.length ? Math.round(earnings/completed.length) : 0;
+  var available = allDrivers.filter(function(d){ return d.status==='available'&&!d.blocked; });
+
+  var h = '<div class="page">';
+
+  // ── STAT CARDS ──
+  h += '<div class="stats">';
+  h += sc(active.length,    'Aktiva',         '#1a56db', "showTab(0,'assigned')");
+  h += sc(pending.length,   'Väntar',         '#d97706', "showTab(0,'pending')");
+  h += sc(available.length, 'Lediga förare',  '#15803d', "showTab(2,'available')");
+  h += sc(earnings+' kr',   'Intäkter idag',  '#7c3aed');
+  h += '</div>';
+
+  // ── REVENUE DETAIL ──
+  h += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">';
+  h += '<div style="background:#f0fdf4;border-radius:10px;padding:10px;text-align:center"><div style="font-size:16px;font-weight:800;color:#15803d">'+completed.length+'</div><div style="font-size:10px;color:#64748b">AVSLUTADE</div></div>';
+  h += '<div style="background:#fef2f2;border-radius:10px;padding:10px;text-align:center"><div style="font-size:16px;font-weight:800;color:#dc2626">'+cancelled.length+'</div><div style="font-size:10px;color:#64748b">AVBOKADE</div></div>';
+  h += '<div style="background:#ede9fe;border-radius:10px;padding:10px;text-align:center"><div style="font-size:16px;font-weight:800;color:#7c3aed">'+avgFare+' kr</div><div style="font-size:10px;color:#64748b">SNITT/RESA</div></div>';
+  h += '</div>';
+
+  // ── PER DRIVER REVENUE ──
+  var driverRevHtml = '';
+  allDrivers.forEach(function(d){
+    var dBooks = completed.filter(function(b){ return b.driver_id===d.id; });
+    var dRev = dBooks.reduce(function(s,b){ return s+(b.fare_sek||0); }, 0);
+    if(dRev > 0 || dBooks.length > 0){
+      var pct = earnings > 0 ? Math.round(dRev/earnings*100) : 0;
+      driverRevHtml += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9">';
+      driverRevHtml += '<div style="width:30px;height:30px;border-radius:50%;background:#0d1b3e;color:#fbbf24;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+d.name.charAt(0)+'</div>';
+      driverRevHtml += '<div style="flex:1"><div style="font-weight:700;font-size:13px">'+d.name+'</div>';
+      driverRevHtml += '<div style="background:#f1f5f9;border-radius:20px;height:6px;margin-top:3px"><div style="background:#7c3aed;height:100%;width:'+pct+'%;border-radius:20px"></div></div></div>';
+      driverRevHtml += '<div style="text-align:right"><div style="font-weight:800;color:#7c3aed;font-size:13px">'+dRev+' kr</div><div style="font-size:10px;color:#94a3b8">'+dBooks.length+' resor</div></div></div>';
+    }
+  });
+  if(driverRevHtml) h += '<div class="card"><div class="stitle">Intäkt per förare idag</div>'+driverRevHtml+'</div>';
+
+  // ── PENDING BOOKINGS ──
+  if(pending.length){
+    h += '<div class="stitle" id="section-pending">🔴 Väntar på förare ('+pending.length+')</div>';
+    pending.forEach(function(b){ h += bcard(b); });
+  }
+
+  // ── ACTIVE BOOKINGS ──
+  if(active.length){
+    h += '<div class="stitle" id="section-assigned">🟠 Aktiva ('+active.length+')</div>';
+    active.forEach(function(b){ h += bcard(b); });
+  }
+
+  // ── COMPLETED TODAY ──
+  if(completed.length){
+    h += '<div class="stitle" id="section-completed">✅ Avslutade idag ('+completed.length+')</div>';
+    completed.slice(0,10).forEach(function(b){ h += bcard(b); });
+  }
+
+  if(!pending.length && !active.length){
+    h += '<div class="empty">📋<br>Inga aktiva bokningar</div>';
+  }
+
+  h += '<div style="height:80px"></div></div>';
+
+  // Scroll to section if filter specified
+  if(filter && filter !== 'all'){
+    setTimeout(function(){
+      var el = document.getElementById('section-'+filter);
+      if(el) el.scrollIntoView({behavior:'smooth'});
+    }, 100);
+  }
+
+  return h;
+}
 
 function tabDrivers(filter){
   filter=filter||'all';
@@ -1641,8 +1681,6 @@ function showMessagePopup(sender,message){
 }
 
 function closeMsgPopup(id){var el=document.getElementById(id);if(el)el.remove();}
-}catch(e){console.error(e);}
-}
 </script>
 </body>
 </html>
