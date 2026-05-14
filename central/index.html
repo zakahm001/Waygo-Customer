@@ -449,7 +449,7 @@ function updateNav(){
 window.onload=function(){if(checkAuth())init();};
 
 async function init(){
-  await loadData();connectSocket();showTab(0);
+  await loadData();connectSocket();showTab(0);requestNotifPermission();listenForDriverResponses();
   if(refreshTimer)clearInterval(refreshTimer);
   refreshTimer=setInterval(async function(){
     await loadData();
@@ -495,6 +495,7 @@ function connectSocket(){
       playNewBookingAlert();
       showAlert('🚨 Ny bokning! '+b.booking_ref+' · '+b.from_address,'warn');
       showToast('🚨 Ny bokning: '+b.booking_ref);
+      sendBrowserNotif('🚨 Ny bokning — '+b.booking_ref, b.from_address+' → '+b.to_address, 'new-booking', function(){ showTab(0); });
       if(curTab===0)showTab(0);
     });
     socket.on('booking:assigned',function(b){
@@ -511,6 +512,7 @@ function connectSocket(){
       var driver=allDrivers.find(function(d){return d.id===data.driverId;});
       var driverName=driver?driver.name:'Förare';
       playDeclineAlert();
+      sendBrowserNotif('⚠️ Förare nekade bokning', driverName+' — tilldela om!', 'declined');
       showAlert('⚠️ '+driverName+' nekade bokning #'+data.bookingId+' — tilldela ny förare','warn');
       showToast('⚠️ '+driverName+' nekade — tilldela ny förare');
       loadData().then(function(){if(curTab===0)showTab(0);});
@@ -518,6 +520,7 @@ function connectSocket(){
     socket.on('booking:returned',function(b){
       allBookings=allBookings.map(function(x){return x.id===b.id?Object.assign({},x,{status:'pending',driver_id:null,driver_name:null}):x;});
       playDeclineAlert();
+      sendBrowserNotif('⚠️ Förare returnerade bokning', (b.booking_ref||'')+(b.driver_name?' — '+b.driver_name:''), 'returned');
       showCentralNotif('⚠️ Förare returnerade bokning', (b.booking_ref||'')+(b.driver_name?' ('+b.driver_name+')':''), '#d97706', 0);
       showToast('⚠️ Bokning returnerad — tilldela om!');
       if(curTab===0)showTab(0);
@@ -530,7 +533,7 @@ function connectSocket(){
       chatUnread++;
       updateChatBadge(chatUnread);
       var senderLabel = data.sender_role === 'customer' ? '👤 Kund' : '🚖 ' + (data.sender_name||'Förare');
-      // DOM popup — always on top, even if on different tab
+      sendBrowserNotif(senderLabel, data.content||'', 'chat-'+data.thread_key, function(){ showTab(4); });
       showMessagePopup(senderLabel, data.content||'');
     });
   socket.on('dispatch:status',function(data){
@@ -571,6 +574,7 @@ function connectSocket(){
       var bk=allBookings.find(function(b){return b.id===data.id;});
       var ref=bk?bk.booking_ref:(data.booking_ref||'#'+data.id);
       playDeclineAlert();
+      sendBrowserNotif('❌ Kund avbokade', ref, 'cancelled');
       showCentralNotif('❌ Kund avbokade', ref + ' — '+(bk?bk.from_address||'':''), '#dc2626', 0);
       showToast('❌ Kund avbokade: ' + ref);
       if(curTab===0)showTab(0);
@@ -1984,6 +1988,61 @@ function showCentralNotif(title, body, color, autoDismiss) {
   document.body.appendChild(banner);
 
   if (autoDismiss > 0) setTimeout(function(){ if(document.getElementById('centralNotifBanner'))document.getElementById('centralNotifBanner').remove(); }, autoDismiss);
+}
+
+// ── BROWSER NOTIFICATION SYSTEM ──
+var notifPermission = 'default';
+
+function requestNotifPermission() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'granted') {
+    notifPermission = 'granted'; return;
+  }
+  if (Notification.permission !== 'denied') {
+    // Show a friendly prompt first
+    var prompt = document.createElement('div');
+    prompt.id = 'notifPrompt';
+    prompt.setAttribute('style',
+      'position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:9999;' +
+      'background:#0d1b3e;color:white;border-radius:16px;padding:16px 20px;min-width:280px;max-width:90vw;' +
+      'box-shadow:0 8px 32px rgba(0,0,0,.4);text-align:center'
+    );
+    prompt.innerHTML =
+      '<div style="font-size:24px;margin-bottom:8px">🔔</div>' +
+      '<div style="font-weight:700;margin-bottom:4px">Tillåt notiser</div>' +
+      '<div style="font-size:13px;color:#94a3b8;margin-bottom:14px">Få larm för nya bokningar och avbokningar även när fliken är i bakgrunden</div>' +
+      '<div style="display:flex;gap:8px;justify-content:center">' +
+      '<button id="notifYes" style="flex:1;padding:10px;background:#22c55e;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer">✅ Tillåt</button>' +
+      '<button id="notifNo" style="flex:1;padding:10px;background:#374151;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer">Senare</button>' +
+      '</div>';
+    document.body.appendChild(prompt);
+    document.getElementById('notifYes').onclick = function() {
+      prompt.remove();
+      Notification.requestPermission().then(function(p) { notifPermission = p; });
+    };
+    document.getElementById('notifNo').onclick = function() { prompt.remove(); };
+    setTimeout(function() { if(document.getElementById('notifPrompt')) document.getElementById('notifPrompt').remove(); }, 12000);
+  } else {
+    notifPermission = Notification.permission;
+  }
+}
+
+function sendBrowserNotif(title, body, tag, onClick) {
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  try {
+    var n = new Notification(title, {
+      body: body,
+      icon: '/favicon.ico',
+      tag: tag || 'thtcab',
+      requireInteraction: true  // stays until user clicks
+    });
+    n.onclick = function() {
+      window.focus();
+      n.close();
+      if (onClick) onClick();
+    };
+  } catch(e) {}
 }
 
 </script>
