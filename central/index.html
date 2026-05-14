@@ -278,6 +278,7 @@ function getAudioCtx() {
 
 // ── CHAT SOUND ──
 var chatUnread = 0;
+var chatThreads = {}; // thread_key -> {unread, lastMsg, lastSender, lastTime}
 function playNewBookingAlert() {
   try {
     var ctx = getAudioCtx(); if(!ctx)return;
@@ -532,6 +533,14 @@ function connectSocket(){
       playChatAlert();
       chatUnread++;
       updateChatBadge(chatUnread);
+      // Track per-thread state
+      if (data.thread_key) {
+        if (!chatThreads[data.thread_key]) chatThreads[data.thread_key] = {unread:0};
+        chatThreads[data.thread_key].unread = (chatThreads[data.thread_key].unread||0) + 1;
+        chatThreads[data.thread_key].lastMsg = data.content||'';
+        chatThreads[data.thread_key].lastSender = data.sender_name||'';
+        chatThreads[data.thread_key].lastTime = new Date().toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'});
+      }
       var senderLabel = data.sender_role === 'customer' ? '👤 Kund' : '🚖 ' + (data.sender_name||'Förare');
       sendBrowserNotif(senderLabel, data.content||'', 'chat-'+data.thread_key, function(){ showTab(4); });
       showMessagePopup(senderLabel, data.content||'');
@@ -602,7 +611,7 @@ function showTab(i,extra){
     curTab=i;
     document.querySelectorAll('.tab').forEach(function(t){var n=parseInt((t.id||'').replace('tab',''));t.classList.toggle('on',n===i);});
     var m=document.getElementById('main');if(!m)return;
-    if(i===0)m.innerHTML=tabBookings();
+    if(i===0)m.innerHTML=tabBookings(extra);
     else if(i===1){m.innerHTML=tabMap();setTimeout(initMapTab,50);}
     else if(i===2)m.innerHTML=tabDrivers(extra);
     else if(i===3)m.innerHTML=tabCustomers();
@@ -614,18 +623,43 @@ function showTab(i,extra){
 }
 
 // ── BOOKINGS ──
-function tabBookings(){
+function tabBookings(filter){
   var pending=allBookings.filter(function(b){return b.status==='pending';});
   var active=allBookings.filter(function(b){return b.status==='assigned';});
   var completed=allBookings.filter(function(b){return b.status==='completed';});
   var cancelled=allBookings.filter(function(b){return b.status==='cancelled';});
   var earnings=completed.reduce(function(s,b){return s+(b.fare_sek||0);},0);
   var h='<div class="page">';
+  // If filter specified, scroll to that section after render
+  var _filter = filter;
   h+='<div class="stats">';
-  h+=sc(active.length,'Aktiva','#1a56db')+sc(pending.length,'Väntar','#d97706');
-  h+=sc(allDrivers.filter(function(d){return d.status==='available';}).length,'Lediga förare','#15803d');
+  h+=sc(active.length,'Aktiva','#1a56db',"showTab(0,'assigned')")+sc(pending.length,'Väntar','#d97706',"showTab(0,'pending')");
+  h+=sc(allDrivers.filter(function(d){return d.status==='available';}).length,'Lediga förare','#15803d',"showTab(2,'available')");
+  var cancelled_today=allBookings.filter(function(b){return b.status==='cancelled';}).length;
+  var avgFare=completed.length?Math.round(earnings/completed.length):0;
   h+=sc(earnings+' kr','Intäkter idag','#7c3aed');
   h+='</div>';
+  // ── REVENUE DETAIL ROW ──
+  h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:0 0 12px">'+
+    '<div style="background:#f0fdf4;border-radius:10px;padding:10px;text-align:center"><div style="font-size:16px;font-weight:800;color:#15803d">'+completed.length+'</div><div style="font-size:10px;color:#64748b">AVSLUTADE</div></div>'+
+    '<div style="background:#fef3c7;border-radius:10px;padding:10px;text-align:center"><div style="font-size:16px;font-weight:800;color:#d97706">'+cancelled_today+'</div><div style="font-size:10px;color:#64748b">AVBOKADE</div></div>'+
+    '<div style="background:#ede9fe;border-radius:10px;padding:10px;text-align:center"><div style="font-size:16px;font-weight:800;color:#7c3aed">'+avgFare+' kr</div><div style="font-size:10px;color:#64748b">SNITT/RESA</div></div>'+
+    '</div>';
+  // Per-driver revenue today
+  var driverRevHtml='';
+  allDrivers.forEach(function(d){
+    var dBooks=completed.filter(function(b){return b.driver_id===d.id;});
+    var dRev=dBooks.reduce(function(s,b){return s+(b.fare_sek||0);},0);
+    if(dRev>0||dBooks.length>0){
+      var pct=earnings>0?Math.round(dRev/earnings*100):0;
+      driverRevHtml+='<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9">'+
+        '<div style="width:32px;height:32px;border-radius:50%;background:#0d1b3e;color:#fbbf24;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+d.name.charAt(0)+'</div>'+
+        '<div style="flex:1"><div style="font-weight:700;font-size:13px">'+d.name+'</div>'+
+        '<div style="background:#f1f5f9;border-radius:20px;height:6px;margin-top:4px"><div style="background:#7c3aed;height:100%;width:'+pct+'%;border-radius:20px"></div></div></div>'+
+        '<div style="text-align:right"><div style="font-weight:800;color:#7c3aed;font-size:13px">'+dRev+' kr</div><div style="font-size:10px;color:#64748b">'+dBooks.length+' resor</div></div></div>';
+    }
+  });
+  if(driverRevHtml)h+='<div class="card"><div class="stitle">Intäkt per förare idag</div>'+driverRevHtml+'</div>';
   if(pending.length)h+='<div class="stitle">🔴 Väntar ('+pending.length+')</div>'+
     '<div id="dispatchLog" style="margin-bottom:10px"></div>'+
     pending.map(bcard).join('');
@@ -637,7 +671,7 @@ function tabBookings(){
   return h;
 }
 
-function sc(val,lbl,color){return '<div class="scard"><div class="sval" style="color:'+color+'">'+val+'</div><div class="slbl">'+lbl+'</div></div>';}
+function sc(val,lbl,color,onclick){return '<div class="scard"'+(onclick?' onclick="'+onclick+'" style="cursor:pointer"':'')+' ><div class="sval" style="color:'+color+'">'+val+'</div><div class="slbl">'+lbl+'</div></div>';}
 
 function getBadge(s){
   if(s==='pending')return '<span class="badge bp">Väntar</span>';
@@ -707,6 +741,11 @@ function initMapTab(){
   if(!document.getElementById('leafletMap')){
     setTimeout(initMapTab,100); return;
   }
+  // Set map bounds to Trollhättan region
+  var TROLHATTAN_BOUNDS = L.latLngBounds(
+    [57.9, 11.8],  // SW corner
+    [58.7, 12.8]   // NE corner
+  );
   if(!window.L){
     // Load Leaflet CSS
     if(!document.querySelector('link[href*="leaflet"]')){
@@ -743,6 +782,47 @@ function makeTaxiIcon(status, name) {
   return window.L.divIcon({ html: html, className: '', iconSize: [40, 52], iconAnchor: [20, 52] });
 }
 
+
+
+// ── ZONE OVERLAYS — only for Central map ──
+var MAP_ZONES = [
+  {id:1,  name:'Trollhättan Centrum', color:'#1a56db', bounds:[[58.270,12.260],[58.295,12.310]]},
+  {id:2,  name:'Götalunden',          color:'#059669', bounds:[[58.285,12.305],[58.305,12.340]]},
+  {id:3,  name:'Lextorp',             color:'#7c3aed', bounds:[[58.255,12.270],[58.278,12.310]]},
+  {id:4,  name:'Gärdhem',             color:'#d97706', bounds:[[58.250,12.310],[58.270,12.355]]},
+  {id:5,  name:'Fors',                color:'#dc2626', bounds:[[58.272,12.330],[58.295,12.380]]},
+  {id:6,  name:'Lagmansered',         color:'#0891b2', bounds:[[58.275,12.220],[58.300,12.260]]},
+  {id:7,  name:'Norra Björke',        color:'#65a30d', bounds:[[58.305,12.240],[58.340,12.295]]},
+  {id:8,  name:'Rommele',             color:'#ea580c', bounds:[[58.280,12.350],[58.320,12.420]]},
+  {id:9,  name:'Upphärad',            color:'#9333ea', bounds:[[58.295,12.280],[58.330,12.340]]},
+  {id:10, name:'Väne-Åsaka',          color:'#16a34a', bounds:[[58.240,12.290],[58.270,12.370]]},
+  {id:11, name:'Vänersborg',          color:'#1d4ed8', bounds:[[58.360,12.290],[58.410,12.380]]},
+  {id:12, name:'Lilla Edet',          color:'#b45309', bounds:[[58.100,12.160],[58.160,12.230]]},
+  {id:15, name:'Göteborg',            color:'#0f766e', bounds:[[57.640,11.880],[57.780,12.050]]},
+  {id:17, name:'Landvetter',          color:'#7c3aed', bounds:[[57.640,12.240],[57.700,12.340]]},
+  {id:23, name:'Uddevalla',           color:'#0284c7', bounds:[[58.330,11.900],[58.410,11.980]]},
+];
+
+function addZoneOverlays(map) {
+  MAP_ZONES.forEach(function(zone) {
+    var rect = L.rectangle(zone.bounds, {
+      color: zone.color,
+      weight: 2,
+      fillColor: zone.color,
+      fillOpacity: 0.08,
+      dashArray: '5,5'
+    }).addTo(map);
+    // Zone label
+    var center = [(zone.bounds[0][0]+zone.bounds[1][0])/2, (zone.bounds[0][1]+zone.bounds[1][1])/2];
+    L.marker(center, {
+      icon: L.divIcon({
+        html: '<div style="background:'+zone.color+';color:white;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;white-space:nowrap;opacity:.85">'+zone.id+' '+zone.name+'</div>',
+        className: '', iconAnchor: [50, 10]
+      }),
+      interactive: false
+    }).addTo(map);
+  });
+}
 
 function initLeafletMap(drivers){
   // Center on Trollhättan
@@ -867,7 +947,17 @@ function tabDrivers(filter){
       '<input class="finput" id="dnPlate" placeholder="Registreringsskylt * (ABC 123)"/>'+
       '<input class="finput" id="dnTaxi" placeholder="Taxinummer (TL-XXXX)"/>'+
       '<input class="finput" id="dnCity" placeholder="Stad"/>'+
-      '<input class="finput" id="dnPwd" type="password" placeholder="Lösenord (för gammal inloggning)"/>'+
+      '<label class="flabel">Anställningstyp</label>'+
+      '<select class="finput" id="dnEmpType">'+
+      '<option value="hourly">Timavlönad</option>'+
+      '<option value="owner">Ägare/Eget åkeri</option>'+
+      '<option value="fixed">Fast lön</option>'+
+      '</select>'+
+      '<label class="flabel">Kopplat åkeri</label>'+
+      '<select class="finput" id="dnAkeri">'+
+      '<option value="">Välj åkeri...</option>'+
+      allCompanies.map(function(c){return '<option value="'+c.id+'">'+c.name+'</option>';}).join('')+
+      '</select>'+
       '<div class="ib ib-r" id="dnErr" style="display:none"></div>'+
       '<button class="btn btnP" id="addDrvBtn" onclick="addDriver()">Lägg till förare →</button></div>';
   }
@@ -904,123 +994,30 @@ async function addDriver(){
   var phone=document.getElementById('dnPhone').value.trim();
   var license=document.getElementById('dnLicense')?document.getElementById('dnLicense').value.trim():'';
   var plate=document.getElementById('dnPlate').value.trim();
-  var taxi=document.getElementById('dnTaxi').value.trim();
-  var city=document.getElementById('dnCity').value.trim();
-  var pwd=document.getElementById('dnPwd').value.trim();
+  var taxi=(document.getElementById('dnTaxi')||{}).value||'';
+  var city=(document.getElementById('dnCity')||{}).value||'';
+  var empType=(document.getElementById('dnEmpType')||{}).value||'hourly';
+  var akeriId=(document.getElementById('dnAkeri')||{}).value||'';
   var err=document.getElementById('dnErr');
   var btn=document.getElementById('addDrvBtn');
-  if(!name||!email||!phone||!plate||!license){err.textContent='⚠️ Fyll i alla obligatoriska fält inkl. legitimationsnummer';err.style.display='';return;}
+  if(!name||!email||!phone||!plate||!license){err.textContent='⚠️ Fyll i alla obligatoriska fält';err.style.display='';return;}
   btn.textContent='Lägger till...';btn.disabled=true;err.style.display='none';
   try{
-    var res=await fetch(API+'/drivers/add',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify({name:name,email:email,phone:phone,plate:plate,taxi_nr:taxi,city:city,password:pwd||'thtcab123',taxi_license:license})});
+    var res=await fetch(API+'/drivers/add',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},
+      body:JSON.stringify({name:name,email:email,phone:phone,taxi_license:license,plate:plate,taxi_nr:taxi,city:city,employment_type:empType,company_id:akeriId||null})
+    });
     var data=await res.json();
-    if(data.driver){allDrivers.push(data.driver);showToast('✅ '+name+' tillagd!');showTab(2);}
-    else{err.textContent='⚠️ '+(data.error||'Fel');err.style.display='';}
+    if(data.driver){
+      allDrivers.push(data.driver);
+      showToast('✅ Förare '+name+' tillagd!');
+      showTab(2);
+    }else{err.textContent='⚠️ '+(data.error||'Fel');err.style.display='';}
   }catch(e){err.textContent='⚠️ Nätverksfel';err.style.display='';}
   btn.textContent='Lägg till förare →';btn.disabled=false;
 }
 
-async function openDriverProfile(id){
-  document.getElementById('driverMod').classList.add('open');
-  document.getElementById('driverModContent').innerHTML='<div style="text-align:center;padding:30px;color:#94a3b8">Laddar...</div>';
-  try{
-    var res=await fetch(API+'/drivers/'+id,{headers:{'Authorization':'Bearer '+staffToken}});
-    var data=await res.json();
-    if(!data.driver){document.getElementById('driverModContent').innerHTML='<div class="ib ib-r">Kunde inte ladda</div>';return;}
-    var d=data.driver;
-    var isBlocked=d.blocked;
-    var isSusp=d.suspended_until&&new Date(d.suspended_until)>new Date();
-    document.getElementById('driverModTitle').textContent=d.name;
-    var h='<div class="profhdr"><div class="big-av">'+d.name.charAt(0)+'</div>'+
-      '<div><div style="font-size:18px;font-weight:bold">'+d.name+'</div>'+
-      '<div style="color:#6b82b8;font-size:13px;margin-top:2px">'+d.email+'</div>'+
-      '<div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">'+
-      (isBlocked?'<span class="badge bblk">🔴 Blockerad</span>':'')+
-      (isSusp?'<span class="badge bp">🟡 Avstängd till '+new Date(d.suspended_until).toLocaleDateString('sv-SE')+'</span>':'')+
-      (d.is_owner?'<span class="badge bown">👑 Ägare '+d.owner_share+'%</span>':'')+
-      '</div></div></div>';
-
-    h+='<div class="card"><div class="stitle">Fordonsinformation</div>'+
-      '<div class="litem"><span style="font-size:13px;color:#64748b">Registreringsskylt</span><span style="font-size:13px;font-weight:700">'+d.plate+'</span></div>'+
-      '<div class="litem"><span style="font-size:13px;color:#64748b">Taxinummer</span><span style="font-size:13px">'+(d.taxi_nr||'—')+'</span></div>'+
-      '<div class="litem"><span style="font-size:13px;color:#64748b">Legitimationsnr</span><span style="font-size:13px;font-weight:700">'+(d.taxi_license||'—')+'</span></div>'+
-      '<div class="litem"><span style="font-size:13px;color:#64748b">Stad</span><span style="font-size:13px">'+(d.city||'—')+'</span></div>'+
-      '<div class="litem"><span style="font-size:13px;color:#64748b">Telefon</span><span style="font-size:13px">'+d.phone+'</span></div></div>';
-
-    h+='<div class="card"><div class="stitle">Statistik</div>'+
-      '<div class="litem"><span style="font-size:13px;color:#64748b">Betyg</span><span style="font-size:13px;font-weight:700">⭐ '+(d.rating||'—')+'</span></div>'+
-      '<div class="litem"><span style="font-size:13px;color:#64748b">Resor idag</span><span style="font-size:13px;font-weight:700;color:#15803d">'+(d.trips_today||0)+'</span></div>'+
-      '<div class="litem"><span style="font-size:13px;color:#64748b">Intäkter idag</span><span style="font-size:13px;font-weight:700;color:#15803d">'+(d.earnings_today||0)+' kr</span></div>'+
-      '<div class="litem"><span style="font-size:13px;color:#64748b">Senast aktiv</span><span style="font-size:13px">'+(d.last_active?new Date(d.last_active).toLocaleString('sv-SE',{dateStyle:'short',timeStyle:'short'}):'Aldrig')+'</span></div></div>';
-
-    h+='<div class="card"><div class="stitle">Status — sätt manuellt</div>'+
-      '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">'+
-      '<button class="btn btn-sm" style="background:#dcfce7;color:#15803d;border:1px solid #22c55e" onclick="setDriverStatus('+d.id+',\'available\')">🟢 Ledig</button>'+
-      '<button class="btn btn-sm" style="background:#fef3c7;color:#d97706;border:1px solid #f59e0b" onclick="setDriverStatus('+d.id+',\'paused\')">🟡 Paus</button>'+
-      '<button class="btn btn-sm" style="background:#f1f5f9;color:#64748b;border:1px solid #94a3b8" onclick="setDriverStatus('+d.id+',\'offline\')">⚫ Offline</button>'+
-      '</div>'+
-      '<div class="stitle" style="margin-top:8px">Åtgärder</div>'+
-      '<div class="agrid">'+
-      (isBlocked?
-        '<button class="btn btnS" onclick="manageDriver('+d.id+',\'unblock\')">✅ Avblockera</button>':
-        '<button class="btn btnD" onclick="manageDriver('+d.id+',\'block\')">🔴 Blockera</button>')+
-      '<button class="btn btnP" onclick="openSuspend('+d.id+')">⏸ Stäng av</button>'+
-      (staffUser&&staffUser.level===1?'<button class="btn btnD" style="grid-column:span 2" onclick="deleteDriver('+d.id+','+JSON.stringify(d.name)+')">🗑️ Ta bort förare</button>':'')+
-      (isSusp&&!isBlocked?'<button class="btn btnS" style="grid-column:span 2" onclick="manageDriver('+d.id+',\'unblock\')">✅ Ta bort avstängning</button>':'')+
-      '</div>'+
-      '<div style="margin-top:10px;display:flex;gap:8px">'+
-      '<button class="btn btnB btn-sm" onclick="openChat(\'central-driver-'+d.id+'\',\''+d.name+'\')">💬 Chatt</button>'+
-      '<button class="btn btn-sm" style="background:#7c3aed;color:white" onclick="openQuestionModal('+d.id+','+JSON.stringify(d.name)+')">📨 Skicka fråga</button>'+
-      '</div>'+
-      '</div>';
-
-    h+='<div class="card"><div class="stitle">🏢 Åkeritillhörighet</div>'+
-      '<div class="ib ib-blue" style="margin-bottom:10px">ℹ️ Åkerinummer tillhör <strong>företaget</strong>, inte föraren. Redigera det under Företag-fliken.</div>'+
-      '<label class="flabel">Kopplat åkeri</label>'+
-      '<select class="finput" id="drvCompany">'+
-      '<option value="">Inget åkeri</option>'+
-      allCompanies.map(function(c){return '<option value="'+c.id+'"'+(d.company_id===c.id?' selected':'')+'>'+c.name+(c.akeri_number?' · Åkeri: '+c.akeri_number:'')+' · Org: '+c.org_number+'</option>';}).join('')+
-      '</select>'+
-      '<label class="flabel">Anställningstyp</label>'+
-      '<select class="finput" id="drvEmployment">'+
-      '<option value="hourly"'+(d.employment_type==="hourly"?' selected':'')+'>Timavlönad</option>'+
-      '<option value="fixed"'+(d.employment_type==="fixed"?' selected':'')+'>Fast lön</option>'+
-      '<option value="owner"'+(d.employment_type==="owner"?' selected':'')+'>Ägare/Eget åkeri</option>'+
-      '</select>'+
-      '<button class="btn btnP" style="width:100%;background:#1a56db;color:white" onclick="updateDriverAkeri('+d.id+')">Spara →</button>'+
-      '</div>';
-
-    h+='<div class="card"><div class="stitle">Redigera uppgifter</div>'+
-      '<input class="finput" id="eDrvName" value="'+d.name+'" placeholder="Namn"/>'+
-      '<input class="finput" id="eDrvPhone" value="'+(d.phone||'')+'" placeholder="Telefon"/>'+
-      '<input class="finput" id="eDrvPlate" value="'+d.plate+'" placeholder="Skylt"/>'+
-      '<input class="finput" id="eDrvTaxi" value="'+(d.taxi_nr||'')+'" placeholder="Taxinummer"/>'+
-      '<input class="finput" id="eDrvCity" value="'+(d.city||'')+'" placeholder="Stad"/>'+
-      '<input class="finput" id="eDrvPwd" type="password" placeholder="Nytt lösenord (lämna tomt = behåll)"/>'+
-      '<button class="btn btnP" style="width:100%" onclick="updateDriver('+d.id+')">Spara →</button></div>';
-
-    // SUPERADMIN ONLY SECTION
-    if(staffUser&&staffUser.level===1){
-      h+='<div class="card" style="border:2px solid #7c3aed">'+
-        '<div class="stitle" style="color:#7c3aed">👑 Superadmin — Känsliga uppgifter</div>'+
-        '<label class="flabel">E-post</label>'+
-        '<input class="finput" id="eDrvEmail" value="'+(d.email||'')+'" type="email" placeholder="E-post"/>'+
-        '<label class="flabel">Taxiförarlegitimation</label>'+
-        '<input class="finput" id="eDrvLicense" value="'+(d.taxi_license||'')+'" placeholder="T.ex. 173424"/>'+
-        '<div class="ib ib-blue" style="font-size:11px;margin-bottom:10px">ℹ️ PIN = sista 4 siffror i legitimationsnumret</div>'+
-        '<label class="flabel">Anställningstyp</label>'+
-        '<select class="finput" id="eDrvEmployment">'+
-        '<option value="hourly"'+(d.employment_type==="hourly"?' selected':'')+'>Timavlönad</option>'+
-        '<option value="fixed"'+(d.employment_type==="fixed"?' selected':'')+'>Fast lön</option>'+
-        '<option value="owner"'+(d.employment_type==="owner"?' selected':'')+'>Ägare</option>'+
-        '</select>'+
-        '<button class="btn btnP" style="width:100%;background:#7c3aed;color:white" onclick="updateDriverAdmin('+d.id+')">👑 Spara känsliga uppgifter →</button>'+
-        '</div>';
-    }
-
-    document.getElementById('driverModContent').innerHTML=h;
-  }catch(e){document.getElementById('driverModContent').innerHTML='<div class="ib ib-r">⚠️ Nätverksfel</div>';}
-}
 
 async function manageDriver(id,action,extra){
   try{
@@ -1245,9 +1242,22 @@ async function resetCustomerPwd(id){
 
 // ── CHAT ──
 function tabChat(){
-  var activeBooks=allBookings.filter(function(b){return b.status==='assigned';});
   var h='<div class="page"><div class="stitle">Chatta med förare</div>';
-  allDrivers.forEach(function(d){
+  // Sort drivers: those with unread messages first
+  var sortedDrivers = allDrivers.slice().sort(function(a,b){
+    var aKey = 'central-driver-'+a.id;
+    var bKey = 'central-driver-'+b.id;
+    var aThread = chatThreads[aKey]||{unread:0};
+    var bThread = chatThreads[bKey]||{unread:0};
+    return (bThread.unread||0)-(aThread.unread||0);
+  });
+  sortedDrivers.forEach(function(d){
+    var threadKey = 'central-driver-'+d.id;
+    var thread = chatThreads[threadKey]||{};
+    var unread = thread.unread||0;
+    var lastMsg = thread.lastMsg||'';
+    var lastSender = thread.lastSender||'';
+    var lastTime = thread.lastTime||'';
     h+='<div class="dcard" style="cursor:pointer;align-items:center" onclick="openChat(\'central-driver-'+d.id+'\',\''+d.name+'\')">'+
       '<div class="davatar" style="background:#7c3aed">💬</div>'+
       '<div><div style="font-size:14px;font-weight:700;color:#0d1b3e">'+d.name+'</div>'+
