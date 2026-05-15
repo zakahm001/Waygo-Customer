@@ -1665,33 +1665,73 @@ function doLogoutConfirm() {
 }
 
 
+// ── ZONE POLYGON DATA (ray casting point-in-polygon) ──
+var ZONE_POLYGONS = [
+  {id:1, name:'Trollhättan Centrum', desc:'Stadscentrum, Drottningtorget', color:'#1a56db',
+   poly:[[58.2900,12.2600],[58.2920,12.2750],[58.2895,12.2980],[58.2840,12.3020],[58.2790,12.2960],[58.2770,12.2830],[58.2800,12.2680],[58.2850,12.2620]]},
+  {id:2, name:'Götalunden', desc:'Östra Trollhättan', color:'#059669',
+   poly:[[58.2840,12.2980],[58.2895,12.2980],[58.2920,12.3100],[58.2910,12.3280],[58.2870,12.3400],[58.2820,12.3350],[58.2800,12.3150],[58.2815,12.3020]]},
+  {id:3, name:'Lextorp', desc:'Södra Trollhättan', color:'#7c3aed',
+   poly:[[58.2770,12.2830],[58.2790,12.2960],[58.2760,12.3050],[58.2710,12.3020],[58.2680,12.2900],[58.2690,12.2760],[58.2730,12.2700]]},
+  {id:4, name:'Gärdhem', desc:'Sydöstra utkanten', color:'#d97706',
+   poly:[[58.2710,12.3020],[58.2760,12.3050],[58.2800,12.3150],[58.2820,12.3350],[58.2780,12.3480],[58.2720,12.3500],[58.2670,12.3380],[58.2650,12.3200],[58.2660,12.3050]]},
+  {id:5, name:'Fors', desc:'Industriområde öster', color:'#dc2626',
+   poly:[[58.2870,12.3400],[58.2910,12.3280],[58.2960,12.3300],[58.3000,12.3500],[58.2980,12.3700],[58.2920,12.3720],[58.2870,12.3600],[58.2840,12.3480]]},
+  {id:6, name:'Lagmansered', desc:'Västra Trollhättan', color:'#0891b2',
+   poly:[[58.2900,12.2600],[58.2850,12.2620],[58.2800,12.2680],[58.2750,12.2600],[58.2720,12.2400],[58.2780,12.2250],[58.2870,12.2300],[58.2940,12.2450]]},
+  {id:7, name:'Norra Björke', desc:'Norra utkanten', color:'#65a30d',
+   poly:[[58.2920,12.2750],[58.2900,12.2600],[58.2940,12.2450],[58.3020,12.2400],[58.3100,12.2600],[58.3120,12.2900],[58.3050,12.3050],[58.2980,12.3000],[58.2960,12.2850]]},
+  {id:8, name:'Rommele', desc:'Östra landsbygd', color:'#ea580c',
+   poly:[[58.3000,12.3500],[58.2960,12.3300],[58.2980,12.3000],[58.3050,12.3050],[58.3120,12.2900],[58.3200,12.3100],[58.3200,12.3500],[58.3100,12.3700],[58.3020,12.3680]]},
+  {id:9, name:'Upphärad', desc:'Nordöstra området', color:'#9333ea',
+   poly:[[58.3120,12.2900],[58.3100,12.2600],[58.3200,12.2500],[58.3350,12.2700],[58.3380,12.3000],[58.3300,12.3200],[58.3200,12.3100]]},
+  {id:10, name:'Väne-Åsaka', desc:'Sydöstra landsbygd', color:'#16a34a',
+   poly:[[58.2650,12.3200],[58.2670,12.3380],[58.2720,12.3500],[58.2680,12.3700],[58.2580,12.3800],[58.2480,12.3600],[58.2450,12.3300],[58.2520,12.3100],[58.2600,12.3050]]},
+  // Västra Götaland
+  {id:11, name:'Vänersborg', desc:'Residensstad ~15km N', color:'#1d4ed8',
+   poly:[[58.340,12.260],[58.410,12.260],[58.430,12.380],[58.400,12.430],[58.350,12.420],[58.330,12.340]]},
+  {id:12, name:'Lilla Edet', desc:'~25km S Trollhättan', color:'#b45309',
+   poly:[[58.060,12.100],[58.190,12.100],[58.200,12.280],[58.150,12.320],[58.070,12.280]]},
+  {id:15, name:'Göteborg', desc:'Centralen, Avenyn', color:'#0f766e',
+   poly:[[57.580,11.800],[57.820,11.800],[57.840,12.100],[57.780,12.200],[57.620,12.180],[57.570,12.000]]},
+  {id:17, name:'Landvetter', desc:'Landvetter flygplats', color:'#7c3aed',
+   poly:[[57.620,12.200],[57.720,12.200],[57.730,12.420],[57.660,12.430],[57.610,12.360]]},
+];
+
+// Ray casting point-in-polygon algorithm
+function pointInPolygon(lat, lng, polygon) {
+  var inside = false;
+  for (var i=0, j=polygon.length-1; i<polygon.length; j=i++) {
+    var xi=polygon[i][0], yi=polygon[i][1];
+    var xj=polygon[j][0], yj=polygon[j][1];
+    if (((yi>lng)!==(yj>lng)) && (lat < (xj-xi)*(lng-yi)/(yj-yi)+xi)) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
 function detectCurrentZone(lat, lng) {
-  var ZB=[
-    {id:1,  name:'Trollhättan Centrum', b:[58.270,12.260,58.295,12.310]},
-    {id:2,  name:'Götalunden',          b:[58.285,12.305,58.305,12.340]},
-    {id:3,  name:'Lextorp',             b:[58.255,12.270,58.278,12.310]},
-    {id:4,  name:'Gärdhem',             b:[58.250,12.310,58.270,12.355]},
-    {id:5,  name:'Fors',                b:[58.272,12.330,58.295,12.380]},
-    {id:6,  name:'Lagmansered',         b:[58.275,12.220,58.300,12.260]},
-    {id:7,  name:'Norra Björke',        b:[58.305,12.240,58.340,12.295]},
-    {id:8,  name:'Rommele',             b:[58.280,12.350,58.320,12.420]},
-    {id:9,  name:'Upphärad',            b:[58.295,12.280,58.330,12.340]},
-    {id:10, name:'Väne-Åsaka',          b:[58.240,12.290,58.270,12.370]},
-    {id:11, name:'Vänersborg',          b:[58.360,12.290,58.410,12.380]},
-    {id:12, name:'Lilla Edet',          b:[58.100,12.160,58.160,12.230]},
-    {id:15, name:'Göteborg',            b:[57.640,11.880,57.780,12.050]},
-  ];
-  if(!lat||!lng)return null;
-  for(var i=0;i<ZB.length;i++){var z=ZB[i];if(lat>=z.b[0]&&lat<=z.b[2]&&lng>=z.b[1]&&lng<=z.b[3])return z;}
+  if (!lat || !lng) return null;
+  for (var i=0; i<ZONE_POLYGONS.length; i++) {
+    var z = ZONE_POLYGONS[i];
+    if (pointInPolygon(lat, lng, z.poly)) {
+      return {id:z.id, name:z.name, desc:z.desc, color:z.color};
+    }
+  }
+  // Fallback: whole Trollhättan municipality
+  if (lat>=58.15 && lat<=58.42 && lng>=12.10 && lng<=12.50) {
+    return {id:1, name:'Trollhättan', desc:'Trollhättan kommun'};
+  }
   return null;
 }
 
 function updateZoneBadge() {
   var badge=document.getElementById('zoneBadge');
-  if(!badge||!lastLat||!lastLng)return;
+  if(!badge)return;
   var zone=detectCurrentZone(lastLat,lastLng);
   if(zone){badge.textContent='Zon '+zone.id+' · '+zone.name;badge.style.display='inline-block';}
-  else{badge.style.display='none';}
+  else if(lastLat){badge.style.display='none';}
 }
 
 async function showZonesTab() {
@@ -1700,6 +1740,17 @@ async function showZonesTab() {
   var c = document.getElementById('tabContent');
   if (!c) return;
   c.innerHTML = '<div style="padding:20px;text-align:center"><div style="font-size:24px">⏳</div><div style="color:#64748b;margin-top:8px">Laddar zoner...</div></div>';
+
+  // Get current GPS if lastLat not set yet
+  if (!lastLat && navigator.geolocation) {
+    await new Promise(function(resolve) {
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        lastLat = pos.coords.latitude;
+        lastLng = pos.coords.longitude;
+        resolve();
+      }, function() { resolve(); }, { timeout: 4000, maximumAge: 30000 });
+    });
+  }
 
   var myZone = detectCurrentZone(lastLat, lastLng);
   var zoneCounts = {};
