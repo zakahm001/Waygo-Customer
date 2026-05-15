@@ -772,28 +772,43 @@ function makeTaxiIcon(status, name) {
 
 
 
-// ── ZONE OVERLAYS — only for Central map ──
-var MAP_ZONES = [
-  {id:1,  name:'Trollhättan Centrum', color:'#1a56db', bounds:[[58.270,12.260],[58.295,12.310]]},
-  {id:2,  name:'Götalunden',          color:'#059669', bounds:[[58.285,12.305],[58.305,12.340]]},
-  {id:3,  name:'Lextorp',             color:'#7c3aed', bounds:[[58.255,12.270],[58.278,12.310]]},
-  {id:4,  name:'Gärdhem',             color:'#d97706', bounds:[[58.250,12.310],[58.270,12.355]]},
-  {id:5,  name:'Fors',                color:'#dc2626', bounds:[[58.272,12.330],[58.295,12.380]]},
-  {id:6,  name:'Lagmansered',         color:'#0891b2', bounds:[[58.275,12.220],[58.300,12.260]]},
-  {id:7,  name:'Norra Björke',        color:'#65a30d', bounds:[[58.305,12.240],[58.340,12.295]]},
-  {id:8,  name:'Rommele',             color:'#ea580c', bounds:[[58.280,12.350],[58.320,12.420]]},
-  {id:9,  name:'Upphärad',            color:'#9333ea', bounds:[[58.295,12.280],[58.330,12.340]]},
-  {id:10, name:'Väne-Åsaka',          color:'#16a34a', bounds:[[58.240,12.290],[58.270,12.370]]},
-  {id:11, name:'Vänersborg',          color:'#1d4ed8', bounds:[[58.360,12.290],[58.410,12.380]]},
-  {id:12, name:'Lilla Edet',          color:'#b45309', bounds:[[58.100,12.160],[58.160,12.230]]},
-  {id:15, name:'Göteborg',            color:'#0f766e', bounds:[[57.640,11.880],[57.780,12.050]]},
-  {id:17, name:'Landvetter',          color:'#7c3aed', bounds:[[57.640,12.240],[57.700,12.340]]},
-  {id:23, name:'Uddevalla',           color:'#0284c7', bounds:[[58.330,11.900],[58.410,11.980]]},
+// ── ZONE POLYGON OVERLAYS — Central map ──
+var MAP_ZONE_POLYGONS = [
+  {id:1,  name:'Trollhättan Centrum', color:'#1a56db',
+   poly:[[58.2900,12.2600],[58.2920,12.2750],[58.2895,12.2980],[58.2840,12.3020],[58.2790,12.2960],[58.2770,12.2830],[58.2800,12.2680],[58.2850,12.2620]]},
+  {id:2,  name:'Götalunden',          color:'#059669',
+   poly:[[58.2840,12.2980],[58.2895,12.2980],[58.2920,12.3100],[58.2910,12.3280],[58.2870,12.3400],[58.2820,12.3350],[58.2800,12.3150],[58.2815,12.3020]]},
+  {id:3,  name:'Lextorp',             color:'#7c3aed',
+   poly:[[58.2770,12.2830],[58.2790,12.2960],[58.2760,12.3050],[58.2710,12.3020],[58.2680,12.2900],[58.2690,12.2760],[58.2730,12.2700]]},
+  {id:4,  name:'Gärdhem',             color:'#d97706',
+   poly:[[58.2710,12.3020],[58.2760,12.3050],[58.2800,12.3150],[58.2820,12.3350],[58.2780,12.3480],[58.2720,12.3500],[58.2670,12.3380],[58.2650,12.3200],[58.2660,12.3050]]},
+  {id:5,  name:'Fors',                color:'#dc2626',
+   poly:[[58.2870,12.3400],[58.2910,12.3280],[58.2960,12.3300],[58.3000,12.3500],[58.2980,12.3700],[58.2920,12.3720],[58.2870,12.3600],[58.2840,12.3480]]},
+  {id:6,  name:'Lagmansered',         color:'#0891b2',
+   poly:[[58.2900,12.2600],[58.2850,12.2620],[58.2800,12.2680],[58.2750,12.2600],[58.2720,12.2400],[58.2780,12.2250],[58.2870,12.2300],[58.2940,12.2450]]},
+  {id:7,  name:'Norra Björke',        color:'#65a30d',
+   poly:[[58.2920,12.2750],[58.2900,12.2600],[58.2940,12.2450],[58.3020,12.2400],[58.3100,12.2600],[58.3120,12.2900],[58.3050,12.3050],[58.2980,12.3000],[58.2960,12.2850]]},
+  {id:8,  name:'Rommele',             color:'#ea580c',
+   poly:[[58.3000,12.3500],[58.2960,12.3300],[58.2980,12.3000],[58.3050,12.3050],[58.3120,12.2900],[58.3200,12.3100],[58.3200,12.3500],[58.3100,12.3700],[58.3020,12.3680]]},
+  {id:9,  name:'Upphärad',            color:'#9333ea',
+   poly:[[58.3120,12.2900],[58.3100,12.2600],[58.3200,12.2500],[58.3350,12.2700],[58.3380,12.3000],[58.3300,12.3200],[58.3200,12.3100]]},
+  {id:10, name:'Väne-Åsaka',          color:'#16a34a',
+   poly:[[58.2650,12.3200],[58.2670,12.3380],[58.2720,12.3500],[58.2680,12.3700],[58.2580,12.3800],[58.2480,12.3600],[58.2450,12.3300],[58.2520,12.3100],[58.2600,12.3050]]},
+  {id:11, name:'Vänersborg',          color:'#1d4ed8',
+   poly:[[58.340,12.260],[58.410,12.260],[58.430,12.380],[58.400,12.430],[58.350,12.420],[58.330,12.340]]},
+  {id:12, name:'Lilla Edet',          color:'#b45309',
+   poly:[[58.060,12.100],[58.190,12.100],[58.200,12.280],[58.150,12.320],[58.070,12.280]]},
+  {id:15, name:'Göteborg',            color:'#0f766e',
+   poly:[[57.580,11.800],[57.820,11.800],[57.840,12.100],[57.780,12.200],[57.620,12.180],[57.570,12.000]]},
+  {id:17, name:'Landvetter',          color:'#7c3aed',
+   poly:[[57.620,12.200],[57.720,12.200],[57.730,12.420],[57.660,12.430],[57.610,12.360]]},
 ];
 
 function addZoneOverlays(map) {
-  MAP_ZONES.forEach(function(zone) {
-    var rect = L.rectangle(zone.bounds, {
+  MAP_ZONE_POLYGONS.forEach(function(zone) {
+    // Convert [lat,lng] pairs to Leaflet format
+    var latlngs = zone.poly.map(function(p){ return [p[0], p[1]]; });
+    var poly = L.polygon(latlngs, {
       color: zone.color,
       weight: 2,
       fillColor: zone.color,
@@ -801,11 +816,13 @@ function addZoneOverlays(map) {
       dashArray: '6,4',
       interactive: false
     }).addTo(map);
-    // Zone label
-    var center = [(zone.bounds[0][0]+zone.bounds[1][0])/2, (zone.bounds[0][1]+zone.bounds[1][1])/2];
-    L.marker(center, {
+    // Zone label at polygon centroid
+    var lats = zone.poly.map(function(p){return p[0];}), lngs = zone.poly.map(function(p){return p[1];});
+    var cLat = lats.reduce(function(a,b){return a+b;})/lats.length;
+    var cLng = lngs.reduce(function(a,b){return a+b;})/lngs.length;
+    L.marker([cLat, cLng], {
       icon: L.divIcon({
-        html: '<div style="background:'+zone.color+';color:white;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px;white-space:nowrap;opacity:.85">'+zone.id+' '+zone.name+'</div>',
+        html: '<div style="background:'+zone.color+';color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap;opacity:.9;box-shadow:0 1px 4px rgba(0,0,0,.3)">'+zone.id+' '+zone.name+'</div>',
         className: '', iconAnchor: [50, 10]
       }),
       interactive: false
