@@ -162,6 +162,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;ba
 </div>
 
 <!-- DRIVER PROFILE -->
+<!-- REASSIGN MODAL -->
+<div class="moverlay" id="reassignMod" onclick="closeMIfOut(event,'reassignMod')">
+  <div class="mbox" style="max-height:85vh;overflow-y:auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div id="reassignTitle" style="font-weight:800;font-size:16px">Tilldela om</div>
+      <button onclick="closeMod('reassignMod')" style="background:none;border:none;font-size:22px;cursor:pointer;color:#64748b">✕</button>
+    </div>
+    <div id="reassignContent"></div>
+  </div>
+</div>
+
 <div class="moverlay" id="driverMod">
   <div class="mbox">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
@@ -690,7 +701,7 @@ function bcard(b){
     '<div style="display:flex;gap:4px">'+(isPre?'<span class="badge bpre">📅 Förbokning</span>':'')+getBadge(b.status)+'</div></div>'+
     (isPre&&b.scheduled_at?'<div style="font-size:11px;color:#7c3aed;font-weight:700;margin-bottom:4px">📅 '+new Date(b.scheduled_at).toLocaleString('sv-SE',{dateStyle:'medium',timeStyle:'short'})+'</div>':'')+
     '<div class="broute">📍 '+b.from_address+' → 🏁 '+b.to_address+'</div>'+
-    (b.passengers>=5?'<div style="background:#fee2e2;border:1px solid #fecaca;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:#dc2626;margin-bottom:8px">⚠️ '+b.passengers+' PASSAGERARE — BEHÖVER MÖJLIGEN 2 BILAR</div>':'')+
+    (b.passengers>=5?'<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:#d97706;margin-bottom:8px">⚠️ '+b.passengers+' passagerare — mogelijk 2 bilar</div>':'')+
     (b.driver_note?'<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:6px 12px;font-size:12px;color:#d97706;margin-bottom:8px">📝 '+b.driver_note+'</div>':'')+
     '<div class="bdetail">👤 '+b.customer_name+' · '+(b.customer_phone||'')+'<br>'+
     (b.passengers&&b.passengers>1?'👥 '+b.passengers+' passagerare · ':'')+
@@ -1047,6 +1058,31 @@ async function openDriverProfile(id) {
 // ═══════════════════════════════════════════════════════
 // TAB RENDERING FUNCTIONS
 // ═══════════════════════════════════════════════════════
+
+async function createSecondCar(bookingId) {
+  var b = allBookings.find(function(x){ return x.id===bookingId; });
+  if (!b) return;
+  if (!confirm('Skapa en andra bokning för ' + b.booking_ref + '?')) return;
+  var groupId = b.booking_ref + '-GRP';
+  try {
+    // Update first booking with group info
+    await fetch(API+'/bookings/'+bookingId, { method:'PATCH', headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},
+      body: JSON.stringify({ booking_group: groupId, car_number: 1, car_total: 2 }) });
+    // Create second booking
+    var res = await fetch(API+'/bookings', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},
+      body: JSON.stringify({
+        customer_name: b.customer_name, customer_phone: b.customer_phone,
+        from_address: b.from_address, to_address: b.to_address,
+        payment_method: b.payment_method, fare_sek: b.fare_sek,
+        passengers: b.passengers, notes: 'Bil 2 av 2 ('+b.booking_ref+')',
+        booking_group: groupId, car_number: 2, car_total: 2
+      })
+    });
+    var data = await res.json();
+    if (data.booking) { showToast('✅ Bokning 2 skapad: '+data.booking.booking_ref); await loadData(); showTab(0); }
+    else showToast('⚠️ '+(data.error||'Fel'));
+  } catch(e) { showToast('⚠️ Nätverksfel'); }
+}
 
 function tabBookings(filter) {
   var today = new Date().toDateString();
@@ -1589,30 +1625,50 @@ function openReassignById(bookingId){
   var b=allBookings.find(function(x){return x.id===bookingId;});
   if(!b)return;
   var available=allDrivers.filter(function(d){return d.status==='available'&&!d.blocked&&d.id!==b.driver_id;});
-  var h='<div class="stitle">Tilldela om — '+b.booking_ref+'</div>';
-  h+='<div style="font-size:12px;color:#64748b;margin-bottom:12px">'+b.from_address+'</div>';
-  if(!available.length){h+='<div class="ib ib-r">Inga lediga förare</div>';document.getElementById('reassignMod').querySelector('.mbox').innerHTML=h;document.getElementById('reassignMod').classList.add('open');return;}
-  available.forEach(function(d){
-    h+='<div class="dcard" style="cursor:pointer" onclick="doReassign('+bookingId+','+d.id+')">'+
-      '<div class="davatar">'+d.name.charAt(0)+'</div>'+
-      '<div style="flex:1"><div style="font-weight:700">'+d.name+'</div>'+
-      '<div style="font-size:12px;color:#64748b">'+(d.plate||'')+'</div></div>'+
-      '<div style="color:#22c55e;font-weight:700">Välj →</div></div>';
-  });
-  document.getElementById('reassignMod').querySelector('.mbox').innerHTML=h;
+
+  var parts=[];
+  parts.push('<div style="font-size:13px;color:#64748b;margin-bottom:12px">'+b.from_address+'<br>→ '+(b.to_address||'')+'</div>');
+  if(!available.length){
+    parts.push('<div class="ib ib-r">⚠️ Inga lediga förare tillgängliga</div>');
+  } else {
+    parts.push('<div style="font-size:12px;color:#64748b;margin-bottom:10px">Välj ny förare ('+available.length+' lediga):</div>');
+    available.forEach(function(d){
+      parts.push('<div onclick="doReassign('+bookingId+','+d.id+')" style="display:flex;align-items:center;gap:12px;padding:12px;background:#f8fafc;border-radius:10px;margin-bottom:8px;cursor:pointer;border:1px solid #e2e8f0">'+
+        '<div style="width:40px;height:40px;border-radius:50%;background:#0d1b3e;color:#fbbf24;font-weight:800;font-size:16px;display:flex;align-items:center;justify-content:center">'+d.name.charAt(0)+'</div>'+
+        '<div style="flex:1"><div style="font-weight:700">'+d.name+'</div><div style="font-size:12px;color:#64748b">'+(d.plate||'')+'</div></div>'+
+        '<div style="color:#22c55e;font-weight:700;font-size:13px">Välj →</div></div>');
+    });
+  }
+
+  // 5+ passengers: offer to create second booking
+  if(b.passengers>=5){
+    parts.push('<div style="background:#fef3c7;border-radius:10px;padding:12px;margin-top:10px">'+
+      '<div style="font-weight:700;margin-bottom:6px">👥 5+ passagerare</div>'+
+      '<div style="font-size:12px;color:#64748b;margin-bottom:10px">Denna bokning har '+b.passengers+' passagerare. Skapa en andra bil?</div>'+
+      '<button onclick="createSecondCar('+b.id+')" style="width:100%;padding:10px;background:#f97316;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer">🚖 Skapa 2:a bil</button>'+
+      '</div>');
+  }
+
+  document.getElementById('reassignTitle').textContent='Tilldela om — '+b.booking_ref;
+  document.getElementById('reassignContent').innerHTML=parts.join('');
   document.getElementById('reassignMod').classList.add('open');
 }
 
-async function doReassign(bookingId,driverId){
+async function createSecondCar(originalBookingId){
+  var b=allBookings.find(function(x){return x.id===originalBookingId;});
+  if(!b)return;
   closeMod('reassignMod');
   try{
-    var res=await fetch(API+'/bookings/'+bookingId+'/reassign',{method:'PATCH',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},body:JSON.stringify({driver_id:driverId})});
+    var res=await fetch(API+'/bookings',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+staffToken},
+      body:JSON.stringify({customer_name:b.customer_name,customer_phone:b.customer_phone,customer_id:b.customer_id,
+        from_address:b.from_address,to_address:b.to_address,payment_method:b.payment_method,
+        fare_sek:b.fare_sek,passengers:b.passengers,car_number:2,car_total:2,booking_group:b.booking_group||b.booking_ref,
+        notes:'Bil 2 av 2 — skapad från bokning '+b.booking_ref})});
     var data=await res.json();
-    if(data.booking){allBookings=allBookings.map(function(b){return b.id===bookingId?Object.assign({},b,data.booking):b;});showToast('✅ Bokning omtilldelad');}
+    if(data.booking){allBookings.unshift(data.booking);showToast('✅ 2:a bil skapad: '+data.booking.booking_ref);showTab(0);}
     else{showToast('⚠️ '+(data.error||'Fel'));}
   }catch(e){showToast('⚠️ Nätverksfel');}
 }
-
 function openCancel(bookingId,ref){
   if(!confirm('Avboka '+ref+'?'))return;
   cancelBooking(bookingId);
