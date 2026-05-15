@@ -1000,6 +1000,134 @@ async function createSecondCar(bookingId) {
   } catch(e) { showToast('⚠️ Nätverksfel'); }
 }
 
+// ── SAVED MAP VIEW ──
+var savedMapCenter = null;
+var savedMapZoom = 13;
+var leafletMapInstance = null;
+var leafletMarkers = {};
+var driverPositions = {};
+
+function makeTaxiIcon(status, name) {
+  var color = status==='available'?'#22c55e':status==='busy'?'#f97316':'#94a3b8';
+  return L.divIcon({
+    html: '<div style="background:'+color+';color:white;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:20px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3);position:relative">🚖<div style="position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);white-space:nowrap;background:rgba(0,0,0,.7);color:white;font-size:9px;padding:1px 4px;border-radius:4px;font-weight:700">'+(name?name.split(' ')[0]:'')+' </div></div>',
+    className: '', iconSize: [38, 38], iconAnchor: [19, 19]
+  });
+}
+
+function addLeafletMarker(map, driver, lat, lng) {
+  var icon = makeTaxiIcon(driver.status, driver.name);
+  var marker = L.marker([lat, lng], { icon: icon }).addTo(map);
+  marker.bindPopup(
+    '<div style="font-size:13px;min-width:140px"><strong>'+driver.name+'</strong><br>'+
+    '<span style="color:#64748b">'+(driver.plate||'')+'</span><br>'+
+    (driver.status==='available'?'🟢 Ledig':driver.status==='busy'?'🟠 På uppdrag':'⚫ Offline')+
+    '</div>'
+  );
+  marker.on('click', function(){
+    if(leafletMapInstance) leafletMapInstance.setView([lat,lng],15);
+    openDriverProfile(driver.id);
+  });
+  marker.bindTooltip(driver.name+' · '+(driver.plate||''), {permanent:false,direction:'top'});
+  leafletMarkers[driver.id] = marker;
+  return marker;
+}
+
+function updateMarker(id, lat, lng) {
+  driverPositions[id] = {lat:lat, lng:lng};
+  if (leafletMapInstance && leafletMarkers[id]) {
+    leafletMarkers[id].setLatLng([lat,lng]);
+  } else if (leafletMapInstance) {
+    var d = allDrivers.find(function(x){return x.id===id;});
+    if (d) addLeafletMarker(leafletMapInstance, d, lat, lng);
+  }
+}
+
+function initLeafletMap(drivers){
+  var mapEl = document.getElementById('leafletMap');
+  if (!mapEl) return;
+  var containerReplaced = leafletMapInstance && (leafletMapInstance.getContainer() !== mapEl);
+  if (leafletMapInstance && !containerReplaced) {
+    drivers.forEach(function(d){
+      var pos = driverPositions[d.id];
+      if (pos && pos.lat && pos.lng) {
+        if (leafletMarkers[d.id]) { leafletMarkers[d.id].setLatLng([pos.lat,pos.lng]); }
+        else { addLeafletMarker(leafletMapInstance,d,pos.lat,pos.lng); }
+      }
+    });
+    setTimeout(function(){ leafletMapInstance.invalidateSize(); }, 100);
+    return;
+  }
+  if (leafletMapInstance) {
+    try { savedMapCenter=leafletMapInstance.getCenter(); savedMapZoom=leafletMapInstance.getZoom(); leafletMapInstance.remove(); } catch(e){}
+    leafletMapInstance=null; leafletMarkers={};
+  }
+  var centerLat=58.2835, centerLng=12.2887, zoom=savedMapZoom||13;
+  if (savedMapCenter) { centerLat=savedMapCenter.lat; centerLng=savedMapCenter.lng; }
+  else {
+    var coords=Object.values(driverPositions).filter(function(p){return p&&p.lat&&p.lng;});
+    if (coords.length) { centerLat=coords[0].lat; centerLng=coords[0].lng; }
+  }
+  var map = L.map('leafletMap',{zoomControl:true,attributionControl:true,preferCanvas:true,fadeAnimation:false}).setView([centerLat,centerLng],zoom);
+  leafletMapInstance = map;
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(map);
+  addZoneOverlays(map);
+  drivers.forEach(function(d){
+    var pos=driverPositions[d.id];
+    if (pos&&pos.lat&&pos.lng) addLeafletMarker(map,d,pos.lat,pos.lng);
+  });
+  setTimeout(function(){ map.invalidateSize(); }, 100);
+  setTimeout(function(){ map.invalidateSize(); }, 400);
+}
+
+function initMapTab(){
+  var avail=allDrivers.filter(function(d){return d.status!=='offline';});
+  if(!document.getElementById('leafletMap')){ setTimeout(initMapTab,100); return; }
+  if(!window.L){
+    setTimeout(function(){
+      if(window.L) initLeafletMap(avail);
+      else initMapTab();
+    },300);
+    return;
+  }
+  initLeafletMap(avail);
+  setTimeout(function(){ if(leafletMapInstance) leafletMapInstance.invalidateSize(); },50);
+}
+
+function tabMap(){
+  var avail=allDrivers.filter(function(d){return d.status!=='offline';});
+  var driverList='';
+  avail.forEach(function(d){
+    var color=d.status==='available'?'#22c55e':d.status==='busy'?'#f97316':'#64748b';
+    var pos=driverPositions[d.id];
+    var hasGps=pos&&pos.lat&&pos.lng;
+    driverList+='<span onclick="locateDriver('+d.id+')" style="display:inline-flex;align-items:center;gap:5px;background:'+(hasGps?'#f0fdf4':'#f8fafc')+';border-radius:20px;padding:4px 12px;margin-right:6px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid '+(hasGps?'#22c55e':'#e2e8f0')+'">'+
+      '<span style="width:8px;height:8px;border-radius:50%;background:'+color+';flex-shrink:0"></span>'+
+      d.name.split(' ')[0]+' '+(d.plate||'')+
+      (hasGps?' 📍':'<span style="color:#dc2626"> ⚠️</span>')+
+      '</span>';
+  });
+  return '<div style="display:flex;flex-direction:column;height:calc(100vh - 100px)">'+
+    '<div id="leafletMap" style="flex:1;width:100%;min-height:0"></div>'+
+    '<div style="padding:8px 12px;background:white;border-top:1px solid #e2e8f0;overflow-x:auto;white-space:nowrap">'+
+    '<span style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-right:8px">'+avail.length+' AKTIVA FORDON</span>'+
+    driverList+
+    '</div></div>';
+}
+
+function locateDriver(driverId) {
+  var pos = driverPositions[driverId];
+  if (!pos||!pos.lat||!pos.lng) { showToast('⚠️ Ingen GPS-position för föraren'); return; }
+  if (curTab!==1) { showTab(1); setTimeout(function(){ locateDriver(driverId); },600); return; }
+  if (!leafletMapInstance) { setTimeout(function(){ locateDriver(driverId); },400); return; }
+  leafletMapInstance.flyTo([pos.lat,pos.lng],16,{animate:true,duration:1.2});
+  var marker=leafletMarkers[driverId];
+  if (marker) setTimeout(function(){ marker.openPopup(); },1000);
+  var d=allDrivers.find(function(x){return x.id===driverId;});
+  if (d) showToast('📍 '+d.name+' · '+(d.plate||''));
+}
+
+
 function tabBookings(filter) {
   var today = new Date().toDateString();
   var pending   = allBookings.filter(function(b){ return b.status==='pending'; });
@@ -1660,80 +1788,4 @@ function setQType(type){
 }
 
 function sendQuestion(){
-  var text=(document.getElementById('questionText').value||'').trim();
-  var err=document.getElementById('questionErr');
-  if(!text){err.textContent='Skriv ett meddelande';err.style.display='';return;}
-  err.style.display='none';
-  if(socket&&socket.connected){
-    socket.emit('central:question',{driver_id:questionDriverId,message:text,type:questionType,from:staffUser?staffUser.name:'Central'});
-    showToast('✅ Meddelande skickat');
-    closeMod('questionMod');
-  }else{err.textContent='Inte ansluten — ladda om';err.style.display='';}
-}
-
-function listenForDriverResponses(){
-  if(!socket)return;
-  socket.on('driver:question_response',function(data){
-    var icon=data.response==='yes'?'✅':data.response==='no'?'❌':'👍';
-    showToast(icon+' '+(data.driver_name||'Förare')+': '+(data.response==='yes'?'JA':data.response==='no'?'NEJ':'OK'));
-    showMessagePopup((data.driver_name||'Förare')+' svarade',icon+' '+(data.response==='yes'?'JA':data.response==='no'?'NEJ':'OK'));
-  });
-}
-
-// ═══════════════════════════════════════════════════════
-// NOTIFICATIONS
-// ═══════════════════════════════════════════════════════
-
-var notifPermission='default';
-
-function requestNotifPermission(){
-  if(!('Notification' in window))return;
-  if(Notification.permission==='granted'){notifPermission='granted';return;}
-  if(Notification.permission!=='denied'){
-    var prompt=document.createElement('div');
-    prompt.id='notifPrompt';
-    prompt.setAttribute('style','position:fixed;bottom:70px;left:50%;transform:translateX(-50%);z-index:9999;background:#0d1b3e;color:white;border-radius:16px;padding:16px 20px;min-width:280px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.4);text-align:center');
-    prompt.innerHTML='<div style="font-size:24px;margin-bottom:8px">🔔</div><div style="font-weight:700;margin-bottom:4px">Tillåt notiser</div><div style="font-size:13px;color:#94a3b8;margin-bottom:14px">Få larm även när fliken är i bakgrunden</div><div style="display:flex;gap:8px;justify-content:center"><button id="notifYes" style="flex:1;padding:10px;background:#22c55e;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer">✅ Tillåt</button><button id="notifNo" style="flex:1;padding:10px;background:#374151;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer">Senare</button></div>';
-    document.body.appendChild(prompt);
-    document.getElementById('notifYes').onclick=function(){prompt.remove();Notification.requestPermission().then(function(p){notifPermission=p;});};
-    document.getElementById('notifNo').onclick=function(){prompt.remove();};
-    setTimeout(function(){if(document.getElementById('notifPrompt'))document.getElementById('notifPrompt').remove();},12000);
-  }else{notifPermission=Notification.permission;}
-}
-
-function sendBrowserNotif(title,body,tag,onClick){
-  if(!('Notification' in window)||Notification.permission!=='granted')return;
-  try{var n=new Notification(title,{body:body,icon:'/favicon.ico',tag:tag||'thtcab',requireInteraction:true});n.onclick=function(){window.focus();n.close();if(onClick)onClick();};}catch(e){}
-}
-
-function showCentralNotif(title,body,color,autoDismiss){
-  var old=document.getElementById('centralNotifBanner');if(old)old.remove();
-  var banner=document.createElement('div');
-  banner.id='centralNotifBanner';
-  banner.setAttribute('style','position:fixed;top:0;left:0;right:0;z-index:9999;background:'+color+';color:white;padding:12px 18px;display:flex;align-items:center;gap:12px;cursor:pointer;animation:slideDown .3s ease;box-shadow:0 4px 20px rgba(0,0,0,.3)');
-  var closeBtn=document.createElement('button');closeBtn.textContent='✕';closeBtn.setAttribute('style','background:none;border:none;color:white;font-size:18px;cursor:pointer;margin-left:auto;flex-shrink:0');closeBtn.onclick=function(e){e.stopPropagation();banner.remove();};
-  var inner=document.createElement('div');inner.innerHTML='<div style="font-weight:800;font-size:14px">'+title+'</div><div style="font-size:12px;opacity:.9;margin-top:2px">'+body+'</div>';
-  banner.appendChild(inner);banner.appendChild(closeBtn);banner.onclick=function(){banner.remove();showTab(0);};
-  document.body.appendChild(banner);
-  if(autoDismiss>0)setTimeout(function(){var b=document.getElementById('centralNotifBanner');if(b)b.remove();},autoDismiss);
-}
-
-var msgPopupTimer=null;
-function showMessagePopup(sender,message){
-  var existing=document.getElementById('msgPopup');if(existing)existing.remove();
-  if(msgPopupTimer)clearTimeout(msgPopupTimer);
-  var popup=document.createElement('div');popup.id='msgPopup';
-  popup.setAttribute('style','position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:9999;background:#0d1b3e;color:white;border-radius:16px;padding:14px 18px;min-width:280px;max-width:90vw;box-shadow:0 8px 32px rgba(0,0,0,.4);cursor:pointer');
-  var closeBtn=document.createElement('button');closeBtn.textContent='✕';closeBtn.setAttribute('style','position:absolute;top:12px;right:14px;background:none;border:none;color:#64748b;font-size:18px;cursor:pointer');closeBtn.onclick=function(e){e.stopPropagation();popup.remove();};
-  var inner=document.createElement('div');inner.setAttribute('style','display:flex;align-items:flex-start;gap:12px;padding-right:24px');inner.innerHTML='<div style="font-size:24px;flex-shrink:0">💬</div><div><div style="font-size:12px;font-weight:700;color:#fbbf24;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">'+sender+'</div><div style="font-size:14px;line-height:1.4">'+message+'</div></div>';
-  var hint=document.createElement('div');hint.textContent='Tryck för att öppna chatten';hint.setAttribute('style','font-size:11px;color:#4a6090;margin-top:8px;text-align:center');
-  popup.appendChild(closeBtn);popup.appendChild(inner);popup.appendChild(hint);
-  popup.onclick=function(){popup.remove();showTab(4);};
-  document.body.appendChild(popup);
-  msgPopupTimer=setTimeout(function(){var p=document.getElementById('msgPopup');if(p)p.remove();},8000);
-}
-
-function closeMsgPopup(id){var el=document.getElementById(id);if(el)el.remove();}
-</script>
-</body>
-</html>
+  var text=(document.getElementById('questio
