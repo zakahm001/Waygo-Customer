@@ -783,134 +783,50 @@ function makeTaxiIcon(status, name) {
 
 
 
-// ── ZONE POLYGON OVERLAYS — Central map ──
-var MAP_ZONE_POLYGONS = [
-  {id:1,  name:'Trollhättan Centrum', color:'#1a56db',
-   poly:[[58.2900,12.2600],[58.2920,12.2750],[58.2895,12.2980],[58.2840,12.3020],[58.2790,12.2960],[58.2770,12.2830],[58.2800,12.2680],[58.2850,12.2620]]},
-  {id:2,  name:'Götalunden',          color:'#059669',
-   poly:[[58.2840,12.2980],[58.2895,12.2980],[58.2920,12.3100],[58.2910,12.3280],[58.2870,12.3400],[58.2820,12.3350],[58.2800,12.3150],[58.2815,12.3020]]},
-  {id:3,  name:'Lextorp',             color:'#7c3aed',
-   poly:[[58.2770,12.2830],[58.2790,12.2960],[58.2760,12.3050],[58.2710,12.3020],[58.2680,12.2900],[58.2690,12.2760],[58.2730,12.2700]]},
-  {id:4,  name:'Gärdhem',             color:'#d97706',
-   poly:[[58.2710,12.3020],[58.2760,12.3050],[58.2800,12.3150],[58.2820,12.3350],[58.2780,12.3480],[58.2720,12.3500],[58.2670,12.3380],[58.2650,12.3200],[58.2660,12.3050]]},
-  {id:5,  name:'Fors',                color:'#dc2626',
-   poly:[[58.2870,12.3400],[58.2910,12.3280],[58.2960,12.3300],[58.3000,12.3500],[58.2980,12.3700],[58.2920,12.3720],[58.2870,12.3600],[58.2840,12.3480]]},
-  {id:6,  name:'Lagmansered',         color:'#0891b2',
-   poly:[[58.2900,12.2600],[58.2850,12.2620],[58.2800,12.2680],[58.2750,12.2600],[58.2720,12.2400],[58.2780,12.2250],[58.2870,12.2300],[58.2940,12.2450]]},
-  {id:7,  name:'Norra Björke',        color:'#65a30d',
-   poly:[[58.2920,12.2750],[58.2900,12.2600],[58.2940,12.2450],[58.3020,12.2400],[58.3100,12.2600],[58.3120,12.2900],[58.3050,12.3050],[58.2980,12.3000],[58.2960,12.2850]]},
-  {id:8,  name:'Rommele',             color:'#ea580c',
-   poly:[[58.3000,12.3500],[58.2960,12.3300],[58.2980,12.3000],[58.3050,12.3050],[58.3120,12.2900],[58.3200,12.3100],[58.3200,12.3500],[58.3100,12.3700],[58.3020,12.3680]]},
-  {id:9,  name:'Upphärad',            color:'#9333ea',
-   poly:[[58.3120,12.2900],[58.3100,12.2600],[58.3200,12.2500],[58.3350,12.2700],[58.3380,12.3000],[58.3300,12.3200],[58.3200,12.3100]]},
-  {id:10, name:'Väne-Åsaka',          color:'#16a34a',
-   poly:[[58.2650,12.3200],[58.2670,12.3380],[58.2720,12.3500],[58.2680,12.3700],[58.2580,12.3800],[58.2480,12.3600],[58.2450,12.3300],[58.2520,12.3100],[58.2600,12.3050]]},
-  {id:11, name:'Vänersborg',          color:'#1d4ed8',
-   poly:[[58.340,12.260],[58.410,12.260],[58.430,12.380],[58.400,12.430],[58.350,12.420],[58.330,12.340]]},
-  {id:12, name:'Lilla Edet',          color:'#b45309',
-   poly:[[58.060,12.100],[58.190,12.100],[58.200,12.280],[58.150,12.320],[58.070,12.280]]},
-  {id:15, name:'Göteborg',            color:'#0f766e',
-   poly:[[57.580,11.800],[57.820,11.800],[57.840,12.100],[57.780,12.200],[57.620,12.180],[57.570,12.000]]},
-  {id:17, name:'Landvetter',          color:'#7c3aed',
-   poly:[[57.620,12.200],[57.720,12.200],[57.730,12.420],[57.660,12.430],[57.610,12.360]]},
+// ── ZONE POLYGON OVERLAYS — Central map (border lines only) ──
+var ZONE_TROLLHATTAN_MAP = {
+  id:'THN', name:'Trollhättan', color:'#1a56db',
+  poly:[[58.3580,12.1800],[58.3720,12.2100],[58.3800,12.2500],[58.3750,12.3000],[58.3600,12.3500],[58.3400,12.3800],[58.3200,12.4200],[58.2900,12.4300],[58.2600,12.4100],[58.2350,12.3900],[58.2150,12.3600],[58.2000,12.3200],[58.2100,12.2800],[58.2300,12.2200],[58.2600,12.1800],[58.3000,12.1500],[58.3300,12.1600]]
+};
+var ZONES_VG_MAP = [
+  {id:'001',name:'Vänersborg',color:'#0891b2',poly:[[58.4100,12.1000],[58.4800,12.1500],[58.5200,12.2500],[58.5000,12.4000],[58.4200,12.4200],[58.3800,12.3800],[58.3600,12.3500],[58.3750,12.3000],[58.3800,12.2500],[58.3720,12.2100],[58.3580,12.1800],[58.3800,12.1200]]},
+  {id:'002',name:'Lilla Edet',color:'#059669',poly:[[58.2000,12.3200],[58.2150,12.3600],[58.2350,12.3900],[58.2100,12.4200],[58.1800,12.4500],[58.1200,12.4200],[58.0800,12.3800],[58.0900,12.2800],[58.1400,12.2500],[58.1800,12.2800]]},
+  {id:'003',name:'Ale',color:'#7c3aed',poly:[[58.1800,12.2800],[58.1400,12.2500],[58.0900,12.2800],[58.0500,12.3000],[58.0000,12.2500],[58.0200,12.1500],[58.0800,12.1000],[58.1500,12.1200],[58.2000,12.1800]]},
+  {id:'004',name:'Kungälv',color:'#d97706',poly:[[57.9500,11.9800],[58.0200,12.0500],[58.0800,12.1000],[58.0200,12.1500],[58.0000,12.2500],[57.9200,12.2000],[57.8800,12.1500],[57.8900,12.0500],[57.9200,11.9800]]},
+  {id:'005',name:'Göteborg',color:'#dc2626',poly:[[57.8000,11.7500],[57.8800,11.8500],[57.9200,11.9800],[57.8900,12.0500],[57.8800,12.1500],[57.8200,12.1800],[57.7500,12.1500],[57.6800,12.1000],[57.6500,12.0000],[57.6800,11.8800],[57.7500,11.7800]]},
+  {id:'006',name:'Mölndal',color:'#ea580c',poly:[[57.6500,12.0000],[57.6800,12.1000],[57.7500,12.1500],[57.7200,12.2500],[57.6800,12.2800],[57.6200,12.2500],[57.5800,12.1500],[57.6000,12.0500]]},
+  {id:'007',name:'Härryda',color:'#65a30d',poly:[[57.7200,12.2500],[57.7500,12.1500],[57.8200,12.1800],[57.8500,12.2500],[57.8000,12.3500],[57.7500,12.4000],[57.7000,12.3800],[57.6800,12.2800]]},
+  {id:'008',name:'Partille',color:'#9333ea',poly:[[57.7500,12.1000],[57.8000,12.1000],[57.8200,12.1800],[57.7500,12.1500],[57.7200,12.2500],[57.6800,12.2800],[57.6800,12.1500]]},
+  {id:'009',name:'Alingsås',color:'#0f766e',poly:[[57.8500,12.2500],[57.9500,12.2000],[58.0000,12.3000],[57.9800,12.5000],[57.9200,12.6000],[57.8500,12.5500],[57.8000,12.4500],[57.8000,12.3500]]},
+  {id:'010',name:'Stenungsund',color:'#1d4ed8',poly:[[57.9200,11.9800],[57.9800,11.9000],[58.0500,11.8500],[58.1000,11.9000],[58.1200,12.0000],[58.0800,12.1000],[58.0200,12.0500]]},
+  {id:'011',name:'Uddevalla',color:'#b45309',poly:[[58.3600,12.3500],[58.3800,12.3800],[58.4200,12.4200],[58.4500,12.4800],[58.3800,12.6000],[58.3200,12.5500],[58.2900,12.4300],[58.3200,12.4200]]},
 ];
 
 function addZoneOverlays(map) {
-  MAP_ZONE_POLYGONS.forEach(function(zone) {
-    // Convert [lat,lng] pairs to Leaflet format
-    var latlngs = zone.poly.map(function(p){ return [p[0], p[1]]; });
-    var poly = L.polygon(latlngs, {
+  function addZone(zone, isTHN) {
+    var latlngs = zone.poly.map(function(p){ return [p[0],p[1]]; });
+    // Border line only — no fill for municipalities, slight fill for Trollhättan
+    L.polygon(latlngs, {
       color: zone.color,
-      weight: 2,
+      weight: isTHN ? 3 : 2,
       fillColor: zone.color,
-      fillOpacity: 0.18,
-      dashArray: '6,4',
+      fillOpacity: isTHN ? 0.06 : 0.03,
+      dashArray: isTHN ? null : '8,6',
       interactive: false
     }).addTo(map);
-    // Zone label at polygon centroid
-    var lats = zone.poly.map(function(p){return p[0];}), lngs = zone.poly.map(function(p){return p[1];});
-    var cLat = lats.reduce(function(a,b){return a+b;})/lats.length;
-    var cLng = lngs.reduce(function(a,b){return a+b;})/lngs.length;
-    L.marker([cLat, cLng], {
-      icon: L.divIcon({
-        html: '<div style="background:'+zone.color+';color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap;opacity:.9;box-shadow:0 1px 4px rgba(0,0,0,.3)">'+zone.id+' '+zone.name+'</div>',
-        className: '', iconAnchor: [50, 10]
-      }),
-      interactive: false
-    }).addTo(map);
-  });
+    // Label at centroid
+    var lats=zone.poly.map(function(p){return p[0];}), lngs=zone.poly.map(function(p){return p[1];});
+    var cLat=lats.reduce(function(a,b){return a+b;})/lats.length;
+    var cLng=lngs.reduce(function(a,b){return a+b;})/lngs.length;
+    L.marker([cLat,cLng],{icon:L.divIcon({
+      html:'<div style="background:'+zone.color+';color:white;font-size:10px;font-weight:700;padding:2px 7px;border-radius:8px;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.3)">'+(isTHN?'THN ':zone.id+' ')+zone.name+'</div>',
+      className:'',iconAnchor:[50,10]
+    }),interactive:false}).addTo(map);
+  }
+  addZone(ZONE_TROLLHATTAN_MAP, true);
+  ZONES_VG_MAP.forEach(function(z){ addZone(z, false); });
 }
 
-// Saved map view for re-init after DOM replacement
-var savedMapCenter = null;
-var savedMapZoom = 13;
-
-function initLeafletMap(drivers){
-  var mapEl = document.getElementById('leafletMap');
-  if (!mapEl) return;
-
-  // ── Check if the container div was replaced (innerHTML re-set) ──
-  var containerReplaced = leafletMapInstance && (leafletMapInstance.getContainer() !== mapEl);
-
-  if (leafletMapInstance && !containerReplaced) {
-    // Same container — just update marker positions, keep view ──
-    drivers.forEach(function(d){
-      var pos = driverPositions[d.id];
-      if (pos && pos.lat && pos.lng) {
-        if (leafletMarkers[d.id]) {
-          leafletMarkers[d.id].setLatLng([pos.lat, pos.lng]);
-        } else {
-          addLeafletMarker(leafletMapInstance, d, pos.lat, pos.lng);
-        }
-      }
-    });
-    setTimeout(function(){ leafletMapInstance.invalidateSize(); }, 100);
-    return;
-  }
-
-  // ── Container was replaced OR first init — save old view then recreate ──
-  if (leafletMapInstance) {
-    try {
-      savedMapCenter = leafletMapInstance.getCenter();
-      savedMapZoom   = leafletMapInstance.getZoom();
-      leafletMapInstance.remove();
-    } catch(e) {}
-    leafletMapInstance = null;
-    leafletMarkers = {};
-  }
-
-  // Choose center: saved view > driver GPS > Trollhättan default
-  var centerLat = 58.2835, centerLng = 12.2887, zoom = savedMapZoom || 13;
-  if (savedMapCenter) { centerLat = savedMapCenter.lat; centerLng = savedMapCenter.lng; }
-  else {
-    var coords = Object.values(driverPositions).filter(function(p){ return p&&p.lat&&p.lng; });
-    if (coords.length) { centerLat = coords[0].lat; centerLng = coords[0].lng; }
-  }
-
-  var map = L.map('leafletMap', {
-    zoomControl: true,
-    attributionControl: true,
-    preferCanvas: true,
-    fadeAnimation: false
-  }).setView([centerLat, centerLng], zoom);
-  leafletMapInstance = map;
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap',
-    maxZoom: 19
-  }).addTo(map);
-
-  addZoneOverlays(map);
-
-  drivers.forEach(function(d){
-    var pos = driverPositions[d.id];
-    if (pos && pos.lat && pos.lng) addLeafletMarker(map, d, pos.lat, pos.lng);
-  });
-
-  // Force Leaflet to recalculate container size
-  setTimeout(function(){ map.invalidateSize(); }, 100);
-  setTimeout(function(){ map.invalidateSize(); }, 400);
-}
 
 function addLeafletMarker(map, driver, lat, lng){
   var color=driver.status==='available'?'#22c55e':driver.status==='busy'?'#f97316':'#64748b';
