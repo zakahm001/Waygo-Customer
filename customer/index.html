@@ -649,7 +649,8 @@ function tabBook(){
     '<div><label class="flabel">'+t('pretime')+'</label>'+
     '<input class="finput" type="time" id="pTime" value="'+preTime+'" onchange="preTime=this.value" style="margin-bottom:0"/></div></div>':'')+
     '<label class="flabel">📍 '+t('pickup')+'</label>'+
-    '<input class="finput" id="bFrom" type="text" placeholder="'+t('pickup')+'..." value="'+(localStorage.getItem('thtcab_prefill_from')||ha)+'"/>'+
+    '<div style="display:flex;gap:6px;align-items:center;margin-bottom:10px">'+
+    '<input class="finput" id="bFrom" type="text" placeholder="'+t('pickup')+'..." value="'+(localStorage.getItem('thtcab_prefill_from')||ha)+'" style="flex:1;margin-bottom:0"/><button type="button" onclick="openMapPicker(\'from\')" style="background:#0d1b3e;color:white;border:none;border-radius:10px;padding:10px 12px;font-size:18px;cursor:pointer;flex-shrink:0">📌</button></div>'+
     '<label class="flabel">🏁 '+t('dest')+'</label>'+
     '<input class="finput" id="bTo" type="text" placeholder="'+t('dest')+'?" onblur="calcFare()" value="'+(localStorage.getItem('thtcab_prefill_to')||'')+'"/>'+
     (customer&&(ha||wa)?'<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'+
@@ -726,13 +727,13 @@ function tryBook(){
   localStorage.removeItem('thtcab_prefill_to');
   const fareEl=document.getElementById('fareAmt');
   const fare=fareEl?(parseInt(fareEl.textContent)||150):150;
-  if(!customer){openGuestSheet({from,to,fare,pay:selPay,pl:selPay==='swish'?t('swish'):selPay==='card'?t('card'):t('invoice'),mode:bookMode,date:preDate,time:preTime});return;}
-  if(selPay==='invoice'&&!isBiz()){showToast(t('inv_priv'));selPay='swish';showTab(0);return;}
-  // 5+ passengers — show choice modal
+  // 5+ passengers — show choice modal BEFORE guest redirect
   if(selPassengers>=5){
     showTwoCarsModal(from,to,fare);
     return;
   }
+  if(!customer){openGuestSheet({from,to,fare,pay:selPay,pl:selPay==='swish'?t('swish'):selPay==='card'?t('card'):t('invoice'),mode:bookMode,date:preDate,time:preTime});return;}
+  if(selPay==='invoice'&&!isBiz()){showToast(t('inv_priv'));selPay='swish';showTab(0);return;}
   doBook(from,to,fare,false);
 }
 
@@ -1589,17 +1590,12 @@ var confirmSocket = null;
 var confirmPollInterval = null;
 
 function initConfirmMap(booking) {
-  // Wire up buttons
   var sb = document.getElementById('custSupportBtn');
   if (sb) sb.onclick = function() { openSupportChat(booking.booking_ref); };
   var cb = document.getElementById('custCancelBtn');
   if (cb) cb.onclick = function() { cancelGuestBooking(booking.id, booking.booking_ref); };
 
-  // Retry if Leaflet not yet loaded
-  if (!window.L) {
-    setTimeout(function() { initConfirmMap(booking); }, 300);
-    return;
-  }
+  if (!window.L) { setTimeout(function() { initConfirmMap(booking); }, 300); return; }
   var mapEl = document.getElementById('confirmMap');
   if (!mapEl) { setTimeout(function() { initConfirmMap(booking); }, 200); return; }
   if (confirmMapInstance) { try{ confirmMapInstance.remove(); }catch(e){} confirmMapInstance = null; }
@@ -1643,12 +1639,23 @@ function initConfirmMap(booking) {
 }
 
 function startConfirmTracking(booking) {
-  // Clear old interval
   if (confirmPollInterval) clearInterval(confirmPollInterval);
 
-  // Connect to socket for live updates
+  // Poll driver position via REST every 8 seconds
+  confirmPollInterval = setInterval(async function() {
+    if (!booking || !booking.driver_id) return;
+    try {
+      var res = await fetch(API + '/bookings/' + booking.id + '/tracking');
+      var data = await res.json();
+      if (data.driver_lat && data.driver_lng) {
+        updateDriverOnMap(parseFloat(data.driver_lat), parseFloat(data.driver_lng));
+      }
+    } catch(e) {}
+  }, 8000);
+
+  // Socket for real-time
   if (!confirmSocket && window.io) {
-    confirmSocket = io(API);
+    confirmSocket = io('https://api.trollhattancab.com', {transports:['websocket','polling']});
     confirmSocket.on('driver:location', function(data) {
       if (!activeConfirmBooking || !confirmMapInstance) return;
       updateDriverOnMap(data.lat, data.lng);
@@ -1715,6 +1722,190 @@ function cancelGuestBooking(id, ref) {
   alert('Ring support för att avboka:\n+46 xxx xxx xxx');
 }
 
+
+// ── MAP PICKER — let customer pin their location ──
+var _mapPickerField = 'from';
+var _mapPickerInstance = null;
+var _mapPickerMarker = null;
+
+function openMapPicker(field) {
+  _mapPickerField = field;
+  var modal = document.getElementById('mapPickerModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'mapPickerModal';
+    modal.setAttribute('style', 'position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:white;display:flex;flex-direction:column');
+    modal.innerHTML =
+      '<div style="background:#0d1b3e;color:white;padding:14px 16px;display:flex;align-items:center;gap:12px">' +
+        '<button onclick="closeMapPicker()" style="background:none;border:none;color:white;font-size:20px;cursor:pointer">✕</button>' +
+        '<div style="font-weight:700;font-size:15px">📌 Välj plats på kartan</div>' +
+      '</div>' +
+      '<div style="background:#fef3c7;padding:10px 14px;font-size:12px;color:#d97706;text-align:center">Tryck på kartan för att välja din plats</div>' +
+      '<div id="mapPickerMap" style="flex:1;width:100%"></div>' +
+      '<div style="padding:12px 14px;background:white;border-top:1px solid #e2e8f0">' +
+        '<div id="mapPickerAddr" style="font-size:13px;color:#64748b;margin-bottom:10px;min-height:20px">Tryck på kartan...</div>' +
+        '<button onclick="confirmMapPin()" style="width:100%;padding:14px;background:#0d1b3e;color:#fbbf24;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer">✅ Välj denna plats</button>' +
+      '</div>';
+    document.body.appendChild(modal);
+  }
+  modal.style.display = 'flex';
+
+  setTimeout(function() {
+    if (!_mapPickerInstance) {
+      navigator.geolocation.getCurrentPosition(function(pos) {
+        var lat = pos.coords.latitude, lng = pos.coords.longitude;
+        _mapPickerInstance = L.map('mapPickerMap').setView([lat, lng], 15);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(_mapPickerInstance);
+        _mapPickerMarker = L.marker([lat, lng], { draggable: true }).addTo(_mapPickerInstance);
+        _mapPickerMarker.on('dragend', function() { reverseGeocode(_mapPickerMarker.getLatLng()); });
+        _mapPickerInstance.on('click', function(e) { _mapPickerMarker.setLatLng(e.latlng); reverseGeocode(e.latlng); });
+        reverseGeocode({lat: lat, lng: lng});
+      }, function() {
+        _mapPickerInstance = L.map('mapPickerMap').setView([58.2835, 12.2887], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(_mapPickerInstance);
+        _mapPickerMarker = L.marker([58.2835, 12.2887], { draggable: true }).addTo(_mapPickerInstance);
+        _mapPickerMarker.on('dragend', function() { reverseGeocode(_mapPickerMarker.getLatLng()); });
+        _mapPickerInstance.on('click', function(e) { _mapPickerMarker.setLatLng(e.latlng); reverseGeocode(e.latlng); });
+      }, { timeout: 5000 });
+    } else {
+      _mapPickerInstance.invalidateSize();
+    }
+  }, 200);
+}
+
+async function reverseGeocode(latlng) {
+  var addr = document.getElementById('mapPickerAddr');
+  if (addr) addr.textContent = 'Söker adress...';
+  try {
+    var res = await fetch('https://nominatim.openstreetmap.org/reverse?lat='+latlng.lat+'&lon='+latlng.lng+'&format=json&accept-language=sv');
+    var data = await res.json();
+    var address = data.display_name || (latlng.lat.toFixed(5) + ', ' + latlng.lng.toFixed(5));
+    // Shorten: use road + city
+    var parts = [];
+    if (data.address) {
+      if (data.address.road) parts.push(data.address.road + (data.address.house_number?' '+data.address.house_number:''));
+      if (data.address.city || data.address.town || data.address.village) parts.push(data.address.city||data.address.town||data.address.village);
+    }
+    address = parts.length ? parts.join(', ') : address.split(',').slice(0,2).join(',');
+    if (addr) addr.textContent = address;
+    window._mapPickerSelectedAddr = address;
+  } catch(e) {
+    var fallback = latlng.lat.toFixed(4) + ', ' + latlng.lng.toFixed(4);
+    if (addr) addr.textContent = fallback;
+    window._mapPickerSelectedAddr = fallback;
+  }
+}
+
+function confirmMapPin() {
+  var addr = window._mapPickerSelectedAddr;
+  if (!addr) { showToast('Tryck på kartan först'); return; }
+  var inputId = _mapPickerField === 'from' ? 'bFrom' : 'bTo';
+  var el = document.getElementById(inputId);
+  if (el) { el.value = addr; el.dispatchEvent(new Event('input')); }
+  closeMapPicker();
+}
+
+function closeMapPicker() {
+  var modal = document.getElementById('mapPickerModal');
+  if (modal) modal.style.display = 'none';
+}
+
+// ── MAP PICKER ──
+var mapPickerField = null;
+var mapPickerInstance = null;
+var mapPickerMarker = null;
+var mapPickerLatLng = null;
+
+function openMapPicker(field) {
+  mapPickerField = field;
+  var modal = document.getElementById('mapPickerModal');
+  if (!modal) return;
+  modal.style.display = 'flex';
+  document.getElementById('mapPickerTitle').textContent = field === 'from' ? '📍 Välj upphämtningsplats' : '🏁 Välj destination';
+  document.getElementById('mapPickerAddress').textContent = 'Tryck på kartan för att välja position';
+  document.getElementById('mapPickerConfirm').disabled = true;
+  document.getElementById('mapPickerConfirm').style.opacity = '0.5';
+  mapPickerLatLng = null;
+
+  // Init map
+  if (!window.L) { setTimeout(function(){ openMapPicker(field); }, 300); return; }
+  var mapEl = document.getElementById('mapPickerMap');
+  if (!mapEl) return;
+
+  if (mapPickerInstance) {
+    try { mapPickerInstance.remove(); } catch(e) {}
+    mapPickerInstance = null; mapPickerMarker = null;
+  }
+
+  // Center on Trollhättan or user GPS
+  var center = [58.2835, 12.2887];
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      if (mapPickerInstance) mapPickerInstance.setView([pos.coords.latitude, pos.coords.longitude], 14);
+    }, function(){}, { timeout: 3000 });
+  }
+
+  var map = L.map('mapPickerMap', { zoomControl: true }).setView(center, 13);
+  mapPickerInstance = map;
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap', maxZoom: 19
+  }).addTo(map);
+
+  // Click to place pin
+  map.on('click', function(e) {
+    mapPickerLatLng = e.latlng;
+    if (mapPickerMarker) mapPickerMarker.remove();
+    mapPickerMarker = L.marker(e.latlng, {
+      icon: L.divIcon({
+        html: '<div style="font-size:32px;margin-top:-32px;margin-left:-12px">📍</div>',
+        className: '', iconSize: [24, 32]
+      })
+    }).addTo(map);
+
+    // Reverse geocode
+    document.getElementById('mapPickerAddress').textContent = 'Hämtar adress...';
+    fetch('https://nominatim.openstreetmap.org/reverse?lat='+e.latlng.lat+'&lon='+e.latlng.lng+'&format=json&accept-language=sv')
+      .then(function(r){ return r.json(); })
+      .then(function(d) {
+        var addr = d.display_name || (e.latlng.lat.toFixed(5)+', '+e.latlng.lng.toFixed(5));
+        // Shorten address for display
+        var parts = addr.split(',');
+        var short = parts.slice(0,3).join(',').trim();
+        mapPickerLatLng.address = short;
+        document.getElementById('mapPickerAddress').textContent = '📍 ' + short;
+        var confirmBtn = document.getElementById('mapPickerConfirm');
+        confirmBtn.disabled = false;
+        confirmBtn.style.opacity = '1';
+      }).catch(function() {
+        var coord = e.latlng.lat.toFixed(5)+', '+e.latlng.lng.toFixed(5);
+        mapPickerLatLng.address = coord;
+        document.getElementById('mapPickerAddress').textContent = '📍 ' + coord;
+        document.getElementById('mapPickerConfirm').disabled = false;
+        document.getElementById('mapPickerConfirm').style.opacity = '1';
+      });
+  });
+
+  setTimeout(function(){ map.invalidateSize(); }, 100);
+}
+
+function closeMapPicker() {
+  var modal = document.getElementById('mapPickerModal');
+  if (modal) modal.style.display = 'none';
+}
+
+function confirmMapPick() {
+  if (!mapPickerLatLng || !mapPickerLatLng.address) return;
+  var fieldId = mapPickerField === 'from' ? 'bFrom' : 'bTo';
+  var input = document.getElementById(fieldId);
+  if (input) {
+    input.value = mapPickerLatLng.address;
+    input.dispatchEvent(new Event('input'));
+  }
+  closeMapPicker();
+  // Update fare estimate
+  if (typeof calcFare === 'function') setTimeout(calcFare, 200);
+}
 </script>
 <script async src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
@@ -1770,6 +1961,21 @@ function cancelGuestBooking(id, ref) {
       Har du ett konto? <span style="color:#1a56db;cursor:pointer;text-decoration:underline" onclick="document.getElementById('guestModal').style.display='none';openAuth(null)">Logga in</span>
     </div>
   </div>
+</div>
+
+
+<!-- MAP PICKER MODAL -->
+<div id="mapPickerModal" style="display:none;position:fixed;inset:0;z-index:9999;flex-direction:column;background:white">
+  <div style="background:#0d1b3e;color:white;padding:14px 16px;display:flex;align-items:center;gap:12px">
+    <button onclick="closeMapPicker()" style="background:none;border:none;color:white;font-size:22px;cursor:pointer">←</button>
+    <div>
+      <div style="font-weight:800;font-size:15px" id="mapPickerTitle">Välj plats</div>
+      <div style="font-size:12px;color:#4a6090">Tryck på kartan för att välja position</div>
+    </div>
+    <button onclick="confirmMapPick()" id="mapPickerConfirm" style="margin-left:auto;background:#22c55e;color:white;border:none;border-radius:10px;padding:8px 16px;font-weight:700;cursor:pointer;opacity:.5" disabled>✅ Bekräfta</button>
+  </div>
+  <div id="mapPickerMap" style="flex:1;width:100%;min-height:0"></div>
+  <div id="mapPickerAddress" style="padding:12px 16px;background:#f8fafc;font-size:13px;color:#64748b;border-top:1px solid #e2e8f0">Ingen plats vald</div>
 </div>
 
 </body>
